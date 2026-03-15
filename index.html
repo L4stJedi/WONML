@@ -9,7 +9,8 @@
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="apple-touch-icon" href="assets/planes/germany/FokkerD7std.png">
+  <link rel="icon" type="image/png" href="assets/branding/WONMLIcon.png">
+  <link rel="apple-touch-icon" href="assets/branding/WONMLIcon-180.png">
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -55,9 +56,12 @@
       display: flex;
       flex-wrap: wrap;
       gap: 10px 18px;
-      font-weight: 600;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Baskerville, Georgia, serif;
+      font-weight: 700;
       text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
-      font-size: 13px;
+      font-size: 14px;
+      line-height: 1.15;
+      letter-spacing: 0.02em;
       pointer-events: none;
       max-width: 430px;
       color: #ffeb3b; /* bright yellow text */
@@ -65,8 +69,10 @@
 
     .hud span.label {
       opacity: 0.9;
-      font-weight: 400;
+      font-weight: 600;
       margin-right: 4px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
       color: #ffe082; /* softer yellow for labels */
     }
 
@@ -125,6 +131,7 @@
 
     <div class="hud">
       <div><span class="label">Score:</span><span id="score">0</span></div>
+      <div><span class="label">XP:</span><span id="xp">0 (0/5)</span></div>
       <div><span class="label">Best:</span><span id="best">0</span></div>
       <div><span class="label">Stage:</span><span id="levelName">Fokker Eindecker</span></div>
       <div><span class="label">Lives:</span><span id="lives">❤❤❤</span></div>
@@ -151,6 +158,7 @@
     const ctx = canvas.getContext("2d");
 
     const scoreEl = document.getElementById("score");
+    const xpEl = document.getElementById("xp");
     const bestEl = document.getElementById("best");
     const hintEl = document.getElementById("hint");
     const levelNameEl = document.getElementById("levelName");
@@ -237,6 +245,18 @@
     d7StdImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerD7std.png");
     d7StdImg.src = "assets/planes/germany/FokkerD7std.png";
 
+    const e3StdImg = new Image();
+    let e3StdLoaded = false;
+    e3StdImg.onload = () => { e3StdLoaded = true; };
+    e3StdImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerEIII_std.png");
+    e3StdImg.src = "assets/planes/germany/FokkerEIII_std.png";
+
+    const dr1StdImg = new Image();
+    let dr1StdLoaded = false;
+    dr1StdImg.onload = () => { dr1StdLoaded = true; };
+    dr1StdImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerDR1_std.png");
+    dr1StdImg.src = "assets/planes/germany/FokkerDR1_std.png";
+
     const d7RbImg = new Image();
     let d7RbLoaded = false;
     d7RbImg.onload = () => { d7RbLoaded = true; };
@@ -267,6 +287,12 @@
     dh9Img.onerror = () => console.error("Could not load assets/planes/britain/AircoDH9.png");
     dh9Img.src = "assets/planes/britain/AircoDH9.png";
 
+    const pupStdImg = new Image();
+    let pupStdLoaded = false;
+    pupStdImg.onload = () => { pupStdLoaded = true; };
+    pupStdImg.onerror = () => console.error("Could not load assets/planes/britain/SopwithPup_std.png");
+    pupStdImg.src = "assets/planes/britain/SopwithPup_std.png";
+
     const balloonImg = new Image();
     let balloonLoaded = false;
     balloonImg.onload = () => { balloonLoaded = true; };
@@ -292,21 +318,59 @@
     const frenchRoundel = loadSplashAsset("assets/backgrounds/menu/FrenchRoundel.png");
     const italianRoundel = loadSplashAsset("assets/backgrounds/menu/ItalianRoundel.png");
     const russianRoundel = loadSplashAsset("assets/backgrounds/menu/RussianRoundel.png");
+    const belgiumSkyLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/SkyLayer.png");
+    const belgiumFarBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium1.png");
+    const belgiumFarBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium2.png");
+    const belgiumFarLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/FarLayer.png");
+    const belgiumMidLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/MidLayer.png");
+    const belgiumForeLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/ForegroundLayer.png");
+    const BELGIUM_CAMPAIGN_LAYERS = {
+      sky: belgiumSkyLayer,
+      far: belgiumFarBlend1,
+      mid: belgiumMidLayer
+    };
+
+    const GERMAN_STANDARD_PLANES = [
+      { tier: "Tier 1", label: "Fokker E.III", planeType: "e3std" },
+      { tier: "Tier 2", label: "Fokker Dr.I", planeType: "dr1std" },
+      { tier: "Tier 3", label: "Fokker D.VII", planeType: "d7std" }
+    ];
+
+    const GERMAN_SPECIAL_LIVERIES = [
+      "Fokker DR1_RB",
+      "Fokker DR1_WeVo",
+      "Fokker D7_RB"
+    ];
 
     function getPlaneSprite(type) {
+      if (type === "e3std") return { img: e3StdImg, loaded: e3StdLoaded, scale: 0.056 };
+      if (type === "dr1std") return { img: dr1StdImg, loaded: dr1StdLoaded, scale: 0.059 };
       if (type === "d7rb") return { img: d7RbImg, loaded: d7RbLoaded, scale: 0.058 };
       if (type === "d7vik") return { img: d7VikImg, loaded: d7VikLoaded, scale: 0.058 };
       if (type === "d7std") return { img: d7StdImg, loaded: d7StdLoaded, scale: 0.058 };
       if (type === "dh1") return { img: dh1Img, loaded: dh1Loaded, scale: 0.056 };
       if (type === "dh2") return { img: dh2Img, loaded: dh2Loaded, scale: 0.056 };
       if (type === "dh9") return { img: dh9Img, loaded: dh9Loaded, scale: 0.056 };
+      if (type === "pupstd") return { img: pupStdImg, loaded: pupStdLoaded, scale: 0.057 };
       return { img: d7StdImg, loaded: d7StdLoaded, scale: 0.058 };
     }
 
+    function getGermanFrontlinePlaneType() {
+      if (currentLevelIndex >= 3) return "d7std";
+      if (currentLevelIndex >= 2) return "dr1std";
+      return "e3std";
+    }
+
+    function getBritishFrontlinePlaneType() {
+      if (currentLevelIndex >= 3) return "pupstd";
+      if (currentLevelIndex >= 1) return "dh2";
+      return "dh1";
+    }
+
     function getEnemyPlaneType(enemyType) {
-      if (enemyType === "german-fighter") return "d7std";
+      if (enemyType === "german-fighter") return getGermanFrontlinePlaneType();
       if (enemyType === "german-bomber") return "d7rb";
-      if (enemyType === "british-fighter") return "dh2";
+      if (enemyType === "british-fighter") return getBritishFrontlinePlaneType();
       if (enemyType === "british-bomber") return dh9Loaded ? "dh9" : "dh1";
       return null;
     }
@@ -314,10 +378,10 @@
     // === Levels with per-level parallax ===
     const LEVELS = [
       {
-        name: "Fokker Eindecker",
-        obstacle: "cloud",
+        name: "Opening Patrol",
+        obstacle: "none",
         speed: 1.9,
-        spawnInterval: 1680,
+        spawnInterval: 1780,
         gravity: 0.28,
         jump: -6.5,
         sky: ["#cbdaf0", "#f2f5fb"],
@@ -326,14 +390,15 @@
           farColor: "#355723",
           midColor: "#7e653e",
           foreColor: "#4a3b26",
-          theme: "rural"
+          theme: "rural",
+          customLayers: BELGIUM_CAMPAIGN_LAYERS
         }
       },
       {
-        name: "Observation Balloons",
-        obstacle: "balloon",
-        speed: 2.8,
-        spawnInterval: 1200,
+        name: "Flak Screen",
+        obstacle: "flak",
+        speed: 2.15,
+        spawnInterval: 1520,
         gravity: 0.32,
         jump: -7.0,
         sky: ["#e3e3e3", "#cfcfcf"],
@@ -342,14 +407,15 @@
           farColor: "#4f5b32",
           midColor: "#8d6e63",
           foreColor: "#5d4037",
-          theme: "farmland"
+          theme: "farmland",
+          customLayers: BELGIUM_CAMPAIGN_LAYERS
         }
       },
       {
-        name: "Zeppelin Raid",
-        obstacle: "zeppelin",
-        speed: 3.0,
-        spawnInterval: 1150,
+        name: "Cloud Bank",
+        obstacle: "cloud",
+        speed: 2.35,
+        spawnInterval: 1420,
         gravity: 0.33,
         jump: -7.2,
         sky: ["#9aa7c3", "#d8dde7"],
@@ -358,14 +424,15 @@
           farColor: "#455a64",
           midColor: "#6d4c41",
           foreColor: "#3e2723",
-          theme: "industrial"
+          theme: "industrial",
+          customLayers: BELGIUM_CAMPAIGN_LAYERS
         }
       },
       {
-        name: "Ace of Aces",
-        obstacle: "flak",
-        speed: 3.4,
-        spawnInterval: 1000,
+        name: "Observation Line",
+        obstacle: "balloon",
+        speed: 2.6,
+        spawnInterval: 1320,
         gravity: 0.35,
         jump: -7.4,
         sky: ["#5b7b9a", "#cfd7e0"],
@@ -374,7 +441,8 @@
           farColor: "#37474f",
           midColor: "#4e342e",
           foreColor: "#263238",
-          theme: "battlefield"
+          theme: "battlefield",
+          customLayers: BELGIUM_CAMPAIGN_LAYERS
         }
       }
     ];
@@ -382,6 +450,8 @@
     const PLANE_WIDTH = 52;
     const PLANE_HEIGHT = 28;
     const PLANE_X = 90;
+    const XP_PER_ACE_STEP = 5;
+    const UNJAM_XP_COST = 5;
 
     let currentLevelIndex = 0;
 
@@ -390,9 +460,13 @@
     let enemies;
     let playerShots;
     let score = 0;
+    let xpPoints = 0;
+    let enemiesShotDown = 0;
     let currentFaction = "germany";
     let lastEnemySpawnTime = 0;
+    let lastEnemySpawnY = null;
     let lastShotTime = 0;
+    let roundStartTime = 0;
 
     // High score & leaderboard
     let bestScore = parseInt(getStoredValue(STORAGE_KEYS.best, STORAGE_KEYS.legacyBest) || "0", 10);
@@ -502,7 +576,7 @@
 
     const parallax = { far: 0, mid: 0, fore: 0 };
 
-    let planeType = "d7std";
+    let planeType = "e3std";
 
     scoreEl.textContent = score;
     bestEl.textContent = bestScore;
@@ -528,12 +602,18 @@
     }
 
     function syncFactionWithPlane() {
-      currentFaction = (planeType === "dh1" || planeType === "dh2" || planeType === "dh9") ? "britain" : "germany";
+      currentFaction = (planeType === "dh1" || planeType === "dh2" || planeType === "dh9" || planeType === "pupstd") ? "britain" : "germany";
+    }
+
+    function updateXpDisplay() {
+      const progress = enemiesShotDown % XP_PER_ACE_STEP;
+      const readyUnjams = Math.floor(xpPoints / UNJAM_XP_COST);
+      xpEl.textContent = readyUnjams > 0
+        ? `${xpPoints} (${progress}/${XP_PER_ACE_STEP}) U:${readyUnjams}`
+        : `${xpPoints} (${progress}/${XP_PER_ACE_STEP})`;
     }
 
     function awardScore(points) {
-      if (points <= 0) return;
-
       score += points;
       scoreEl.textContent = score;
 
@@ -551,6 +631,15 @@
     }
 
     updateLivesDisplay();
+    updateXpDisplay();
+
+    function registerEnemyKill() {
+      enemiesShotDown += 1;
+      if (enemiesShotDown % XP_PER_ACE_STEP === 0) {
+        xpPoints += 1;
+      }
+      updateXpDisplay();
+    }
 
     function ensurePilotName() {
       if (!currentPilotName) {
@@ -622,21 +711,27 @@
         width: PLANE_WIDTH,
         height: PLANE_HEIGHT,
         vy: 0,
-        invincibleUntil: 0
+        invincibleUntil: 0,
+        hitRecoveryUntil: 0
       };
       obstacles = [];
       enemies = [];
       playerShots = [];
       score = 0;
+      xpPoints = 0;
+      enemiesShotDown = 0;
       lives = 3;
       damageLevel = 0;
       scoreSubmitted = false;
       scoreEl.textContent = score;
       updateLivesDisplay();
+      updateXpDisplay();
       lastTime = 0;
       lastSpawnTime = 0;
       lastEnemySpawnTime = 0;
+      lastEnemySpawnY = null;
       lastShotTime = 0;
+      roundStartTime = 0;
       gameOver = false;
       gameRunning = false;
       currentLevelIndex = 0;
@@ -653,16 +748,37 @@
       }
     }
 
+    function getDamageFlightState(timestamp = performance.now()) {
+      let jumpMultiplier = 1;
+      let speedMultiplier = 1;
+
+      if (damageLevel === 1) {
+        jumpMultiplier = 0.9;
+        speedMultiplier = 0.97;
+      } else if (damageLevel >= 2) {
+        jumpMultiplier = 0.76;
+        speedMultiplier = 0.9;
+      }
+
+      if (plane.hitRecoveryUntil && timestamp < plane.hitRecoveryUntil) {
+        jumpMultiplier *= 0.94;
+        speedMultiplier *= 0.96;
+      }
+
+      return { jumpMultiplier, speedMultiplier };
+    }
+
     function flap() {
       const level = LEVELS[currentLevelIndex];
-      plane.vy = level.jump;
+      const { jumpMultiplier } = getDamageFlightState();
+      plane.vy = level.jump * jumpMultiplier;
     }
 
     function updateLevelByScore() {
       let newIndex = 0;
-      if (score >= 30) newIndex = 3;
-      else if (score >= 20) newIndex = 2;
-      else if (score >= 10) newIndex = 1;
+      if (score >= 145) newIndex = 3;
+      else if (score >= 90) newIndex = 2;
+      else if (score >= 45) newIndex = 1;
       else newIndex = 0;
 
       if (newIndex !== currentLevelIndex) {
@@ -677,7 +793,9 @@
 
     function spawnObstacle(timestamp) {
       const level = LEVELS[currentLevelIndex];
+      if (!level.obstacle || level.obstacle === "none") return;
       if (!lastSpawnTime) lastSpawnTime = timestamp;
+      if (currentLevelIndex === 0 && timestamp - roundStartTime < 2200) return;
       if (timestamp - lastSpawnTime < level.spawnInterval) return;
 
       lastSpawnTime = timestamp;
@@ -688,22 +806,7 @@
       const yMax = H - GROUND_HEIGHT - marginBottom;
       const baseY = Math.random() * (yMax - yMin) + yMin;
 
-      let obstacleType = level.obstacle;
-
-      if (currentLevelIndex === 3) {
-        if (score >= 500) {
-          const r = Math.random();
-          obstacleType = (r < 0.6) ? "flak" : "zeppelin";
-        } else if (score >= 400) {
-          const r = Math.random();
-          obstacleType = (r < 0.6) ? "flak" : "balloon";
-        } else if (score >= 300) {
-          const r = Math.random();
-          obstacleType = (r < 0.7) ? "flak" : "cloud";
-        } else {
-          obstacleType = "flak";
-        }
-      }
+      const obstacleType = level.obstacle;
 
       const radius = obstacleType === "zeppelin" ? 40 : 26;
 
@@ -723,22 +826,21 @@
       const roll = Math.random();
 
       if (currentFaction === "britain") {
-        if (currentLevelIndex >= 2 && roll > 0.82) return "zeppelin";
-        if (currentLevelIndex >= 1 && roll > 0.52) return "german-bomber";
+        if (currentLevelIndex >= 3 && roll > 0.76) return "zeppelin";
         return "german-fighter";
       }
 
-      if (currentLevelIndex >= 1 && roll > 0.58) return "british-bomber";
+      if (currentLevelIndex >= 3 && roll > 0.74) return "british-bomber";
       return "british-fighter";
     }
 
     function createEnemy(type, y) {
       const map = {
-        "german-fighter": { width: 58, height: 24, speedFactor: 1.18, hp: 1, points: 3, bobAmp: 8, bobFreq: 0.004 },
-        "german-bomber": { width: 84, height: 30, speedFactor: 0.88, hp: 2, points: 5, bobAmp: 5, bobFreq: 0.0028 },
-        "british-fighter": { width: 58, height: 24, speedFactor: 1.16, hp: 1, points: 3, bobAmp: 8, bobFreq: 0.0042 },
-        "british-bomber": { width: 86, height: 30, speedFactor: 0.9, hp: 2, points: 5, bobAmp: 5, bobFreq: 0.0028 },
-        "zeppelin": { width: 126, height: 38, speedFactor: 0.62, hp: 3, points: 8, bobAmp: 4, bobFreq: 0.0019 }
+        "german-fighter": { width: 58, height: 24, speedFactor: 1.18, hp: 1, points: 3, missPenalty: 1, bobAmp: 8, bobFreq: 0.004 },
+        "german-bomber": { width: 84, height: 30, speedFactor: 0.88, hp: 2, points: 5, missPenalty: 2, bobAmp: 5, bobFreq: 0.0028 },
+        "british-fighter": { width: 58, height: 24, speedFactor: 1.16, hp: 1, points: 3, missPenalty: 1, bobAmp: 8, bobFreq: 0.0042 },
+        "british-bomber": { width: 86, height: 30, speedFactor: 0.9, hp: 2, points: 5, missPenalty: 2, bobAmp: 5, bobFreq: 0.0028 },
+        "zeppelin": { width: 126, height: 38, speedFactor: 0.62, hp: 3, points: 8, missPenalty: 3, bobAmp: 4, bobFreq: 0.0019 }
       };
 
       const base = map[type];
@@ -752,14 +854,40 @@
         type,
         hp: base.hp,
         points: base.points,
+        missPenalty: base.missPenalty,
         bobAmp: base.bobAmp,
         bobFreq: base.bobFreq,
         phase: Math.random() * Math.PI * 2
       };
     }
 
+    function pickEnemySpawnY(type) {
+      const minY = type === "zeppelin" ? 90 : 70;
+      const maxY = type === "zeppelin" ? H - GROUND_HEIGHT - 180 : H - GROUND_HEIGHT - 90;
+      const playerCenterY = plane.y + plane.height / 2;
+      const preferredSpacing = currentLevelIndex === 0 ? 90 : 58;
+      const previousSpacing = type === "zeppelin" ? 110 : 70;
+
+      let fallbackY = Math.random() * Math.max(20, maxY - minY) + minY;
+
+      for (let attempt = 0; attempt < 6; attempt++) {
+        const candidateY = Math.random() * Math.max(20, maxY - minY) + minY;
+        fallbackY = candidateY;
+
+        const clearsPlayerLane = Math.abs(candidateY - playerCenterY) >= preferredSpacing;
+        const clearsPreviousLane = lastEnemySpawnY === null || Math.abs(candidateY - lastEnemySpawnY) >= previousSpacing;
+
+        if (clearsPlayerLane && clearsPreviousLane) {
+          return candidateY;
+        }
+      }
+
+      return fallbackY;
+    }
+
     function spawnEnemy(timestamp) {
       if (!lastEnemySpawnTime) lastEnemySpawnTime = timestamp;
+      if (currentLevelIndex === 0 && timestamp - roundStartTime < 4200) return;
 
       const isOpeningLevel = currentLevelIndex === 0;
       const spawnBase = isOpeningLevel ? 3050 : 2500;
@@ -774,9 +902,8 @@
       lastEnemySpawnTime = timestamp;
 
       const type = chooseEnemyType();
-      const minY = type === "zeppelin" ? 90 : 70;
-      const maxY = type === "zeppelin" ? H - GROUND_HEIGHT - 180 : H - GROUND_HEIGHT - 90;
-      const y = Math.random() * Math.max(20, maxY - minY) + minY;
+      const y = pickEnemySpawnY(type);
+      lastEnemySpawnY = y;
       enemies.push(createEnemy(type, y));
     }
 
@@ -795,10 +922,10 @@
       playerShots.push({
         x: planeCx + 18,
         y: planeCy,
-        vx: 8.2,
+        vx: 8.8,
         vy: 0,
-        r: 3,
-        ttl: 820
+        r: 4,
+        ttl: 880
       });
     }
 
@@ -808,19 +935,32 @@
       }
 
       plane.invincibleUntil = timestamp + 900;
-      damageLevel++;
-      lives = Math.max(0, lives - 1);
+      damageLevel = Math.min(3, damageLevel + 1);
+      lives = Math.max(0, 3 - damageLevel);
+      plane.hitRecoveryUntil = timestamp + (damageLevel === 1 ? 850 : 1200);
       updateLivesDisplay();
 
-      if (damageLevel >= 3 || lives <= 0) {
+      if (damageLevel >= 3) {
         damageLevel = 3;
+        lives = 0;
+        updateLivesDisplay();
         endGame();
         return true;
       }
       return false;
     }
 
+    function crashToGround() {
+      damageLevel = 3;
+      lives = 0;
+      plane.hitRecoveryUntil = 0;
+      updateLivesDisplay();
+      endGame();
+    }
+
     function update(dt, timestamp) {
+      if (!roundStartTime) roundStartTime = timestamp;
+
       const level = LEVELS[currentLevelIndex];
 
       let levelSpeed = level.speed;
@@ -832,17 +972,27 @@
       }
 
       let planeSpeedFactor = 1.0;
-      if (planeType === "d7std") {
+      if (planeType === "e3std") {
+        planeSpeedFactor = 0.95;
+      } else if (planeType === "dr1std") {
         planeSpeedFactor = 1.0;
+      } else if (planeType === "d7std") {
+        planeSpeedFactor = 1.03;
       } else if (planeType === "d7rb") {
-        planeSpeedFactor = 1.06;
+        planeSpeedFactor = 1.03;
       } else if (planeType === "d7vik") {
-        planeSpeedFactor = 0.98;
+        planeSpeedFactor = 1.03;
       } else if (planeType === "dh1") {
         planeSpeedFactor = 0.95;
       } else if (planeType === "dh2") {
+        planeSpeedFactor = 1.0;
+      } else if (planeType === "dh9") {
+        planeSpeedFactor = 0.94;
+      } else if (planeType === "pupstd") {
         planeSpeedFactor = 1.02;
       }
+
+      planeSpeedFactor *= getDamageFlightState(timestamp).speedMultiplier;
 
       levelSpeed *= planeSpeedFactor;
 
@@ -874,8 +1024,9 @@
 
       obstacles = obstacles.filter(o => o.x + o.r > -20);
 
+      const enemyApproachFactor = currentLevelIndex === 0 ? 0.9 : 1.0;
       for (const enemy of enemies) {
-        enemy.x -= levelSpeed * enemy.speedFactor * speedFactor;
+        enemy.x -= levelSpeed * enemy.speedFactor * enemyApproachFactor * speedFactor;
         enemy.y = enemy.baseY + Math.sin(timestamp * enemy.bobFreq + enemy.phase) * enemy.bobAmp;
       }
 
@@ -898,26 +1049,27 @@
       parallax.fore -= base * 1.0;
 
       if (plane.y < 0 || plane.y + plane.height > H - GROUND_HEIGHT) {
-        damageLevel = 3;
-        lives = 0;
-        updateLivesDisplay();
-        endGame();
+        crashToGround();
         return;
       }
 
-      let planeFactor = 0.6;
-      if (planeType === "d7std") planeFactor = 0.64;
-      if (planeType === "d7rb") planeFactor = 0.64;
-      if (planeType === "d7vik") planeFactor = 0.64;
-      if (planeType === "dh1") planeFactor = 0.62;
-      if (planeType === "dh2") planeFactor = 0.62;
+      let planeFactor = 0.56;
+      if (planeType === "e3std") planeFactor = 0.56;
+      if (planeType === "dr1std") planeFactor = 0.58;
+      if (planeType === "d7std") planeFactor = 0.59;
+      if (planeType === "d7rb") planeFactor = 0.59;
+      if (planeType === "d7vik") planeFactor = 0.59;
+      if (planeType === "dh1") planeFactor = 0.57;
+      if (planeType === "dh2") planeFactor = 0.57;
+      if (planeType === "dh9") planeFactor = 0.57;
+      if (planeType === "pupstd") planeFactor = 0.58;
       const planeR = Math.min(plane.width, plane.height) * planeFactor;
 
       for (const o of obstacles) {
         const dx = planeCx - o.x;
         const dy = planeCy - o.y;
         const distSq = dx * dx + dy * dy;
-        const rad = planeR + o.r + 3;
+        const rad = planeR + o.r + 1;
         if (distSq < rad * rad) {
           const gameEnded = registerHit(timestamp);
           if (gameEnded) return;
@@ -934,7 +1086,14 @@
         const enemy = enemies[i];
         const ex = enemy.x;
         const ey = enemy.y;
-        const er = Math.max(enemy.width, enemy.height) * (enemy.type === "zeppelin" ? 0.42 : 0.34);
+        const er = Math.max(enemy.width, enemy.height) * (enemy.type === "zeppelin" ? 0.38 : 0.29);
+
+        if (enemy.x + enemy.width * 0.5 < plane.x) {
+          awardScore(-enemy.missPenalty);
+          enemies.splice(i, 1);
+          continue;
+        }
+
         const dx = planeCx - ex;
         const dy = planeCy - ey;
         if (dx * dx + dy * dy < (planeR + er) * (planeR + er)) {
@@ -956,6 +1115,7 @@
             if (enemy.hp <= 0) {
               enemies.splice(i, 1);
               awardScore(enemy.points);
+              registerEnemyKill();
             }
             break;
           }
@@ -965,6 +1125,7 @@
 
     function drawBackground() {
       const level = LEVELS[currentLevelIndex];
+      const customLayers = level.parallax?.customLayers;
 
       ctx.clearRect(0, 0, W, H);
 
@@ -974,10 +1135,14 @@
       ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, W, H - GROUND_HEIGHT);
 
-      ctx.fillStyle = "rgba(255,255,255,0.7)";
-      drawCloudShape(80, 90, 22);
-      drawCloudShape(180, 60, 18);
-      drawCloudShape(340, 110, 26);
+      if (customLayers?.sky && customLayers.sky.loaded) {
+        drawImageCover(customLayers.sky, 0, 0, W, H);
+      } else {
+        ctx.fillStyle = "rgba(255,255,255,0.7)";
+        drawCloudShape(80, 90, 22);
+        drawCloudShape(180, 60, 18);
+        drawCloudShape(340, 110, 26);
+      }
 
       const groundGradient = ctx.createLinearGradient(0, H - GROUND_HEIGHT, 0, H);
       groundGradient.addColorStop(0, level.ground[0]);
@@ -986,6 +1151,66 @@
       ctx.fillRect(0, H - GROUND_HEIGHT, W, GROUND_HEIGHT);
 
       drawParallaxGround();
+    }
+
+    function drawCampaignParallaxAsset(asset, offset, widthFactor, bottomY, alpha = 1) {
+      if (!asset || !asset.loaded) return false;
+
+      const drawW = W * widthFactor;
+      const scale = drawW / asset.img.width;
+      const drawH = asset.img.height * scale;
+      const tileSpan = Math.max(1, drawW);
+      const scroll = ((-offset % tileSpan) + tileSpan) % tileSpan;
+      const baseX = (W - drawW) / 2;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      for (let x = baseX - scroll - drawW; x < W + drawW; x += drawW) {
+        ctx.drawImage(asset.img, x, bottomY - drawH, drawW, drawH);
+      }
+      ctx.restore();
+      return true;
+    }
+
+    function drawBlendedCampaignParallaxAssets(assets, offset, widthFactor, bottomY, alpha = 1) {
+      const readyAssets = (assets || []).filter(asset => asset && asset.loaded);
+      if (readyAssets.length === 0) return false;
+      if (readyAssets.length === 1) {
+        return drawCampaignParallaxAsset(readyAssets[0], offset, widthFactor, bottomY, alpha);
+      }
+
+      const drawW = W * widthFactor;
+      const scale = drawW / readyAssets[0].img.width;
+      const drawH = readyAssets[0].img.height * scale;
+      const tileSpan = Math.max(1, drawW);
+      const scroll = ((-offset % tileSpan) + tileSpan) % tileSpan;
+      const baseX = (W - drawW) / 2;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      for (let x = baseX - scroll - drawW, tileIndex = -1; x < W + drawW; x += drawW, tileIndex++) {
+        const seqIndex = ((tileIndex % readyAssets.length) + readyAssets.length) % readyAssets.length;
+        const currentAsset = readyAssets[seqIndex];
+        ctx.drawImage(currentAsset.img, x, bottomY - drawH, drawW, drawH);
+      }
+      ctx.restore();
+      return true;
+    }
+
+    function drawCustomCampaignLayers(customLayers, groundTop) {
+      if (!customLayers) return false;
+
+      const drewFar = drawBlendedCampaignParallaxAssets(
+        customLayers.farVariants || [customLayers.far],
+        parallax.far * 0.2,
+        1.9,
+        groundTop + 24,
+        0.9
+      );
+      const drewMid = drawCampaignParallaxAsset(customLayers.mid, parallax.mid * 0.32, 2.05, groundTop + 58, 0.95);
+      const drewFore = drawCampaignParallaxAsset(customLayers.fore, parallax.fore * 0.5, 2.2, H + 210, 1);
+
+      return drewFar || drewMid || drewFore;
     }
 
     // === New multi-level parallax ground ===
@@ -998,6 +1223,10 @@
       const theme = p.theme || "rural";
 
       const groundTop = H - GROUND_HEIGHT;
+
+      if (drawCustomCampaignLayers(p.customLayers, groundTop)) {
+        return;
+      }
 
       // little variation per level so Y offsets change
       const baseOffset = currentLevelIndex * 3;
@@ -1251,22 +1480,66 @@
       ctx.restore();
     }
 
-    function drawFlakCloud(cx, cy, baseR) {
-      const R = baseR * 1.3;
+    function drawFlakCloud(cx, cy, baseR, age = 0) {
+      const ageNorm = Math.min(1, age / 260);
+      const smokeR = baseR * (0.9 + ageNorm * 0.25);
+      const flash = Math.max(0, 1 - ageNorm * 2.4);
+      const shardAlpha = Math.max(0, 0.9 - ageNorm * 1.1);
 
       ctx.save();
-      ctx.globalAlpha = 0.7;
-      ctx.fillStyle = "rgb(40,40,40)";
+
+      if (flash > 0) {
+        const flashR = smokeR * (0.32 + flash * 0.18);
+        const flashGrad = ctx.createRadialGradient(
+          cx, cy, flashR * 0.08,
+          cx, cy, flashR
+        );
+        flashGrad.addColorStop(0, `rgba(255,252,236,${0.96 * flash})`);
+        flashGrad.addColorStop(0.38, `rgba(255,202,96,${0.82 * flash})`);
+        flashGrad.addColorStop(0.74, `rgba(255,122,36,${0.46 * flash})`);
+        flashGrad.addColorStop(1, "rgba(80,24,12,0)");
+        ctx.fillStyle = flashGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, flashR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = "rgba(48,46,45,0.92)";
+      ctx.strokeStyle = "rgba(24,22,20,0.62)";
+      ctx.lineWidth = Math.max(1.2, smokeR * 0.07);
 
       ctx.beginPath();
-      ctx.arc(cx, cy, R * 0.8, 0, Math.PI * 2);
-      ctx.arc(cx - R * 0.6, cy, R * 0.75, 0, Math.PI * 2);
-      ctx.arc(cx + R * 0.6, cy, R * 0.75, 0, Math.PI * 2);
-      ctx.arc(cx, cy - R * 0.6, R * 0.7, 0, Math.PI * 2);
-      ctx.arc(cx, cy + R * 0.6, R * 0.7, 0, Math.PI * 2);
-      ctx.arc(cx - R * 0.45, cy - R * 0.45, R * 0.65, 0, Math.PI * 2);
-      ctx.arc(cx + R * 0.45, cy + R * 0.45, R * 0.65, 0, Math.PI * 2);
+      ctx.arc(cx - smokeR * 0.34, cy + smokeR * 0.06, smokeR * 0.4, 0, Math.PI * 2);
+      ctx.arc(cx + smokeR * 0.32, cy, smokeR * 0.34, 0, Math.PI * 2);
+      ctx.arc(cx - smokeR * 0.02, cy - smokeR * 0.28, smokeR * 0.46, 0, Math.PI * 2);
+      ctx.arc(cx + smokeR * 0.06, cy + smokeR * 0.24, smokeR * 0.38, 0, Math.PI * 2);
       ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(118,112,104,0.2)";
+      ctx.beginPath();
+      ctx.arc(cx - smokeR * 0.08, cy - smokeR * 0.14, smokeR * 0.18, 0, Math.PI * 2);
+      ctx.arc(cx + smokeR * 0.1, cy - smokeR * 0.08, smokeR * 0.12, 0, Math.PI * 2);
+      ctx.fill();
+
+      if (shardAlpha > 0) {
+        const shardLen = smokeR * (0.46 + flash * 0.18);
+        ctx.strokeStyle = `rgba(255,224,176,${0.42 * shardAlpha})`;
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        for (let i = 0; i < 5; i++) {
+          const angle = -Math.PI / 2 + i * (Math.PI * 0.4);
+          const sx = cx + Math.cos(angle) * smokeR * 0.22;
+          const sy = cy + Math.sin(angle) * smokeR * 0.22;
+          const ex = cx + Math.cos(angle) * shardLen;
+          const ey = cy + Math.sin(angle) * shardLen;
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(ex, ey);
+        }
+        ctx.stroke();
+      }
+
       ctx.restore();
     }
 
@@ -1313,16 +1586,7 @@
       } else if (o.type === "flak") {
         const burstFactor = Math.min(1, (o.age || 0) / 140);
         const baseR = o.r * burstFactor;
-        drawFlakCloud(o.x, o.y, baseR);
-
-        const cloudR = baseR * 1.3;
-        const outerStar = cloudR / 3;
-        const midStar   = outerStar * 0.7;
-        const innerStar = outerStar * 0.5;
-
-        drawStar6(o.x, o.y, outerStar, midStar, "#f44336", 0.6);
-        drawStar6(o.x, o.y, midStar,   innerStar, "#ff9800", 0.8);
-        drawStar6(o.x, o.y, innerStar, innerStar * 0.6, "#fff176", 0.95);
+        drawFlakCloud(o.x, o.y, baseR, o.age || 0);
       }
     }
 
@@ -1362,8 +1626,19 @@
 
       ctx.save();
       ctx.translate(enemy.x, enemy.y);
+      ctx.globalAlpha = 0.18;
+      ctx.fillStyle = "#1b2432";
+      ctx.beginPath();
+      ctx.ellipse(0, 0, imgW * 0.34, imgH * 0.24, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.3;
+      ctx.strokeStyle = "rgba(255, 244, 218, 0.45)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(0, 0, imgW * 0.3, imgH * 0.2, 0, 0, Math.PI * 2);
+      ctx.stroke();
       ctx.scale(-1, 1);
-      ctx.filter = "brightness(0.78) saturate(0.92)";
+      ctx.filter = "brightness(0.74) saturate(0.86) contrast(1.08)";
       ctx.globalAlpha = 0.96;
       ctx.drawImage(sprite.img, -imgW / 2, -imgH / 2, imgW, imgH);
       ctx.filter = "none";
@@ -1372,30 +1647,83 @@
 
     function drawPlayerShot(shot) {
       ctx.save();
-      ctx.fillStyle = "#fff3c4";
+      const glow = ctx.createRadialGradient(shot.x, shot.y, 0, shot.x, shot.y, shot.r * 2.3);
+      glow.addColorStop(0, "rgba(255, 250, 220, 0.98)");
+      glow.addColorStop(0.38, "rgba(255, 196, 84, 0.7)");
+      glow.addColorStop(1, "rgba(255, 140, 0, 0)");
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(shot.x, shot.y, shot.r * 2.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = "rgba(255, 170, 40, 0.95)";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(shot.x - 9, shot.y);
+      ctx.lineTo(shot.x + 1, shot.y);
+      ctx.stroke();
+
+      ctx.strokeStyle = "rgba(255, 244, 194, 0.95)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(shot.x - 6, shot.y);
+      ctx.lineTo(shot.x + 2, shot.y);
+      ctx.stroke();
+
+      ctx.fillStyle = "#fffaf0";
       ctx.beginPath();
       ctx.arc(shot.x, shot.y, shot.r, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = "rgba(255, 214, 102, 0.9)";
-      ctx.lineWidth = 2;
+      ctx.fillStyle = "#ffb300";
       ctx.beginPath();
-      ctx.moveTo(shot.x - 10, shot.y);
-      ctx.lineTo(shot.x + 2, shot.y);
-      ctx.stroke();
+      ctx.arc(shot.x - 1, shot.y, shot.r * 0.55, 0, Math.PI * 2);
+      ctx.fill();
       ctx.restore();
     }
 
     function drawSmokePuff(cx, cy, baseR, alpha, shade) {
       ctx.save();
       ctx.globalAlpha = alpha;
+      const phase = performance.now() * 0.004;
+      const driftX = Math.sin(phase + cx * 0.01) * baseR * 0.08;
+      const driftY = Math.cos(phase * 0.8 + cy * 0.01) * baseR * 0.05;
+      const puffX = cx + driftX;
+      const puffY = cy + driftY;
+      const outlineAlpha = Math.min(1, alpha * 1.15);
+
       ctx.fillStyle = shade;
+      ctx.strokeStyle = `rgba(40, 34, 30, ${outlineAlpha})`;
+      ctx.lineWidth = Math.max(1.25, baseR * 0.12);
+      ctx.lineJoin = "round";
 
       ctx.beginPath();
-      ctx.arc(cx - baseR * 0.4, cy, baseR * 0.9, 0, Math.PI * 2);
-      ctx.arc(cx + baseR * 0.2, cy - baseR * 0.3, baseR * 0.75, 0, Math.PI * 2);
-      ctx.arc(cx + baseR * 0.5, cy + baseR * 0.1, baseR * 0.6, 0, Math.PI * 2);
+      ctx.arc(puffX - baseR * 0.46, puffY + baseR * 0.08, baseR * 0.56, Math.PI * 0.35, Math.PI * 1.78);
+      ctx.arc(puffX - baseR * 0.04, puffY - baseR * 0.28, baseR * 0.72, Math.PI * 0.9, Math.PI * 2.12);
+      ctx.arc(puffX + baseR * 0.42, puffY - baseR * 0.02, baseR * 0.5, Math.PI * 1.18, Math.PI * 0.28);
+      ctx.arc(puffX + baseR * 0.1, puffY + baseR * 0.34, baseR * 0.64, Math.PI * 1.88, Math.PI * 0.88, true);
+      ctx.closePath();
       ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "rgba(236, 231, 223, 0.18)";
+      ctx.beginPath();
+      ctx.ellipse(
+        puffX - baseR * 0.12,
+        puffY - baseR * 0.22,
+        baseR * 0.46,
+        baseR * 0.24,
+        -0.25,
+        0,
+        Math.PI * 2
+      );
+      ctx.fill();
+
+      ctx.strokeStyle = `rgba(255, 250, 244, ${Math.min(0.26, alpha * 0.34)})`;
+      ctx.lineWidth = Math.max(0.8, baseR * 0.05);
+      ctx.beginPath();
+      ctx.arc(puffX - baseR * 0.18, puffY - baseR * 0.18, baseR * 0.26, Math.PI * 1.1, Math.PI * 1.85);
+      ctx.stroke();
 
       ctx.restore();
     }
@@ -1617,36 +1945,36 @@
 
       const iconSize = 72;
       const iconY = H * 0.61;
-      const germanX = W * 0.27;
-      const britishX = W * 0.73;
+      const britishX = W * 0.27;
+      const germanX = W * 0.73;
       const badgeHitSize = 110;
 
-      germanEntryRect = {
-        x: germanX - badgeHitSize / 2,
-        y: iconY - badgeHitSize / 2 - 10,
-        w: badgeHitSize,
-        h: badgeHitSize
-      };
       britishEntryRect = {
         x: britishX - badgeHitSize / 2,
         y: iconY - badgeHitSize / 2 - 10,
         w: badgeHitSize,
         h: badgeHitSize
       };
+      germanEntryRect = {
+        x: germanX - badgeHitSize / 2,
+        y: iconY - badgeHitSize / 2 - 10,
+        w: badgeHitSize,
+        h: badgeHitSize
+      };
 
-      drawSplashBadgeHalo(germanX, iconY - 10, 48);
       drawSplashBadgeHalo(britishX, iconY - 10, 48);
-      drawSplashBadge(germanCross, germanX, iconY - 12, iconSize);
+      drawSplashBadgeHalo(germanX, iconY - 10, 48);
       drawSplashBadge(britishRoundel, britishX, iconY - 12, iconSize);
+      drawSplashBadge(germanCross, germanX, iconY - 12, iconSize);
 
       ctx.fillStyle = "#fff7dc";
       ctx.font = "14px " + UI_FONT;
       ctx.strokeStyle = "rgba(36, 24, 12, 0.28)";
       ctx.lineWidth = 1.4;
-      ctx.strokeText("German Air Service", germanX, iconY + 46);
       ctx.strokeText("Royal Flying Corps", britishX, iconY + 46);
-      ctx.fillText("German Air Service", germanX, iconY + 46);
+      ctx.strokeText("German Air Service", germanX, iconY + 46);
       ctx.fillText("Royal Flying Corps", britishX, iconY + 46);
+      ctx.fillText("German Air Service", germanX, iconY + 46);
 
       const stripY = H * 0.81;
       const stripH = 86;
@@ -1716,11 +2044,10 @@
       const rowX = 40;
       const rowW = W - 80;
 
-      const entries = [
-        { tier: "Tier 1", label: "Fokker D.VII Standard", planeType: "d7std", unlocked: true },
-        { tier: "Tier 2", label: "Fokker D.VII Red Baron", planeType: "d7rb", unlocked: true },
-        { tier: "Tier 3", label: "Fokker D.VII Bulldog", planeType: "d7vik", unlocked: true }
-      ];
+      const entries = GERMAN_STANDARD_PLANES.map(entry => ({
+        ...entry,
+        unlocked: true
+      }));
 
       entries.forEach((entry, i) => {
         const y = startY + i * rowH;
@@ -1737,7 +2064,11 @@
         const thumbY = y + (rowH - 14) / 2;
 
         let imgToUse = null;
-        if (entry.planeType === "d7std") {
+        if (entry.planeType === "e3std") {
+          if (e3StdLoaded)         imgToUse = e3StdImg;
+        } else if (entry.planeType === "dr1std") {
+          if (dr1StdLoaded)        imgToUse = dr1StdImg;
+        } else if (entry.planeType === "d7std") {
           if (d7StdLoaded)         imgToUse = d7StdImg;
         } else if (entry.planeType === "d7rb") {
           if (d7RbLoaded)          imgToUse = d7RbImg;
@@ -1782,6 +2113,7 @@
       ctx.textAlign = "center";
       ctx.fillStyle = "#5d4037";
       ctx.font = "13px " + UI_FONT;
+      ctx.fillText("Ace liveries unlock through events or supporter purchases", W / 2, H - 52);
       ctx.fillText("Tap anywhere outside rows to go back", W / 2, H - 30);
     }
 
@@ -1814,7 +2146,8 @@
 
       const entries = [
         { tier: "Tier 1", label: "Airco DH.1", planeType: "dh1", loaded: dh1Loaded, img: dh1Img },
-        { tier: "Tier 2", label: "Airco DH.2", planeType: "dh2", loaded: dh2Loaded, img: dh2Img }
+        { tier: "Tier 2", label: "Airco DH.2", planeType: "dh2", loaded: dh2Loaded, img: dh2Img },
+        { tier: "Tier 3", label: "Sopwith Pup", planeType: "pupstd", loaded: pupStdLoaded, img: pupStdImg }
       ];
 
       entries.forEach((entry, i) => {
@@ -1944,7 +2277,7 @@
           return;
         } else {
           ensurePilotName();
-          planeType = "d7std";
+          planeType = "e3std";
           screen = "game";
           updateOverlayVisibility();
           hintEl.textContent = "Tap or press SPACE to fly - guns fire automatically";
@@ -1958,7 +2291,7 @@
       if (screen === "planeSelectGerman") {
         if (!evt) {
           ensurePilotName();
-          planeType = "d7std";
+          planeType = "e3std";
           screen = "game";
           updateOverlayVisibility();
           hintEl.textContent = "Tap or press SPACE to fly - guns fire automatically";
