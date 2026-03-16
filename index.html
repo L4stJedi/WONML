@@ -365,6 +365,12 @@
     e3StdImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerEIII_std.png");
     e3StdImg.src = "assets/planes/germany/FokkerEIII_std.png";
 
+    const albatrosStdImg = new Image();
+    let albatrosStdLoaded = false;
+    albatrosStdImg.onload = () => { albatrosStdLoaded = true; };
+    albatrosStdImg.onerror = () => console.error("Could not load assets/planes/germany/AlbatrosDV_std.png");
+    albatrosStdImg.src = "assets/planes/germany/AlbatrosDV_std.png";
+
     const dr1StdImg = new Image();
     let dr1StdLoaded = false;
     dr1StdImg.onload = () => { dr1StdLoaded = true; };
@@ -412,6 +418,10 @@
     const hangarDr1Jj = loadUiAsset("assets/planes/germany/FokkerDR1_JJ.png");
     const hangarD7Rb = loadUiAsset("assets/planes/germany/FokkerD7_RB.png");
     const hangarE3Green = loadUiAsset("assets/planes/germany/FokkerEIII_green.png");
+    const hangarAlbatrosBlack = loadUiAsset("assets/planes/germany/AlbatrosDV_blck.png");
+    const hangarAlbatrosCaro = loadUiAsset("assets/planes/germany/AlbatrosDV_caro.png");
+    const hangarAlbatrosRedNose = loadUiAsset("assets/planes/germany/AlbatrosDV_rd_ns.png");
+    const hangarAlbatrosSkull = loadUiAsset("assets/planes/germany/AlbatrosDV_skull.png");
 
     const hangarPupDun = loadUiAsset("assets/planes/britain/SopwithPup_Dun.png");
     const hangarPupSo = loadUiAsset("assets/planes/britain/SopwithPup_SO.png");
@@ -500,21 +510,21 @@
     const italianRoundel = loadSplashAsset("assets/backgrounds/menu/ItalianRoundel.png");
     const russianRoundel = loadSplashAsset("assets/backgrounds/menu/RussianRoundel.png");
     const belgiumSkyLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/SkyLayer.png");
-    const belgiumFarBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium1.png");
-    const belgiumFarBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium2.png");
-    const belgiumFarLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/FarLayer.png");
-    const belgiumMidLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/MidLayer.png");
-    const belgiumForeLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/ForegroundLayer.png");
+    const belgiumFarBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium1_seamless.png");
+    const belgiumFarBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium2_seamless.png");
+    const belgiumFarBlend3 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium3_seamless.png");
     const BELGIUM_CAMPAIGN_LAYERS = {
       sky: belgiumSkyLayer,
       far: belgiumFarBlend1,
-      mid: belgiumMidLayer
+      farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
+      onlyFar: true
     };
 
     const GERMAN_STANDARD_PLANES = [
       { tier: "Tier 1", label: "Fokker E.III", planeType: "e3std" },
-      { tier: "Tier 2", label: "Fokker Dr.I", planeType: "dr1std" },
-      { tier: "Tier 3", label: "Fokker D.VII", planeType: "d7std" }
+      { tier: "Tier 2", label: "Albatros D.V", planeType: "albatrosdvstd" },
+      { tier: "Tier 3", label: "Fokker Dr.I", planeType: "dr1std" },
+      { tier: "Tier 4", label: "Fokker D.VII", planeType: "d7std" }
     ];
 
     const HANGAR_DATA = {
@@ -525,6 +535,13 @@
           role: "Scout monoplane",
           years: "1915-1916",
           note: "One of Germany's first effective synchronized-gun fighters. Light, fast for its day, and a true early-war interrupter scout."
+        },
+        {
+          planeType: "albatrosdvstd",
+          label: "Albatros D.V",
+          role: "Fighter biplane",
+          years: "1917-1918",
+          note: "A sleek late-1917 German scout with elegant lines and strong speed, though less forgiving than the best late-war fighters."
         },
         {
           planeType: "dr1std",
@@ -623,6 +640,42 @@
           basePlaneType: "e3std",
           asset: hangarE3Green,
           note: "An alternate early-war monoplane finish suited to rough front-line reconnaissance and patrol duty."
+        },
+        {
+          id: "albatrosblack",
+          label: "Black Wing",
+          role: "Special livery",
+          years: "1917-1918",
+          basePlaneType: "albatrosdvstd",
+          asset: hangarAlbatrosBlack,
+          note: "A darker custom Albatros finish with a more ominous front-line silhouette."
+        },
+        {
+          id: "albatroscaro",
+          label: "Diamond Banner",
+          role: "Special livery",
+          years: "1917-1918",
+          basePlaneType: "albatrosdvstd",
+          asset: hangarAlbatrosCaro,
+          note: "A bold Albatros skin with a heraldic mid-fuselage pattern and rich unit-color flavor."
+        },
+        {
+          id: "albatrosrednose",
+          label: "Red Nose",
+          role: "Special livery",
+          years: "1917-1918",
+          basePlaneType: "albatrosdvstd",
+          asset: hangarAlbatrosRedNose,
+          note: "A bright personalized Albatros livery built around a red nose and more flamboyant late-war styling."
+        },
+        {
+          id: "albatrosskull",
+          label: "Skull Flight",
+          role: "Special livery",
+          years: "1917-1918",
+          basePlaneType: "albatrosdvstd",
+          asset: hangarAlbatrosSkull,
+          note: "A premium Albatros look with stark insignia and a theatrical squadron identity."
         }
       ],
       britain: [
@@ -663,6 +716,7 @@
     // Approximate fuselage lengths in meters keep side-view sprite widths believable.
     const PLANE_SIZE_DATA = {
       e3std: { lengthMeters: 7.2 },
+      albatrosdvstd: { lengthMeters: 7.33 },
       dr1std: { lengthMeters: 5.77 },
       d7std: { lengthMeters: 6.95 },
       d7rb: { lengthMeters: 6.95 },
@@ -691,6 +745,7 @@
     function getPlaneSprite(type) {
       const sizeMetrics = getPlaneSizeMetrics(type);
       if (type === "e3std") return { img: e3StdImg, loaded: e3StdLoaded, scale: 0.056, rotation: 0, ...sizeMetrics };
+      if (type === "albatrosdvstd") return { img: albatrosStdImg, loaded: albatrosStdLoaded, scale: 0.056, rotation: 0, ...sizeMetrics };
       if (type === "dr1std") return { img: dr1StdImg, loaded: dr1StdLoaded, scale: 0.059, rotation: Math.PI / 36, ...sizeMetrics };
       if (type === "d7rb") return { img: d7RbImg, loaded: d7RbLoaded, scale: 0.058, rotation: 0, ...sizeMetrics };
       if (type === "d7vik") return { img: d7VikImg, loaded: d7VikLoaded, scale: 0.058, rotation: 0, ...sizeMetrics };
@@ -716,6 +771,7 @@
     function getGermanFrontlinePlaneType() {
       if (currentLevelIndex >= 3) return "d7std";
       if (currentLevelIndex >= 2) return "dr1std";
+      if (currentLevelIndex >= 1) return "albatrosdvstd";
       return "e3std";
     }
 
@@ -1764,8 +1820,12 @@
         groundTop + 24,
         0.9
       );
-      const drewMid = drawCampaignParallaxAsset(customLayers.mid, parallax.mid * 0.32, 2.05, groundTop + 58, 0.95);
-      const drewFore = drawCampaignParallaxAsset(customLayers.fore, parallax.fore * 0.5, 2.2, H + 210, 1);
+      const drewMid = customLayers.onlyFar
+        ? false
+        : drawCampaignParallaxAsset(customLayers.mid, parallax.mid * 0.32, 2.05, groundTop + 58, 0.95);
+      const drewFore = customLayers.onlyFar
+        ? false
+        : drawCampaignParallaxAsset(customLayers.fore, parallax.fore * 0.5, 2.2, H + 210, 1);
 
       return drewFar || drewMid || drewFore;
     }
@@ -3027,6 +3087,8 @@
         let imgToUse = null;
         if (entry.planeType === "e3std") {
           if (e3StdLoaded)         imgToUse = e3StdImg;
+        } else if (entry.planeType === "albatrosdvstd") {
+          if (albatrosStdLoaded)   imgToUse = albatrosStdImg;
         } else if (entry.planeType === "dr1std") {
           if (dr1StdLoaded)        imgToUse = dr1StdImg;
         } else if (entry.planeType === "d7std") {
