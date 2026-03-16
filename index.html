@@ -308,9 +308,11 @@
     let germanPlaneChoices = [];
     let britishPlaneChoices = [];
     let hangarFactionTabs = [];
+    let hangarSectionTabs = [];
     let hangarPlaneChoices = [];
     let hangarBackRect = null;
     let currentHangarFaction = "germany";
+    let currentHangarSection = "service";
     let selectedHangarPlaneType = "e3std";
 
     function fillRoundedRect(x, y, w, h, r) {
@@ -333,6 +335,17 @@
       asset.img.onload = () => {
         asset.loaded = true;
         if (screen === "splash") drawSplash();
+      };
+      asset.img.onerror = () => console.error(`Could not load ${src}`);
+      asset.img.src = src;
+      return asset;
+    }
+
+    function loadUiAsset(src) {
+      const asset = { img: new Image(), loaded: false, src };
+      asset.img.onload = () => {
+        asset.loaded = true;
+        if (screen === "hangar") drawHangar();
       };
       asset.img.onerror = () => console.error(`Could not load ${src}`);
       asset.img.src = src;
@@ -394,6 +407,16 @@
     pupStdImg.onerror = () => console.error("Could not load assets/planes/britain/SopwithPup_std.png");
     pupStdImg.src = "assets/planes/britain/SopwithPup_std.png";
 
+    const hangarDr1Rb = loadUiAsset("assets/planes/germany/FokkerDR1_RB.png");
+    const hangarDr1WeVo = loadUiAsset("assets/planes/germany/FokkerDR1_WeVo.png");
+    const hangarDr1Jj = loadUiAsset("assets/planes/germany/FokkerDR1_JJ.png");
+    const hangarD7Rb = loadUiAsset("assets/planes/germany/FokkerD7_RB.png");
+    const hangarE3Green = loadUiAsset("assets/planes/germany/FokkerEIII_green.png");
+
+    const hangarPupDun = loadUiAsset("assets/planes/britain/SopwithPup_Dun.png");
+    const hangarPupSo = loadUiAsset("assets/planes/britain/SopwithPup_SO.png");
+    const hangarPupBy = loadUiAsset("assets/planes/britain/SopwithPup_by.png");
+
     const balloonImg = new Image();
     let balloonLoaded = false;
     balloonImg.onload = () => { balloonLoaded = true; };
@@ -405,6 +428,63 @@
     zeppelinImg.onload = () => { zeppelinLoaded = true; };
     zeppelinImg.onerror = () => console.error("Could not load assets/obstacles/Zeppelin.png");
     zeppelinImg.src = "assets/obstacles/Zeppelin.png";
+
+    const flakBurstVideoSrc = "assets/Animations/WW_Flak_Burst_Animation_Request.mp4";
+    const flakVideoProbe = document.createElement("video");
+    const flakVideoSupported = typeof flakVideoProbe.canPlayType === "function" &&
+      flakVideoProbe.canPlayType("video/mp4") !== "";
+    const flakVideoTemplate = flakVideoSupported ? document.createElement("video") : null;
+    if (flakVideoTemplate) {
+      flakVideoTemplate.muted = true;
+      flakVideoTemplate.defaultMuted = true;
+      flakVideoTemplate.playsInline = true;
+      flakVideoTemplate.setAttribute("playsinline", "");
+      flakVideoTemplate.setAttribute("webkit-playsinline", "");
+      flakVideoTemplate.preload = "auto";
+      flakVideoTemplate.src = flakBurstVideoSrc;
+      flakVideoTemplate.load();
+    }
+
+    const airplaneSmokeVideoSrc = "assets/Animations/AirplaneSmoke.mp4";
+    const airplaneSmokeVideo = flakVideoSupported ? document.createElement("video") : null;
+    let airplaneSmokeReady = false;
+    if (airplaneSmokeVideo) {
+      airplaneSmokeVideo.muted = true;
+      airplaneSmokeVideo.defaultMuted = true;
+      airplaneSmokeVideo.playsInline = true;
+      airplaneSmokeVideo.loop = true;
+      airplaneSmokeVideo.setAttribute("playsinline", "");
+      airplaneSmokeVideo.setAttribute("webkit-playsinline", "");
+      airplaneSmokeVideo.preload = "auto";
+      airplaneSmokeVideo.currentTime = 0;
+      airplaneSmokeVideo.addEventListener("loadeddata", () => {
+        airplaneSmokeReady = true;
+      });
+      airplaneSmokeVideo.addEventListener("loadedmetadata", () => {
+        airplaneSmokeReady = true;
+      });
+      airplaneSmokeVideo.addEventListener("canplay", () => {
+        airplaneSmokeReady = true;
+      });
+      airplaneSmokeVideo.addEventListener("canplaythrough", () => {
+        airplaneSmokeReady = true;
+      });
+      airplaneSmokeVideo.addEventListener("error", () => {
+        airplaneSmokeReady = false;
+      });
+      airplaneSmokeVideo.src = airplaneSmokeVideoSrc;
+      airplaneSmokeVideo.load();
+    }
+
+    function ensureAirplaneSmokePlayback() {
+      if (!airplaneSmokeVideo) return;
+      if (airplaneSmokeVideo.paused || airplaneSmokeVideo.ended) {
+        const playAttempt = airplaneSmokeVideo.play();
+        if (playAttempt && playAttempt.catch) {
+          playAttempt.catch(() => {});
+        }
+      }
+    }
 
     const splashLogo = new Image();
     let splashLogoLoaded = false;
@@ -482,8 +562,102 @@
           role: "Scout biplane",
           years: "1916-1917",
           note: "Beloved by pilots for its pleasant handling and maneuverability. The Pup was smaller than later fighters, but highly effective in skilled hands."
+        },
+        {
+          planeType: "dh9",
+          label: "Airco DH.9",
+          role: "Light bomber",
+          years: "1917-1918",
+          note: "A late-war British day bomber with long range and a more purposeful strike profile. Bigger and steadier than the earlier scouts in the tree."
         }
-      ]
+      ],
+      france: [],
+      italy: [],
+      russia: [],
+      america: []
+    };
+
+    const HANGAR_SPECIALS = {
+      germany: [
+        {
+          id: "dr1rb",
+          label: "Red Baron",
+          role: "Ace livery",
+          years: "1917-1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1Rb,
+          note: "The most famous German ace livery. Rich red coloring made the triplane instantly recognizable in the air."
+        },
+        {
+          id: "dr1wevo",
+          label: "Werner Voss",
+          role: "Ace livery",
+          years: "1917",
+          basePlaneType: "dr1std",
+          asset: hangarDr1WeVo,
+          note: "A special Dr.I livery inspired by one of Germany's great fighter aces and the triplane's early legend."
+        },
+        {
+          id: "dr1jj",
+          label: "Josef Jacobs",
+          role: "Ace livery",
+          years: "1917-1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1Jj,
+          note: "A late-war ace-themed triplane skin built around bold personal colors and squadron identity."
+        },
+        {
+          id: "d7rb",
+          label: "D.VII Ace Red",
+          role: "Ace livery",
+          years: "1918",
+          basePlaneType: "d7std",
+          asset: hangarD7Rb,
+          note: "A premium D.VII finish for players who want a more heroic late-war fighter profile."
+        },
+        {
+          id: "e3green",
+          label: "Field Green",
+          role: "Campaign livery",
+          years: "1915-1916",
+          basePlaneType: "e3std",
+          asset: hangarE3Green,
+          note: "An alternate early-war monoplane finish suited to rough front-line reconnaissance and patrol duty."
+        }
+      ],
+      britain: [
+        {
+          id: "pupdun",
+          label: "Dun Tones",
+          role: "Special livery",
+          years: "1916-1917",
+          basePlaneType: "pupstd",
+          asset: hangarPupDun,
+          note: "A stylized Sopwith Pup livery with subdued tones that feel more weathered and field-ready."
+        },
+        {
+          id: "pupso",
+          label: "Silver Owl",
+          role: "Special livery",
+          years: "1916-1917",
+          basePlaneType: "pupstd",
+          asset: hangarPupSo,
+          note: "A cleaner, brighter custom Pup finish designed more as a reward aircraft than a standard patrol machine."
+        },
+        {
+          id: "pupby",
+          label: "Golden Flight",
+          role: "Special livery",
+          years: "1916-1917",
+          basePlaneType: "pupstd",
+          asset: hangarPupBy,
+          note: "A bold premium Pup look for event rewards or supporter unlocks."
+        }
+      ],
+      france: [],
+      italy: [],
+      russia: [],
+      america: []
     };
 
     // Approximate fuselage lengths in meters keep side-view sprite widths believable.
@@ -999,6 +1173,10 @@
 
     function resetGame() {
       syncFactionWithPlane();
+      ensureAirplaneSmokePlayback();
+      if (obstacles && obstacles.length) {
+        obstacles.forEach(disposeObstacleMedia);
+      }
       plane = {
         x: PLANE_X,
         y: H / 2,
@@ -1091,12 +1269,68 @@
       return;
     }
 
+    function getObstacleSpawnInterval(level) {
+      let spawnInterval = level.spawnInterval;
+
+      if (currentLevelIndex === 1 && level.obstacle === "flak") {
+        const flakStageScore = Math.max(0, score - 45);
+        const ramp = Math.min(1, flakStageScore / 20);
+        const intervalMultiplier = 2 - ramp;
+        spawnInterval *= intervalMultiplier;
+      }
+
+      return spawnInterval;
+    }
+
+    function createFlakBurstVideo(obstacle) {
+      if (!flakVideoSupported) return;
+
+      const video = document.createElement("video");
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+      video.setAttribute("playsinline", "");
+      video.setAttribute("webkit-playsinline", "");
+      video.preload = "auto";
+      video.src = flakBurstVideoSrc;
+
+      obstacle.video = video;
+      obstacle.videoReady = false;
+
+      const markReady = () => {
+        obstacle.videoReady = true;
+      };
+      const fail = () => {
+        disposeObstacleMedia(obstacle);
+      };
+      const tryPlay = () => {
+        const playAttempt = video.play();
+        if (playAttempt && playAttempt.catch) {
+          playAttempt.catch(() => {});
+        }
+      };
+
+      video.addEventListener("loadeddata", markReady, { once: true });
+      video.addEventListener("canplay", tryPlay, { once: true });
+      video.addEventListener("error", fail, { once: true });
+      video.load();
+    }
+
+    function disposeObstacleMedia(obstacle) {
+      if (!obstacle || !obstacle.video) return;
+      obstacle.video.pause();
+      obstacle.video.removeAttribute("src");
+      obstacle.video.load();
+      obstacle.video = null;
+      obstacle.videoReady = false;
+    }
+
     function spawnObstacle(timestamp) {
       const level = LEVELS[currentLevelIndex];
       if (!level.obstacle || level.obstacle === "none") return;
       if (!lastSpawnTime) lastSpawnTime = timestamp;
       if (currentLevelIndex === 0 && timestamp - roundStartTime < 2200) return;
-      if (timestamp - lastSpawnTime < level.spawnInterval) return;
+      if (timestamp - lastSpawnTime < getObstacleSpawnInterval(level)) return;
 
       lastSpawnTime = timestamp;
 
@@ -1110,7 +1344,7 @@
 
       const radius = obstacleType === "zeppelin" ? 40 : 26;
 
-      obstacles.push({
+      const obstacle = {
         x: W + radius + 10,
         y: baseY,
         baseY,
@@ -1118,8 +1352,16 @@
         type: obstacleType,
         scored: false,
         age: 0,
-        phase: Math.random() * Math.PI * 2
-      });
+        phase: Math.random() * Math.PI * 2,
+        video: null,
+        videoReady: false
+      };
+
+      if (obstacleType === "flak") {
+        createFlakBurstVideo(obstacle);
+      }
+
+      obstacles.push(obstacle);
     }
 
     function chooseEnemyType() {
@@ -1329,7 +1571,15 @@
         }
       }
 
-      obstacles = obstacles.filter(o => o.x + o.r > -20);
+      const activeObstacles = [];
+      for (const o of obstacles) {
+        if (o.x + o.r > -20) {
+          activeObstacles.push(o);
+        } else {
+          disposeObstacleMedia(o);
+        }
+      }
+      obstacles = activeObstacles;
 
       const enemyApproachFactor = currentLevelIndex === 0 ? 0.9 : 1.0;
       for (const enemy of enemies) {
@@ -1787,6 +2037,14 @@
       ctx.restore();
     }
 
+    function traceFlakCloudPath(cx, cy, smokeR) {
+      ctx.beginPath();
+      ctx.arc(cx - smokeR * 0.34, cy + smokeR * 0.06, smokeR * 0.4, 0, Math.PI * 2);
+      ctx.arc(cx + smokeR * 0.32, cy, smokeR * 0.34, 0, Math.PI * 2);
+      ctx.arc(cx - smokeR * 0.02, cy - smokeR * 0.28, smokeR * 0.46, 0, Math.PI * 2);
+      ctx.arc(cx + smokeR * 0.06, cy + smokeR * 0.24, smokeR * 0.38, 0, Math.PI * 2);
+    }
+
     function drawFlakCloud(cx, cy, baseR, age = 0) {
       const ageNorm = Math.min(1, age / 260);
       const smokeR = baseR * (0.9 + ageNorm * 0.25);
@@ -1816,11 +2074,7 @@
       ctx.strokeStyle = "rgba(24,22,20,0.62)";
       ctx.lineWidth = Math.max(1.2, smokeR * 0.07);
 
-      ctx.beginPath();
-      ctx.arc(cx - smokeR * 0.34, cy + smokeR * 0.06, smokeR * 0.4, 0, Math.PI * 2);
-      ctx.arc(cx + smokeR * 0.32, cy, smokeR * 0.34, 0, Math.PI * 2);
-      ctx.arc(cx - smokeR * 0.02, cy - smokeR * 0.28, smokeR * 0.46, 0, Math.PI * 2);
-      ctx.arc(cx + smokeR * 0.06, cy + smokeR * 0.24, smokeR * 0.38, 0, Math.PI * 2);
+      traceFlakCloudPath(cx, cy, smokeR);
       ctx.fill();
       ctx.stroke();
 
@@ -1891,9 +2145,40 @@
           ctx.fill();
         }
       } else if (o.type === "flak") {
-        const burstFactor = Math.min(1, (o.age || 0) / 140);
+        const age = o.age || 0;
+        const burstFactor = Math.min(1, age / 140);
         const baseR = o.r * burstFactor;
-        drawFlakCloud(o.x, o.y, baseR, o.age || 0);
+        const videoAgeLimit = 760;
+        const useVideo = o.video && o.videoReady && o.video.readyState >= 2 && age < videoAgeLimit;
+
+        if (useVideo) {
+          const aspect = Math.max(0.1, o.video.videoWidth / Math.max(1, o.video.videoHeight));
+          const desiredH = Math.max(baseR * 3.2, 68);
+          const desiredW = desiredH * aspect;
+          const settleAlpha = age < 120 ? Math.min(1, age / 80) : Math.max(0.68, 1 - ((age - 120) / 900));
+          const smokeR = Math.max(baseR * 1.12, 24);
+          ctx.save();
+          ctx.globalAlpha = settleAlpha;
+          traceFlakCloudPath(o.x, o.y, smokeR);
+          ctx.clip();
+          ctx.drawImage(
+            o.video,
+            o.x - desiredW / 2,
+            o.y - desiredH / 2,
+            desiredW,
+            desiredH
+          );
+          ctx.restore();
+
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.34, settleAlpha * 0.34);
+          ctx.fillStyle = "rgba(42,40,38,0.9)";
+          traceFlakCloudPath(o.x, o.y, smokeR);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          drawFlakCloud(o.x, o.y, baseR, age);
+        }
       }
     }
 
@@ -2036,6 +2321,51 @@
       ctx.restore();
     }
 
+    function drawEngineSmokeTrail(cx, cy, width, alpha) {
+      if (!airplaneSmokeVideo || airplaneSmokeVideo.readyState < 1) {
+        return false;
+      }
+
+      const videoW = airplaneSmokeVideo.videoWidth || 1;
+      const videoH = airplaneSmokeVideo.videoHeight || 1;
+      if (!airplaneSmokeReady && (videoW <= 1 || videoH <= 1)) {
+        return false;
+      }
+      const aspect = videoW / videoH;
+      const drawW = width;
+      const drawH = drawW / Math.max(0.2, aspect);
+      const smokeR = drawH * 0.46;
+
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(cx, cy);
+      ctx.scale(-1, 1);
+      ctx.beginPath();
+      ctx.arc(-drawW * 0.02, drawH * 0.02, smokeR * 0.78, 0, Math.PI * 2);
+      ctx.arc(drawW * 0.22, -drawH * 0.08, smokeR * 0.64, 0, Math.PI * 2);
+      ctx.arc(drawW * 0.46, drawH * 0.02, smokeR * 0.5, 0, Math.PI * 2);
+      ctx.arc(drawW * 0.66, drawH * 0.03, smokeR * 0.34, 0, Math.PI * 2);
+      ctx.arc(drawW * 0.82, drawH * 0.04, smokeR * 0.2, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(
+        airplaneSmokeVideo,
+        -drawW * 0.3,
+        -drawH * 0.5,
+        drawW,
+        drawH
+      );
+      ctx.fillStyle = "rgba(54, 52, 50, 0.12)";
+      ctx.beginPath();
+      ctx.arc(-drawW * 0.02, drawH * 0.02, smokeR * 0.78, 0, Math.PI * 2);
+      ctx.arc(drawW * 0.22, -drawH * 0.08, smokeR * 0.64, 0, Math.PI * 2);
+      ctx.arc(drawW * 0.46, drawH * 0.02, smokeR * 0.5, 0, Math.PI * 2);
+      ctx.arc(drawW * 0.66, drawH * 0.03, smokeR * 0.34, 0, Math.PI * 2);
+      ctx.arc(drawW * 0.82, drawH * 0.04, smokeR * 0.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return true;
+    }
+
     function drawPlane() {
       const { x, y, width, height } = plane;
       const cx = x + width * 0.5;
@@ -2073,39 +2403,67 @@
 
       if (damageLevel >= 1 && damageLevel < 3) {
         const R = imgWidth * 0.09;
-
-        drawSmokePuff(
-          noseX - 4,
-          noseY - 6,
-          R,
-          0.8,
-          "rgb(90,90,90)"
+        const smokeAlpha = damageLevel >= 2 ? 0.92 : 0.8;
+        const smokeDrawn = drawEngineSmokeTrail(
+          noseX - imgWidth * 0.13,
+          noseY - imgHeight * 0.08,
+          imgWidth * (damageLevel >= 2 ? 0.82 : 0.68),
+          smokeAlpha
         );
 
-        drawSmokePuff(
-          noseX - 14,
-          noseY - 10,
-          R * 1.5,
-          0.6,
-          "rgb(120,120,120)"
-        );
+        if (!smokeDrawn) {
+          drawSmokePuff(
+            noseX - 4,
+            noseY - 6,
+            R,
+            0.8,
+            "rgb(90,90,90)"
+          );
 
-        drawSmokePuff(
-          noseX - 28,
-          noseY - 14,
-          R * 2.0,
-          0.4,
-          "rgb(150,150,150)"
-        );
+          drawSmokePuff(
+            noseX - 14,
+            noseY - 10,
+            R * 1.5,
+            0.6,
+            "rgb(120,120,120)"
+          );
+
+          drawSmokePuff(
+            noseX - 28,
+            noseY - 14,
+            R * 2.0,
+            0.4,
+            "rgb(150,150,150)"
+          );
+        }
       }
 
       if (damageLevel >= 2 && damageLevel < 3) {
+        const flamePhase = performance.now() * 0.02;
+        const flameLen = imgWidth * (0.17 + Math.sin(flamePhase) * 0.015);
+        const flameHeight = imgHeight * (0.16 + Math.cos(flamePhase * 0.85) * 0.012);
+
+        ctx.save();
+        ctx.translate(noseX - imgWidth * 0.01, noseY - imgHeight * 0.02);
+        ctx.rotate(rotation);
+
+        ctx.fillStyle = "rgba(255,132,24,0.9)";
         ctx.beginPath();
-        ctx.moveTo(noseX + 2, noseY - 4);
-        ctx.quadraticCurveTo(noseX + 14, noseY - 22, noseX + 4, noseY - 10);
-        ctx.quadraticCurveTo(noseX - 2, noseY - 16, noseX + 2, noseY - 4);
-        ctx.fillStyle = "rgba(255,160,0,0.9)";
+        ctx.moveTo(flameLen * 0.12, 0);
+        ctx.quadraticCurveTo(-flameLen * 0.12, -flameHeight * 0.9, -flameLen, -flameHeight * 0.16);
+        ctx.quadraticCurveTo(-flameLen * 0.72, 0, -flameLen, flameHeight * 0.16);
+        ctx.quadraticCurveTo(-flameLen * 0.12, flameHeight * 0.9, flameLen * 0.12, 0);
         ctx.fill();
+
+        ctx.fillStyle = "rgba(255,228,120,0.9)";
+        ctx.beginPath();
+        ctx.moveTo(flameLen * 0.04, 0);
+        ctx.quadraticCurveTo(-flameLen * 0.06, -flameHeight * 0.48, -flameLen * 0.64, -flameHeight * 0.08);
+        ctx.quadraticCurveTo(-flameLen * 0.48, 0, -flameLen * 0.64, flameHeight * 0.08);
+        ctx.quadraticCurveTo(-flameLen * 0.06, flameHeight * 0.48, flameLen * 0.04, 0);
+        ctx.fill();
+
+        ctx.restore();
       }
 
       if (damageLevel >= 3) {
@@ -2245,10 +2603,36 @@
       return HANGAR_DATA[faction] || [];
     }
 
+    function getHangarSpecialEntries(faction) {
+      return HANGAR_SPECIALS[faction] || [];
+    }
+
+    function getActiveHangarEntries() {
+      return currentHangarSection === "special"
+        ? getHangarSpecialEntries(currentHangarFaction)
+        : getHangarEntries(currentHangarFaction);
+    }
+
+    function getHangarDisplaySprite(entry) {
+      if (!entry) return null;
+      if (currentHangarSection === "special") {
+        const sizeMetrics = getPlaneSizeMetrics(entry.basePlaneType);
+        const rotation = entry.basePlaneType === "dr1std" ? Math.PI / 36 : 0;
+        return {
+          img: entry.asset.img,
+          loaded: entry.asset.loaded,
+          rotation,
+          ...sizeMetrics
+        };
+      }
+      return getPlaneSprite(entry.planeType);
+    }
+
     function ensureHangarSelection() {
-      const entries = getHangarEntries(currentHangarFaction);
-      if (!entries.some(entry => entry.planeType === selectedHangarPlaneType)) {
-        selectedHangarPlaneType = entries[0]?.planeType || null;
+      const entries = getActiveHangarEntries();
+      const keyField = currentHangarSection === "special" ? "id" : "planeType";
+      if (!entries.some(entry => entry[keyField] === selectedHangarPlaneType)) {
+        selectedHangarPlaneType = entries[0]?.[keyField] || null;
       }
     }
 
@@ -2304,8 +2688,12 @@
       ctx.fillText("Back", hangarBackRect.x + hangarBackRect.w / 2, 41);
 
       hangarFactionTabs = [
-        { faction: "germany", x: 36, y: 78, w: 146, h: 34, label: "German Air Service" },
-        { faction: "britain", x: 198, y: 78, w: 146, h: 34, label: "Royal Flying Corps" }
+        { faction: "germany", x: 20, y: 78, w: 138, h: 30, label: "Germany" },
+        { faction: "britain", x: 171, y: 78, w: 138, h: 30, label: "Britain" },
+        { faction: "france", x: 322, y: 78, w: 138, h: 30, label: "France" },
+        { faction: "italy", x: 20, y: 116, w: 138, h: 30, label: "Italy" },
+        { faction: "russia", x: 171, y: 116, w: 138, h: 30, label: "Russia" },
+        { faction: "america", x: 322, y: 116, w: 138, h: 30, label: "America" }
       ];
 
       hangarFactionTabs.forEach((tab) => {
@@ -2314,32 +2702,48 @@
         fillRoundedRect(tab.x, tab.y, tab.w, tab.h, 12);
         ctx.fillStyle = active ? "#31200a" : "#f8ecd0";
         ctx.font = "12px " + UI_FONT;
-        ctx.fillText(tab.label, tab.x + tab.w / 2, tab.y + 22);
+        ctx.fillText(tab.label, tab.x + tab.w / 2, tab.y + 20);
+      });
+
+      hangarSectionTabs = [
+        { section: "service", x: 26, y: 160, w: 150, h: 30, label: "Service Aircraft" },
+        { section: "special", x: 186, y: 160, w: 150, h: 30, label: "Special Liveries" }
+      ];
+
+      hangarSectionTabs.forEach((tab) => {
+        const active = tab.section === currentHangarSection;
+        ctx.fillStyle = active ? "rgba(231, 198, 132, 0.96)" : "rgba(35, 28, 22, 0.72)";
+        fillRoundedRect(tab.x, tab.y, tab.w, tab.h, 11);
+        ctx.fillStyle = active ? "#31200a" : "#f9edd1";
+        ctx.font = "12px " + UI_FONT;
+        ctx.fillText(tab.label, tab.x + tab.w / 2, tab.y + 20);
       });
 
       const listX = 26;
-      const listY = 132;
+      const listY = 204;
       const listW = 154;
-      const rowH = 74;
+      const rowH = 62;
       const detailX = 194;
-      const detailY = 132;
+      const detailY = 204;
       const detailW = W - detailX - 20;
-      const detailH = 440;
+      const detailH = 386;
 
       ctx.fillStyle = "rgba(245, 236, 217, 0.92)";
-      fillRoundedRect(listX, listY, listW, rowH * 3 + 22, 18);
+      fillRoundedRect(listX, listY, listW, detailH, 18);
       fillRoundedRect(detailX, detailY, detailW, detailH, 18);
 
-      const entries = getHangarEntries(currentHangarFaction);
+      const entries = getActiveHangarEntries();
       hangarPlaneChoices = [];
-      entries.forEach((entry, index) => {
+      const visibleEntries = entries.slice(0, 5);
+      visibleEntries.forEach((entry, index) => {
         const y = listY + 10 + index * rowH;
-        const active = entry.planeType === selectedHangarPlaneType;
+        const entryKey = currentHangarSection === "special" ? entry.id : entry.planeType;
+        const active = entryKey === selectedHangarPlaneType;
         ctx.fillStyle = active ? "rgba(214, 187, 127, 0.95)" : "rgba(255, 252, 244, 0.92)";
         fillRoundedRect(listX + 8, y, listW - 16, rowH - 10, 12);
 
-        const sprite = getPlaneSprite(entry.planeType);
-        if (sprite.loaded) {
+        const sprite = getHangarDisplaySprite(entry);
+        if (sprite?.loaded) {
           const maxW = 86;
           const maxH = 30;
           const { imgW, imgH } = getSpriteDrawSize(sprite, sprite.thumbWidth, maxW, maxH);
@@ -2358,13 +2762,26 @@
         ctx.font = "11px " + UI_FONT;
         ctx.fillText(entry.role, listX + 72, y + 46);
 
-        hangarPlaneChoices.push({ x: listX + 8, y, w: listW - 16, h: rowH - 10, planeType: entry.planeType });
+        hangarPlaneChoices.push({ x: listX + 8, y, w: listW - 16, h: rowH - 10, key: entryKey });
       });
 
-      const selected = entries.find(entry => entry.planeType === selectedHangarPlaneType) || entries[0];
+      if (visibleEntries.length === 0) {
+        ctx.fillStyle = "#6a5942";
+        ctx.font = "12px " + UI_FONT;
+        ctx.textAlign = "center";
+        ctx.fillText(
+          currentHangarSection === "special" ? "No special liveries catalogued yet" : "No service aircraft catalogued yet",
+          listX + listW / 2,
+          listY + 42
+        );
+      }
+
+      const selected = entries.find(entry => (currentHangarSection === "special" ? entry.id : entry.planeType) === selectedHangarPlaneType) || entries[0];
       if (selected) {
-        const sprite = getPlaneSprite(selected.planeType);
-        const stats = getPlaneHangarStats(selected.planeType);
+        const sprite = getHangarDisplaySprite(selected);
+        const stats = currentHangarSection === "special"
+          ? null
+          : getPlaneHangarStats(selected.planeType);
 
         ctx.textAlign = "left";
         ctx.fillStyle = "#2a1f15";
@@ -2376,14 +2793,14 @@
         ctx.fillText(`${selected.role} • ${selected.years}`, detailX + 18, detailY + 54);
 
         ctx.fillStyle = "rgba(231, 216, 185, 0.9)";
-        fillRoundedRect(detailX + 16, detailY + 74, detailW - 32, 130, 14);
+        fillRoundedRect(detailX + 16, detailY + 74, detailW - 32, 170, 14);
 
-        if (sprite.loaded) {
-          const maxW = detailW - 56;
-          const maxH = 92;
-          const { imgW, imgH } = getSpriteDrawSize(sprite, sprite.hangarWidth, maxW, maxH);
+        if (sprite?.loaded) {
+          const maxW = detailW - 28;
+          const maxH = 164;
+          const { imgW, imgH } = getSpriteDrawSize(sprite, sprite.hangarWidth * 1.9, maxW, maxH);
           ctx.save();
-          ctx.translate(detailX + detailW / 2, detailY + 138);
+          ctx.translate(detailX + detailW / 2, detailY + 158);
           ctx.rotate(sprite.rotation || 0);
           ctx.drawImage(sprite.img, -imgW / 2, -imgH / 2, imgW, imgH);
           ctx.restore();
@@ -2391,24 +2808,48 @@
 
         ctx.fillStyle = "#4a3925";
         ctx.font = "12px " + UI_FONT;
-        drawWrappedText(selected.note, detailX + 18, detailY + 230, detailW - 36, 18, 5);
+        drawWrappedText(selected.note, detailX + 18, detailY + 258, detailW - 36, 18, 3);
 
-        const statsY = detailY + 334;
+        const statsY = detailY + 306;
         ctx.fillStyle = "rgba(32, 26, 21, 0.74)";
-        fillRoundedRect(detailX + 16, statsY, detailW - 32, 92, 14);
+        fillRoundedRect(detailX + 16, statsY, detailW - 32, 74, 14);
         ctx.fillStyle = "#fff1c8";
         ctx.font = "14px " + UI_FONT;
-        ctx.fillText("Service Record", detailX + 30, statsY + 24);
+        ctx.fillText(currentHangarSection === "special" ? "Unlock Notes" : "Service Record", detailX + 30, statsY + 24);
         ctx.font = "12px " + UI_FONT;
-        ctx.fillText(`Flights: ${stats.flights || 0}`, detailX + 30, statsY + 48);
-        ctx.fillText(`Kills: ${stats.kills || 0}`, detailX + 30, statsY + 68);
-        ctx.fillText(`Best score: ${stats.bestScore || 0}`, detailX + 30, statsY + 88);
+        if (currentHangarSection === "special") {
+          ctx.fillText("Event reward or supporter livery", detailX + 30, statsY + 46);
+          ctx.fillText("Requires base aircraft ownership", detailX + 30, statsY + 64);
+        } else {
+          ctx.fillText(`Flights: ${stats.flights || 0}`, detailX + 30, statsY + 44);
+          ctx.fillText(`Kills: ${stats.kills || 0}  •  Best score: ${stats.bestScore || 0}`, detailX + 30, statsY + 62);
+        }
+      } else {
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#2a1f15";
+        ctx.font = "21px " + UI_FONT;
+        ctx.fillText(currentHangarSection === "special" ? "Special Liveries" : "Hangar Record", detailX + 18, detailY + 32);
+        ctx.fillStyle = "#7c6546";
+        ctx.font = "13px " + UI_FONT;
+        ctx.fillText("No aircraft in this section yet", detailX + 18, detailY + 54);
+        ctx.fillStyle = "#4a3925";
+        ctx.font = "12px " + UI_FONT;
+        drawWrappedText(
+          currentHangarSection === "special"
+            ? "This nation does not have premium or event liveries in the hangar yet. Once you add art, they will appear here."
+            : "This nation is not flyable yet, but the hangar tab is ready for future aircraft and service records.",
+          detailX + 18,
+          detailY + 96,
+          detailW - 36,
+          18,
+          6
+        );
       }
 
       ctx.textAlign = "center";
       ctx.fillStyle = "#f5e5bc";
       ctx.font = "13px " + UI_FONT;
-      ctx.fillText("View your aircraft, service notes, and personal record", W / 2, H - 26);
+      ctx.fillText("View service aircraft, special liveries, and your personal record", W / 2, H - 26);
       hintEl.textContent = "Browse your aircraft collection";
     }
 
@@ -2560,7 +3001,7 @@
       germanPlaneChoices = [];
 
       const startY = H * 0.26;
-      const rowH = 82;
+      const rowH = 90;
       const rowX = 40;
       const rowW = W - 80;
 
@@ -2580,7 +3021,7 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(rowX + 0.5, y + 0.5, rowW - 1, rowH - 15);
 
-        const thumbX = rowX + 74;
+        const thumbX = rowX + 86;
         const thumbY = y + (rowH - 14) / 2;
 
         let imgToUse = null;
@@ -2597,10 +3038,11 @@
         }
 
         if (imgToUse) {
-          const maxW = 118;
-          const maxH = 52;
+          const maxW = 164;
+          const maxH = 74;
           const sprite = getPlaneSprite(entry.planeType);
-          const { imgW, imgH } = getSpriteDrawSize(sprite, sprite.thumbWidth, maxW, maxH);
+          const desiredThumbWidth = sprite.thumbWidth * 1.42;
+          const { imgW, imgH } = getSpriteDrawSize(sprite, desiredThumbWidth, maxW, maxH);
           ctx.drawImage(imgToUse, thumbX - imgW / 2, thumbY - imgH / 2, imgW, imgH);
         } else {
           ctx.fillStyle = "#b0bec5";
@@ -2610,11 +3052,11 @@
         ctx.textAlign = "left";
         ctx.fillStyle = "#263238";
         ctx.font = "14px " + UI_FONT;
-        ctx.fillText(`${entry.tier} – ${entry.label}`, rowX + 132, y + 28);
+        ctx.fillText(`${entry.tier} – ${entry.label}`, rowX + 160, y + 32);
 
         ctx.font = "13px " + UI_FONT;
         ctx.fillStyle = entry.unlocked ? "#2e7d32" : "#b0bec5";
-        ctx.fillText(entry.unlocked ? "Ready" : "Locked", rowX + 132, y + 48);
+        ctx.fillText(entry.unlocked ? "Ready" : "Locked", rowX + 160, y + 54);
 
         ctx.restore();
 
@@ -2658,15 +3100,16 @@
 
       britishPlaneChoices = [];
 
-      const startY = H * 0.30;
-      const rowH = 100;
+      const startY = H * 0.26;
+      const rowH = 96;
       const rowX = 40;
       const rowW = W - 80;
 
       const entries = [
         { tier: "Tier 1", label: "Airco DH.1", planeType: "dh1", loaded: dh1Loaded, img: dh1Img },
         { tier: "Tier 2", label: "Airco DH.2", planeType: "dh2", loaded: dh2Loaded, img: dh2Img },
-        { tier: "Tier 3", label: "Sopwith Pup", planeType: "pupstd", loaded: pupStdLoaded, img: pupStdImg }
+        { tier: "Tier 3", label: "Sopwith Pup", planeType: "pupstd", loaded: pupStdLoaded, img: pupStdImg },
+        { tier: "Tier 4", label: "Airco DH.9", planeType: "dh9", loaded: dh9Loaded, img: dh9Img }
       ];
 
       entries.forEach((entry, i) => {
@@ -2680,14 +3123,15 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(rowX + 0.5, y + 0.5, rowW - 1, rowH - 15);
 
-        const thumbX = rowX + 92;
+        const thumbX = rowX + 102;
         const thumbY = y + (rowH - 14) / 2;
 
         if (entry.loaded) {
-          const maxW = 126;
-          const maxH = 56;
+          const maxW = 176;
+          const maxH = 74;
           const sprite = getPlaneSprite(entry.planeType);
-          const { imgW, imgH } = getSpriteDrawSize(sprite, sprite.thumbWidth, maxW, maxH);
+          const desiredThumbWidth = sprite.thumbWidth * 1.42;
+          const { imgW, imgH } = getSpriteDrawSize(sprite, desiredThumbWidth, maxW, maxH);
           ctx.drawImage(entry.img, thumbX - imgW / 2, thumbY - imgH / 2, imgW, imgH);
         } else {
           ctx.fillStyle = "#b0bec5";
@@ -2697,11 +3141,11 @@
         ctx.textAlign = "left";
         ctx.fillStyle = "#263238";
         ctx.font = "14px " + UI_FONT;
-        ctx.fillText(`${entry.tier} - ${entry.label}`, rowX + 170, y + 34);
+        ctx.fillText(`${entry.tier} - ${entry.label}`, rowX + 194, y + 34);
 
         ctx.font = "13px " + UI_FONT;
         ctx.fillStyle = "#2e7d32";
-        ctx.fillText("Ready", rowX + 170, y + 56);
+        ctx.fillText("Ready", rowX + 194, y + 54);
 
         ctx.restore();
 
@@ -2796,6 +3240,7 @@
     function handleInput(evt) {
       // start music on first interaction
       startBgmIfNeeded();
+      ensureAirplaneSmokePlayback();
 
       if (screen === "splash") {
         if (evt) {
@@ -2815,13 +3260,14 @@
             drawBritishWIP();
             return;
           }
-          if (inside(hangarEntryRect)) {
-            currentHangarFaction = currentFaction;
-            selectedHangarPlaneType = planeType;
-            screen = "hangar";
-            drawHangar();
-            return;
-          }
+        if (inside(hangarEntryRect)) {
+          currentHangarFaction = currentFaction;
+          currentHangarSection = "service";
+          selectedHangarPlaneType = planeType;
+          screen = "hangar";
+          drawHangar();
+          return;
+        }
           return;
         } else {
           ensurePilotName();
@@ -2857,6 +3303,15 @@
         const clickedTab = hangarFactionTabs.find(tab => inside(tab));
         if (clickedTab) {
           currentHangarFaction = clickedTab.faction;
+          currentHangarSection = "service";
+          ensureHangarSelection();
+          drawHangar();
+          return;
+        }
+
+        const clickedSection = hangarSectionTabs.find(tab => inside(tab));
+        if (clickedSection) {
+          currentHangarSection = clickedSection.section;
           ensureHangarSelection();
           drawHangar();
           return;
@@ -2864,7 +3319,7 @@
 
         const clickedPlane = hangarPlaneChoices.find(choice => inside(choice));
         if (clickedPlane) {
-          selectedHangarPlaneType = clickedPlane.planeType;
+          selectedHangarPlaneType = clickedPlane.key;
           drawHangar();
           return;
         }
