@@ -138,15 +138,18 @@
       position: absolute;
       top: 16px;
       right: 20px;
-      width: 34px;
-      height: 34px;
+      width: 44px;
+      height: 44px;
       border-radius: 50%;
       border: none;
-      background: rgba(0, 0, 0, 0.55);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255, 246, 219, 0.2) 0, rgba(255, 246, 219, 0) 35%),
+        rgba(26, 22, 17, 0.72);
       color: #ffeb3b;
-      font-size: 18px;
       cursor: pointer;
-      box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+      box-shadow:
+        0 4px 12px rgba(0,0,0,0.42),
+        inset 0 1px 0 rgba(255, 241, 206, 0.18);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -155,11 +158,28 @@
     }
 
     .mute-btn:hover {
-      background: rgba(0, 0, 0, 0.75);
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255, 246, 219, 0.28) 0, rgba(255, 246, 219, 0) 36%),
+        rgba(18, 15, 12, 0.8);
     }
 
     .mute-btn.muted {
       color: #ccc;
+    }
+
+    .mute-btn svg {
+      width: 30px;
+      height: 30px;
+      display: block;
+      overflow: visible;
+    }
+
+    .mute-btn img {
+      width: 30px;
+      height: 30px;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.25));
     }
 
     .burst-btn {
@@ -225,7 +245,7 @@
     <!-- Music controls + audio -->
     <button id="burstBtn" class="burst-btn">BURST
 1 XP</button>
-    <button id="muteBtn" class="mute-btn">🔊</button>
+    <button id="muteBtn" class="mute-btn" aria-label="Toggle sound"></button>
     <audio id="bgmRun" src="assets/audio/bgm_run.mp3" loop></audio>
   </div>
 
@@ -269,12 +289,13 @@
     const UI_FONT = "Segoe UI, Tahoma, Geneva, Verdana, sans-serif";
     const GAME_TITLE = "Wings Over No Man's Land";
     const GAMEPLAY_HINT = "Tap or press SPACE to fly\nPress X or BURST for double burst";
+    const STORAGE_REVISION = "wonml_r2";
     const STORAGE_KEYS = {
-      best: "wonml_best",
-      bestPilot: "wonml_best_pilot",
-      leaderboard: "wonml_leaderboard",
-      hangarStats: "wonml_hangar_stats",
-      lastPilot: "wonml_last_pilot",
+      best: `${STORAGE_REVISION}_best`,
+      bestPilot: `${STORAGE_REVISION}_best_pilot`,
+      leaderboard: `${STORAGE_REVISION}_leaderboard`,
+      hangarStats: `${STORAGE_REVISION}_hangar_stats`,
+      lastPilot: `${STORAGE_REVISION}_last_pilot`,
       legacyBest: "ww1_fokker_best",
       legacyBestPilot: "ww1_fokker_best_pilot",
       legacyLeaderboard: "ww1_leaderboard",
@@ -295,8 +316,8 @@
 
     // === Supabase setup ===
     const { createClient } = supabase;
-    const supabaseUrl = "https://jnpzarwuilevjdulgxrc.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpucHphcnd1aWxldmpkdWxneHJjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM0MTk1OTIsImV4cCI6MjA3ODk5NTU5Mn0.agBNLqBMUSE9-MxD4U9Evij8mGSxU5ey_LdFuA3tqZE";
+    const supabaseUrl = "https://jcwmwblvpakstbkifpki.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impjd213Ymx2cGFrc3Ria2lmcGtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzQzODcsImV4cCI6MjA4OTI1MDM4N30.aROdC_urHemSqKX2Oz0ejBLn64hRQsoT3ZBDX72re30";
     const sb = createClient(supabaseUrl, supabaseKey);
 
     // Screens: splash, hangar, planeSelectGerman, planeSelectBritish, game
@@ -935,6 +956,16 @@
     let bgmStarted = false;
     let bgmMuted = false;
 
+    function updateMuteButtonIcon() {
+      if (!muteBtn) return;
+      const iconSrc = bgmMuted ? "assets/branding/SoundOff.png" : "assets/branding/SoundOn.png";
+      const iconAlt = bgmMuted ? "Sound off" : "Sound on";
+      muteBtn.innerHTML = `<img src="${iconSrc}" alt="${iconAlt}">`;
+      muteBtn.classList.toggle("muted", bgmMuted);
+      muteBtn.setAttribute("aria-pressed", bgmMuted ? "true" : "false");
+      muteBtn.setAttribute("title", bgmMuted ? "Sound off" : "Sound on");
+    }
+
     function startBgmIfNeeded() {
       if (!bgmRun || bgmStarted) return;
       bgmStarted = true;
@@ -952,10 +983,11 @@
       muteBtn.addEventListener("click", () => {
         bgmMuted = !bgmMuted;
         bgmRun.muted = bgmMuted;
-        muteBtn.classList.toggle("muted", bgmMuted);
-        muteBtn.textContent = bgmMuted ? "🔈" : "🔊";
+        updateMuteButtonIcon();
       });
     }
+
+    updateMuteButtonIcon();
 
     if (burstBtn) {
       const triggerBurst = (e) => {
@@ -1046,7 +1078,7 @@
 
     function updateOverlayVisibility() {
       const showHud = screen === "game";
-      const showMute = screen === "game";
+      const showMute = true;
       const showBurst = screen === "game" && !gameOver;
       if (scoreEl && scoreEl.closest(".hud")) {
         scoreEl.closest(".hud").style.display = showHud ? "flex" : "none";
@@ -1661,7 +1693,17 @@
       parallax.mid -= base * 0.6;
       parallax.fore -= base * 1.0;
 
-      if (plane.y < 0 || plane.y + plane.height > H - GROUND_HEIGHT) {
+      if (plane.y < 0) {
+        plane.y = 0;
+        plane.vy = Math.max(0, plane.vy) + 0.6;
+        const gameEnded = registerHit(timestamp);
+        if (gameEnded) {
+          endGame();
+        }
+        return;
+      }
+
+      if (plane.y + plane.height > H - GROUND_HEIGHT) {
         crashToGround();
         return;
       }
@@ -2782,7 +2824,7 @@
       const listX = 26;
       const listY = 204;
       const listW = 154;
-      const rowH = 62;
+      const rowH = currentHangarSection === "special" ? 40 : 62;
       const detailX = 194;
       const detailY = 204;
       const detailW = W - detailX - 20;
@@ -2794,7 +2836,8 @@
 
       const entries = getActiveHangarEntries();
       hangarPlaneChoices = [];
-      const visibleEntries = entries.slice(0, 5);
+      const visibleCount = Math.max(1, Math.floor((detailH - 12) / rowH));
+      const visibleEntries = entries.slice(0, visibleCount);
       visibleEntries.forEach((entry, index) => {
         const y = listY + 10 + index * rowH;
         const entryKey = currentHangarSection === "special" ? entry.id : entry.planeType;
@@ -2804,11 +2847,12 @@
 
         const sprite = getHangarDisplaySprite(entry);
         if (sprite?.loaded) {
-          const maxW = 86;
-          const maxH = 30;
-          const { imgW, imgH } = getSpriteDrawSize(sprite, sprite.thumbWidth, maxW, maxH);
+          const maxW = currentHangarSection === "special" ? 62 : 86;
+          const maxH = currentHangarSection === "special" ? 18 : 30;
+          const thumbWidth = currentHangarSection === "special" ? sprite.thumbWidth * 0.82 : sprite.thumbWidth;
+          const { imgW, imgH } = getSpriteDrawSize(sprite, thumbWidth, maxW, maxH);
           ctx.save();
-          ctx.translate(listX + 42, y + 31);
+          ctx.translate(listX + (currentHangarSection === "special" ? 36 : 42), y + (currentHangarSection === "special" ? 16 : 31));
           ctx.rotate(sprite.rotation || 0);
           ctx.drawImage(sprite.img, -imgW / 2, -imgH / 2, imgW, imgH);
           ctx.restore();
@@ -2816,11 +2860,11 @@
 
         ctx.textAlign = "left";
         ctx.fillStyle = "#2c2115";
-        ctx.font = "13px " + UI_FONT;
-        ctx.fillText(entry.label, listX + 72, y + 28);
+        ctx.font = (currentHangarSection === "special" ? "11px " : "13px ") + UI_FONT;
+        ctx.fillText(entry.label, listX + (currentHangarSection === "special" ? 58 : 72), y + (currentHangarSection === "special" ? 18 : 28));
         ctx.fillStyle = "#6b5842";
-        ctx.font = "11px " + UI_FONT;
-        ctx.fillText(entry.role, listX + 72, y + 46);
+        ctx.font = (currentHangarSection === "special" ? "9px " : "11px ") + UI_FONT;
+        ctx.fillText(entry.role, listX + (currentHangarSection === "special" ? 58 : 72), y + (currentHangarSection === "special" ? 30 : 46));
 
         hangarPlaneChoices.push({ x: listX + 8, y, w: listW - 16, h: rowH - 10, key: entryKey });
       });
@@ -2949,12 +2993,12 @@
       ctx.strokeText("Choose your side", W / 2, H * 0.34 + 6);
       ctx.fillText("Choose your side", W / 2, H * 0.34 + 6);
 
-      hangarEntryRect = { x: W - 118, y: 70, w: 90, h: 34 };
+      hangarEntryRect = { x: W / 2 - 60, y: H * 0.73, w: 120, h: 36 };
       ctx.fillStyle = "rgba(24, 20, 16, 0.72)";
       fillRoundedRect(hangarEntryRect.x, hangarEntryRect.y, hangarEntryRect.w, hangarEntryRect.h, 12);
       ctx.fillStyle = "#fff2cb";
       ctx.font = "14px " + UI_FONT;
-      ctx.fillText("Hangar", hangarEntryRect.x + hangarEntryRect.w / 2, hangarEntryRect.y + 22);
+      ctx.fillText("Hangar", hangarEntryRect.x + hangarEntryRect.w / 2, hangarEntryRect.y + 23);
 
       const iconSize = 72;
       const iconY = H * 0.61;
