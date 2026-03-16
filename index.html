@@ -470,7 +470,7 @@
     zeppelinImg.onerror = () => console.error("Could not load assets/obstacles/Zeppelin.png");
     zeppelinImg.src = "assets/obstacles/Zeppelin.png";
 
-    const flakBurstVideoSrc = "assets/Animations/WW_Flak_Burst_Animation_Request.mp4";
+    const flakBurstVideoSrc = "assets/animations/WW_Flak_Burst_Animation_Request.mp4";
     const flakVideoProbe = document.createElement("video");
     const flakVideoSupported = typeof flakVideoProbe.canPlayType === "function" &&
       flakVideoProbe.canPlayType("video/mp4") !== "";
@@ -486,7 +486,7 @@
       flakVideoTemplate.load();
     }
 
-    const airplaneSmokeVideoSrc = "assets/Animations/AirplaneSmoke.mp4";
+    const airplaneSmokeVideoSrc = "assets/animations/AirplaneSmoke.mp4";
     const airplaneSmokeVideo = flakVideoSupported ? document.createElement("video") : null;
     let airplaneSmokeReady = false;
     if (airplaneSmokeVideo) {
@@ -800,15 +800,15 @@
     }
 
     function getGermanFrontlinePlaneType() {
-      if (currentLevelIndex >= 3) return "d7std";
-      if (currentLevelIndex >= 2) return "dr1std";
-      if (currentLevelIndex >= 1) return "albatrosdvstd";
+      if (currentStageIndex >= 3) return "d7std";
+      if (currentStageIndex >= 2) return "dr1std";
+      if (currentStageIndex >= 1) return "albatrosdvstd";
       return "e3std";
     }
 
     function getBritishFrontlinePlaneType() {
-      if (currentLevelIndex >= 3) return "pupstd";
-      if (currentLevelIndex >= 1) return "dh2";
+      if (currentStageIndex >= 3) return "pupstd";
+      if (currentStageIndex >= 1) return "dh2";
       return "dh1";
     }
 
@@ -820,75 +820,97 @@
       return null;
     }
 
-    // === Levels with per-level parallax ===
-    const LEVELS = [
+    const CAMPAIGNS = [
       {
-        name: "Opening Patrol",
-        obstacle: "none",
-        speed: 1.9,
-        spawnInterval: 1780,
-        gravity: 0.28,
-        jump: -6.5,
-        sky: ["#cbdaf0", "#f2f5fb"],
-        ground: ["#c9b884", "#9f8957"],
-        parallax: {
-          farColor: "#355723",
-          midColor: "#7e653e",
-          foreColor: "#4a3b26",
-          theme: "rural",
-          customLayers: BELGIUM_CAMPAIGN_LAYERS
-        }
-      },
-      {
-        name: "Flak Screen",
-        obstacle: "flak",
-        speed: 2.15,
-        spawnInterval: 1520,
-        gravity: 0.32,
-        jump: -7.0,
-        sky: ["#e3e3e3", "#cfcfcf"],
-        ground: ["#b2c18a", "#7a9153"],
-        parallax: {
-          farColor: "#4f5b32",
-          midColor: "#8d6e63",
-          foreColor: "#5d4037",
-          theme: "farmland",
-          customLayers: BELGIUM_CAMPAIGN_LAYERS
-        }
-      },
-      {
-        name: "Cloud Bank",
-        obstacle: "none",
-        speed: 2.35,
-        spawnInterval: 1420,
-        gravity: 0.33,
-        jump: -7.2,
-        sky: ["#9aa7c3", "#d8dde7"],
-        ground: ["#8c8b6a", "#494736"],
-        parallax: {
-          farColor: "#455a64",
-          midColor: "#6d4c41",
-          foreColor: "#3e2723",
-          theme: "industrial",
-          customLayers: BELGIUM_CAMPAIGN_LAYERS
-        }
-      },
-      {
-        name: "Observation Line",
-        obstacle: "balloon",
-        speed: 2.6,
-        spawnInterval: 1320,
-        gravity: 0.35,
-        jump: -7.4,
-        sky: ["#5b7b9a", "#cfd7e0"],
-        ground: ["#5c6b40", "#2f3a20"],
-        parallax: {
-          farColor: "#37474f",
-          midColor: "#4e342e",
-          foreColor: "#263238",
-          theme: "battlefield",
-          customLayers: BELGIUM_CAMPAIGN_LAYERS
-        }
+        id: "belgium",
+        order: 1,
+        name: "German Invasion of Belgium and France",
+        shortName: "Belgium, August 1914",
+        introTitle: "Belgium, August 1914",
+        introSubtitle: "The war has just begun. Welcome to Flanders, pilot.",
+        backgrounds: BELGIUM_CAMPAIGN_LAYERS,
+        stages: [
+          {
+            id: "opening_patrol",
+            name: "Opening Patrol",
+            scoreStart: 0,
+            scoreEnd: 45,
+            obstacle: "none",
+            speed: 1.9,
+            spawnInterval: 1780,
+            gravity: 0.28,
+            jump: -6.5,
+            sky: ["#cbdaf0", "#f2f5fb"],
+            ground: ["#c9b884", "#9f8957"],
+            parallax: {
+              farColor: "#355723",
+              midColor: "#7e653e",
+              foreColor: "#4a3b26",
+              theme: "rural",
+              customLayers: BELGIUM_CAMPAIGN_LAYERS
+            }
+          },
+          {
+            id: "flak_screen",
+            name: "Flak Screen",
+            scoreStart: 45,
+            scoreEnd: 90,
+            obstacle: "flak",
+            speed: 2.15,
+            spawnInterval: 1520,
+            gravity: 0.32,
+            jump: -7.0,
+            sky: ["#e3e3e3", "#cfcfcf"],
+            ground: ["#b2c18a", "#7a9153"],
+            parallax: {
+              farColor: "#4f5b32",
+              midColor: "#8d6e63",
+              foreColor: "#5d4037",
+              theme: "farmland",
+              customLayers: BELGIUM_CAMPAIGN_LAYERS
+            }
+          },
+          {
+            id: "cloud_bank",
+            name: "Cloud Bank",
+            scoreStart: 90,
+            scoreEnd: 145,
+            obstacle: "none",
+            speed: 2.35,
+            spawnInterval: 1420,
+            gravity: 0.33,
+            jump: -7.2,
+            sky: ["#9aa7c3", "#d8dde7"],
+            ground: ["#8c8b6a", "#494736"],
+            parallax: {
+              farColor: "#455a64",
+              midColor: "#6d4c41",
+              foreColor: "#3e2723",
+              theme: "industrial",
+              customLayers: BELGIUM_CAMPAIGN_LAYERS
+            }
+          },
+          {
+            id: "observation_line",
+            name: "Observation Line",
+            scoreStart: 145,
+            scoreEnd: Infinity,
+            obstacle: "balloon",
+            speed: 2.6,
+            spawnInterval: 1320,
+            gravity: 0.35,
+            jump: -7.4,
+            sky: ["#5b7b9a", "#cfd7e0"],
+            ground: ["#5c6b40", "#2f3a20"],
+            parallax: {
+              farColor: "#37474f",
+              midColor: "#4e342e",
+              foreColor: "#263238",
+              theme: "battlefield",
+              customLayers: BELGIUM_CAMPAIGN_LAYERS
+            }
+          }
+        ]
       }
     ];
 
@@ -898,14 +920,8 @@
     const XP_PER_ACE_STEP = 5;
     const DOUBLE_BURST_XP_COST = 1;
     const DOUBLE_BURST_DURATION = 6500;
-    const CAMPAIGN_INTROS = {
-      belgium: {
-        title: "Belgium, August 1914",
-        subtitle: "The war has just begun. Welcome to Flanders, pilot."
-      }
-    };
-
-    let currentLevelIndex = 0;
+    let currentCampaignIndex = 0;
+    let currentStageIndex = 0;
 
     let plane;
     let obstacles;
@@ -923,8 +939,38 @@
     let lastShotTime = 0;
     let roundStartTime = 0;
     let burstModeUntil = 0;
-    let activeCampaignIntro = CAMPAIGN_INTROS.belgium;
+    let activeCampaignIntro = null;
     let campaignIntroUntil = 0;
+
+    function getCurrentCampaign() {
+      return CAMPAIGNS[currentCampaignIndex] || CAMPAIGNS[0];
+    }
+
+    function getCurrentStage() {
+      const campaign = getCurrentCampaign();
+      return campaign.stages[currentStageIndex] || campaign.stages[0];
+    }
+
+    function getCurrentCampaignIntro() {
+      const campaign = getCurrentCampaign();
+      if (!campaign) return null;
+      return {
+        title: campaign.introTitle,
+        subtitle: campaign.introSubtitle
+      };
+    }
+
+    function getStageIndexForScore(campaign, scoreValue) {
+      if (!campaign?.stages?.length) return 0;
+
+      for (let i = campaign.stages.length - 1; i >= 0; i--) {
+        if (scoreValue >= campaign.stages[i].scoreStart) {
+          return i;
+        }
+      }
+
+      return 0;
+    }
 
     // High score & leaderboard
     let bestScore = parseInt(getStoredValue(STORAGE_KEYS.best, STORAGE_KEYS.legacyBest) || "0", 10);
@@ -1082,7 +1128,7 @@
 
     scoreEl.textContent = score;
     bestEl.textContent = bestScore;
-    levelNameEl.textContent = LEVELS[currentLevelIndex].name;
+    levelNameEl.textContent = getCurrentStage().name;
     bestPilotEl.textContent = bestPilotName;
     currentPilotEl.textContent = currentPilotName || "-";
 
@@ -1269,6 +1315,21 @@
       }
     }
 
+    function getCurrentPilotBestScore() {
+      if (!currentPilotName) return null;
+
+      const leaderboardEntry = leaderboard.find(entry => entry.name === currentPilotName);
+      if (leaderboardEntry) {
+        return leaderboardEntry.score;
+      }
+
+      if (currentPilotName === bestPilotName) {
+        return bestScore;
+      }
+
+      return 0;
+    }
+
     function resetGame() {
       syncFactionWithPlane();
       ensureAirplaneSmokePlayback();
@@ -1305,12 +1366,13 @@
       lastShotTime = 0;
       roundStartTime = 0;
       burstModeUntil = 0;
-      activeCampaignIntro = CAMPAIGN_INTROS.belgium;
+      currentCampaignIndex = 0;
+      currentStageIndex = 0;
+      activeCampaignIntro = getCurrentCampaignIntro();
       campaignIntroUntil = performance.now() + 4200;
       gameOver = false;
       gameRunning = false;
-      currentLevelIndex = 0;
-      levelNameEl.textContent = LEVELS[currentLevelIndex].name;
+      levelNameEl.textContent = getCurrentStage().name;
       parallax.far = 0;
       parallax.mid = 0;
       parallax.fore = 0;
@@ -1345,21 +1407,18 @@
     }
 
     function flap() {
-      const level = LEVELS[currentLevelIndex];
+      const level = getCurrentStage();
       const { jumpMultiplier } = getDamageFlightState();
       plane.vy = level.jump * jumpMultiplier;
     }
 
     function updateLevelByScore() {
-      let newIndex = 0;
-      if (score >= 145) newIndex = 3;
-      else if (score >= 90) newIndex = 2;
-      else if (score >= 45) newIndex = 1;
-      else newIndex = 0;
+      const campaign = getCurrentCampaign();
+      const newIndex = getStageIndexForScore(campaign, score);
 
-      if (newIndex !== currentLevelIndex) {
-        currentLevelIndex = newIndex;
-        levelNameEl.textContent = LEVELS[currentLevelIndex].name;
+      if (newIndex !== currentStageIndex) {
+        currentStageIndex = newIndex;
+        levelNameEl.textContent = getCurrentStage().name;
       }
     }
 
@@ -1370,8 +1429,8 @@
     function getObstacleSpawnInterval(level) {
       let spawnInterval = level.spawnInterval;
 
-      if (currentLevelIndex === 1 && level.obstacle === "flak") {
-        const flakStageScore = Math.max(0, score - 45);
+      if (currentStageIndex === 1 && level.obstacle === "flak") {
+        const flakStageScore = Math.max(0, score - level.scoreStart);
         const ramp = Math.min(1, flakStageScore / 20);
         const intervalMultiplier = 2 - ramp;
         spawnInterval *= intervalMultiplier;
@@ -1446,10 +1505,10 @@
     }
 
     function spawnObstacle(timestamp) {
-      const level = LEVELS[currentLevelIndex];
+      const level = getCurrentStage();
       if (!level.obstacle || level.obstacle === "none") return;
       if (!lastSpawnTime) lastSpawnTime = timestamp;
-      if (currentLevelIndex === 0 && timestamp - roundStartTime < 2200) return;
+      if (currentStageIndex === 0 && timestamp - roundStartTime < 2200) return;
       if (timestamp - lastSpawnTime < getObstacleSpawnInterval(level)) return;
 
       lastSpawnTime = timestamp;
@@ -1500,11 +1559,11 @@
       const roll = Math.random();
 
       if (currentFaction === "britain") {
-        if (currentLevelIndex >= 3 && roll > 0.76) return "zeppelin";
+        if (currentStageIndex >= 3 && roll > 0.76) return "zeppelin";
         return "german-fighter";
       }
 
-      if (currentLevelIndex >= 3 && roll > 0.74) return "british-bomber";
+      if (currentStageIndex >= 3 && roll > 0.74) return "british-bomber";
       return "british-fighter";
     }
 
@@ -1539,7 +1598,7 @@
       const minY = type === "zeppelin" ? 90 : 70;
       const maxY = type === "zeppelin" ? H - GROUND_HEIGHT - 180 : H - GROUND_HEIGHT - 90;
       const playerCenterY = plane.y + plane.height / 2;
-      const preferredSpacing = currentLevelIndex === 0 ? 90 : 58;
+      const preferredSpacing = currentStageIndex === 0 ? 90 : 58;
       const previousSpacing = type === "zeppelin" ? 110 : 70;
 
       let fallbackY = Math.random() * Math.max(20, maxY - minY) + minY;
@@ -1561,15 +1620,15 @@
 
     function spawnEnemy(timestamp) {
       if (!lastEnemySpawnTime) lastEnemySpawnTime = timestamp;
-      if (currentLevelIndex === 0 && timestamp - roundStartTime < 4200) return;
+      if (currentStageIndex === 0 && timestamp - roundStartTime < 4200) return;
 
-      const isOpeningLevel = currentLevelIndex === 0;
+      const isOpeningLevel = currentStageIndex === 0;
       const spawnBase = isOpeningLevel ? 3050 : 2500;
       const spawnFloor = isOpeningLevel ? 1780 : 1350;
       const scoreRamp = isOpeningLevel ? 3 : 7;
       const spawnEvery = Math.max(
         spawnFloor,
-        spawnBase - currentLevelIndex * 230 - Math.min(score, 80) * scoreRamp
+        spawnBase - currentStageIndex * 230 - Math.min(score, 80) * scoreRamp
       );
       if (timestamp - lastEnemySpawnTime < spawnEvery) return;
 
@@ -1642,11 +1701,11 @@
       if (!roundStartTime) roundStartTime = timestamp;
       updateBurstButton(timestamp);
 
-      const level = LEVELS[currentLevelIndex];
+      const level = getCurrentStage();
 
       let levelSpeed = level.speed;
 
-      if (currentLevelIndex === 3 && score >= 150) {
+      if (currentStageIndex === getCurrentCampaign().stages.length - 1 && score >= 150) {
         const extraSteps = Math.floor((score - 150) / 50) + 1;
         const extra = extraSteps * 0.25;
         levelSpeed += extra;
@@ -1713,7 +1772,7 @@
       }
       obstacles = activeObstacles;
 
-      const enemyApproachFactor = currentLevelIndex === 0 ? 0.9 : 1.0;
+      const enemyApproachFactor = currentStageIndex === 0 ? 0.9 : 1.0;
       for (const enemy of enemies) {
         enemy.x -= levelSpeed * enemy.speedFactor * enemyApproachFactor * speedFactor;
         enemy.y = enemy.baseY + Math.sin(timestamp * enemy.bobFreq + enemy.phase) * enemy.bobAmp;
@@ -1844,7 +1903,7 @@
     }
 
     function drawBackground() {
-      const level = LEVELS[currentLevelIndex];
+      const level = getCurrentStage();
       const customLayers = level.parallax?.customLayers;
 
       ctx.clearRect(0, 0, W, H);
@@ -1939,7 +1998,7 @@
 
     // === New multi-level parallax ground ===
     function drawParallaxGround() {
-      const level = LEVELS[currentLevelIndex];
+      const level = getCurrentStage();
       const p = level.parallax || {};
       const farColor = p.farColor || "#3e5136";
       const midColor = p.midColor || "#7e653e";
@@ -1953,7 +2012,7 @@
       }
 
       // little variation per level so Y offsets change
-      const baseOffset = currentLevelIndex * 3;
+      const baseOffset = currentStageIndex * 3;
       const farY = groundTop + 16 + baseOffset;
       const midY = groundTop + 30 + baseOffset;
       const foreY = groundTop + 40 + baseOffset;
@@ -3123,7 +3182,7 @@
       ctx.fillText("German Air Service", germanX, labelY);
 
       const stripY = H * 0.81;
-      const stripH = 86;
+      const stripH = 116;
       const stripX = 58;
       const stripW = W - 116;
       ctx.fillStyle = "rgba(28, 36, 46, 0.34)";
@@ -3132,17 +3191,29 @@
       ctx.textAlign = "left";
       ctx.fillStyle = "rgba(255, 247, 226, 0.95)";
       ctx.font = "15px " + UI_FONT;
-      ctx.fillText("Top Ace", stripX + 20, stripY + 28);
+      ctx.fillText("Top Ace", stripX + 20, stripY + 26);
 
       const aceLine = leaderboard.length > 0
         ? `${leaderboard[0].name} - ${leaderboard[0].score}`
         : "No aces recorded yet";
+      const playerBest = getCurrentPilotBestScore();
+      const playerBestLine = currentPilotName
+        ? `${currentPilotName} - ${playerBest ?? 0}`
+        : "Fly your first patrol to record it";
       ctx.font = "13px " + UI_FONT;
       ctx.fillStyle = "rgba(255, 247, 226, 0.88)";
-      ctx.fillText(aceLine, stripX + 20, stripY + 50);
+      ctx.fillText(aceLine, stripX + 20, stripY + 46);
+
+      ctx.fillStyle = "rgba(255, 247, 226, 0.95)";
+      ctx.font = "15px " + UI_FONT;
+      ctx.fillText("Your Best", stripX + 20, stripY + 72);
+
+      ctx.fillStyle = "rgba(255, 247, 226, 0.88)";
+      ctx.font = "13px " + UI_FONT;
+      ctx.fillText(playerBestLine, stripX + 20, stripY + 92);
 
       ctx.textAlign = "center";
-      const futureY = stripY + 20;
+      const futureY = stripY + 28;
       const futureIcons = [
         americanRoundel,
         frenchRoundel,
@@ -3155,7 +3226,7 @@
 
       futureIcons.forEach((asset, i) => {
         const cx = stripX + stripW * 0.54 + i * 44;
-        drawSplashBadge(asset, cx, futureY + 28, 32, 0.95);
+        drawSplashBadge(asset, cx, futureY + 36, 32, 0.95);
       });
 
       ctx.textAlign = "center";
