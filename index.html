@@ -448,11 +448,21 @@
     const hangarPupSo = loadUiAsset("assets/planes/britain/SopwithPup_SO.png");
     const hangarPupBy = loadUiAsset("assets/planes/britain/SopwithPup_by.png");
 
-    const balloonImg = new Image();
-    let balloonLoaded = false;
-    balloonImg.onload = () => { balloonLoaded = true; };
-    balloonImg.onerror = () => console.error("Could not load assets/obstacles/ObsBaloon.png");
-    balloonImg.src = "assets/obstacles/ObsBaloon.png";
+    const balloonBritishImg = new Image();
+    let balloonBritishLoaded = false;
+    balloonBritishImg.onload = () => { balloonBritishLoaded = true; };
+    balloonBritishImg.onerror = () => console.error("Could not load assets/obstacles/balloons/britain/BallonAllies.png");
+    balloonBritishImg.src = "assets/obstacles/balloons/britain/BallonAllies.png";
+
+    const balloonGermanImg = new Image();
+    let balloonGermanLoaded = false;
+    balloonGermanImg.onload = () => { balloonGermanLoaded = true; };
+    balloonGermanImg.onerror = () => console.error("Could not load assets/obstacles/balloons/germany/BallonGermany.png");
+    balloonGermanImg.src = "assets/obstacles/balloons/germany/BallonGermany.png";
+
+    const cloudAssets = Array.from({ length: 9 }, (_, index) =>
+      loadUiAsset(`assets/obstacles/clouds/Cloud${String(index + 1).padStart(2, "0")}.png`)
+    );
 
     const zeppelinImg = new Image();
     let zeppelinLoaded = false;
@@ -848,7 +858,7 @@
       },
       {
         name: "Cloud Bank",
-        obstacle: "cloud",
+        obstacle: "none",
         speed: 2.35,
         spawnInterval: 1420,
         gravity: 0.33,
@@ -1370,6 +1380,28 @@
       return spawnInterval;
     }
 
+    function getBalloonVariantForCurrentFaction() {
+      return currentFaction === "germany" ? "britain" : "germany";
+    }
+
+    function getBalloonObstacleAsset(variant = getBalloonVariantForCurrentFaction()) {
+      if (variant === "germany") {
+        return {
+          img: balloonGermanImg,
+          loaded: balloonGermanLoaded,
+          drawWidth: 144,
+          radius: 34
+        };
+      }
+
+      return {
+        img: balloonBritishImg,
+        loaded: balloonBritishLoaded,
+        drawWidth: 132,
+        radius: 32
+      };
+    }
+
     function createFlakBurstVideo(obstacle) {
       if (!flakVideoSupported) return;
 
@@ -1430,8 +1462,7 @@
 
       const obstacleType = level.obstacle;
 
-      const radius = obstacleType === "zeppelin" ? 40 : 26;
-
+      let radius = obstacleType === "zeppelin" ? 40 : 26;
       const obstacle = {
         x: W + radius + 10,
         y: baseY,
@@ -1442,8 +1473,21 @@
         age: 0,
         phase: Math.random() * Math.PI * 2,
         video: null,
-        videoReady: false
+        videoReady: false,
+        hp: 1,
+        points: obstacleType === "balloon" ? 2 : 0
       };
+
+      if (obstacleType === "balloon") {
+        const balloonAsset = getBalloonObstacleAsset();
+        obstacle.variant = getBalloonVariantForCurrentFaction();
+        obstacle.r = balloonAsset.radius;
+        obstacle.points = 2;
+        obstacle.hp = 1;
+        obstacle.x = W + obstacle.r + 10;
+      } else if (obstacleType === "cloud") {
+        obstacle.cloudIndex = Math.floor(Math.random() * cloudAssets.length);
+      }
 
       if (obstacleType === "flak") {
         createFlakBurstVideo(obstacle);
@@ -1734,6 +1778,27 @@
         if (!o.scored && o.x + o.r < plane.x) {
           o.scored = true;
           awardScore(1);
+        }
+      }
+
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obstacle = obstacles[i];
+        if (obstacle.type !== "balloon") continue;
+
+        for (let j = playerShots.length - 1; j >= 0; j--) {
+          const shot = playerShots[j];
+          const hitDx = shot.x - obstacle.x;
+          const hitDy = shot.y - obstacle.y;
+          const hitR = obstacle.r + shot.r;
+          if (hitDx * hitDx + hitDy * hitDy <= hitR * hitR) {
+            playerShots.splice(j, 1);
+            obstacle.hp -= 1;
+            if (obstacle.hp <= 0) {
+              obstacles.splice(i, 1);
+              awardScore(obstacle.points || 2);
+            }
+            break;
+          }
         }
       }
 
@@ -2208,15 +2273,31 @@
 
     function drawObstacle(o) {
       if (o.type === "cloud") {
-        ctx.fillStyle = "rgba(255,255,255,0.95)";
-        drawCloudShape(o.x, o.y, o.r);
-      } else if (o.type === "balloon") {
-        if (balloonLoaded) {
-          const scale = 0.45;
-          const imgW = balloonImg.width * scale;
-          const imgH = balloonImg.height * scale;
+        const cloudAsset = cloudAssets[o.cloudIndex || 0];
+        if (cloudAsset?.loaded) {
+          const drawW = Math.max(86, o.r * 4.6);
+          const drawH = drawW * cloudAsset.img.height / cloudAsset.img.width;
+          ctx.save();
+          ctx.globalAlpha = 0.96;
           ctx.drawImage(
-            balloonImg,
+            cloudAsset.img,
+            o.x - drawW / 2,
+            o.y - drawH / 2,
+            drawW,
+            drawH
+          );
+          ctx.restore();
+        } else {
+          ctx.fillStyle = "rgba(255,255,255,0.95)";
+          drawCloudShape(o.x, o.y, o.r);
+        }
+      } else if (o.type === "balloon") {
+        const balloonAsset = getBalloonObstacleAsset(o.variant);
+        if (balloonAsset.loaded) {
+          const imgW = balloonAsset.drawWidth;
+          const imgH = imgW * balloonAsset.img.height / balloonAsset.img.width;
+          ctx.drawImage(
+            balloonAsset.img,
             o.x - imgW / 2,
             o.y - imgH / 2,
             imgW,
