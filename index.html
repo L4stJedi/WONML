@@ -4250,11 +4250,13 @@
     });
 
     window.addEventListener("mousedown", (e) => {
+      if (!accessUnlocked) return;
       e.preventDefault();
       handleInput(e);
     });
 
     window.addEventListener("mousemove", (e) => {
+      if (!accessUnlocked) return;
       if (screen === "campaignMap") {
         e.preventDefault();
         updateCampaignMapPointer(e);
@@ -4262,6 +4264,7 @@
     });
 
     window.addEventListener("mouseup", (e) => {
+      if (!accessUnlocked) return;
       if (screen === "campaignMap") {
         e.preventDefault();
         endCampaignMapPointer(e);
@@ -4269,11 +4272,13 @@
     });
 
     window.addEventListener("touchstart", (e) => {
+      if (!accessUnlocked) return;
       e.preventDefault();
       handleInput(e);
     }, { passive: false });
 
     window.addEventListener("touchmove", (e) => {
+      if (!accessUnlocked) return;
       if (screen === "campaignMap") {
         e.preventDefault();
         updateCampaignMapPointer(e);
@@ -4281,6 +4286,7 @@
     }, { passive: false });
 
     window.addEventListener("touchend", (e) => {
+      if (!accessUnlocked) return;
       if (screen === "campaignMap") {
         e.preventDefault();
         endCampaignMapPointer(e);
