@@ -881,6 +881,13 @@
       { tier: "Tier 4", label: "Fokker D.VII", planeType: "d7std" }
     ];
 
+    const BRITISH_STANDARD_PLANES = [
+      { tier: "Tier 1", label: "Airco DH.1", planeType: "dh1" },
+      { tier: "Tier 2", label: "Airco DH.2", planeType: "dh2" },
+      { tier: "Tier 3", label: "Sopwith Pup", planeType: "pupstd" },
+      { tier: "Tier 4", label: "Airco DH.9", planeType: "dh9" }
+    ];
+
     const HANGAR_DATA = {
       germany: [
         {
@@ -1232,23 +1239,31 @@
       return { imgW, imgH };
     }
 
-    function getGermanFrontlinePlaneType() {
-      if (currentStageIndex >= 3) return "d7std";
-      if (currentStageIndex >= 2) return "dr1std";
-      if (currentStageIndex >= 1) return "albatrosdvstd";
-      return "e3std";
+    function getStandardPlaneProgression(faction) {
+      return faction === "britain" ? BRITISH_STANDARD_PLANES : GERMAN_STANDARD_PLANES;
     }
 
-    function getBritishFrontlinePlaneType() {
-      if (currentStageIndex >= 3) return "pupstd";
-      if (currentStageIndex >= 1) return "dh2";
-      return "dh1";
+    function getPlaneTierIndex(type, faction = currentFaction) {
+      const progression = getStandardPlaneProgression(faction);
+      const idx = progression.findIndex(entry => entry.planeType === type);
+      return idx >= 0 ? idx : 0;
     }
 
-    function getEnemyPlaneType(enemyType) {
-      if (enemyType === "german-fighter") return getGermanFrontlinePlaneType();
+    function getOpposingPlaneTypeForTierOffset(offset = 0) {
+      const opposingFaction = currentFaction === "germany" ? "britain" : "germany";
+      const ownTierIndex = getPlaneTierIndex(planeType, currentFaction);
+      const opposingProgression = getStandardPlaneProgression(opposingFaction);
+      const targetIndex = Math.max(0, Math.min(opposingProgression.length - 1, ownTierIndex + offset));
+      return opposingProgression[targetIndex]?.planeType || opposingProgression[0]?.planeType || null;
+    }
+
+    function getEnemyPlaneType(enemyType, level = getCurrentStage()) {
+      if (enemyType === "frontline-fighter") {
+        return getOpposingPlaneTypeForTierOffset(level.enemyTierOffset || 0);
+      }
+      if (enemyType === "german-fighter") return getStandardPlaneProgression("germany")[0].planeType;
       if (enemyType === "german-bomber") return "d7rb";
-      if (enemyType === "british-fighter") return getBritishFrontlinePlaneType();
+      if (enemyType === "british-fighter") return getStandardPlaneProgression("britain")[0].planeType;
       if (enemyType === "british-bomber") return dh9Loaded ? "dh9" : "dh1";
       return null;
     }
@@ -1267,12 +1282,22 @@
             id: "opening_patrol",
             name: "Opening Patrol",
             scoreStart: 0,
-            scoreEnd: 45,
+            scoreEnd: 35,
             obstacle: "none",
-            speed: 1.9,
-            spawnInterval: 1780,
+            speed: 1.82,
+            spawnInterval: 1880,
             gravity: 0.28,
             jump: -6.5,
+            enemyType: "frontline-fighter",
+            enemyTierOffset: 0,
+            enemyHp: 1,
+            enemyPoints: 3,
+            enemyMissPenalty: 1,
+            enemySpawnBase: 3000,
+            enemySpawnFloor: 1880,
+            enemySpawnScoreRamp: 3,
+            enemyStartDelay: 4300,
+            enemyApproachFactor: 0.86,
             sky: ["#cbdaf0", "#f2f5fb"],
             ground: ["#c9b884", "#9f8957"],
             parallax: {
@@ -1286,13 +1311,25 @@
           {
             id: "flak_screen",
             name: "Flak Screen",
-            scoreStart: 45,
-            scoreEnd: 90,
+            scoreStart: 35,
+            scoreEnd: 75,
             obstacle: "flak",
-            speed: 2.15,
-            spawnInterval: 1520,
-            gravity: 0.32,
-            jump: -7.0,
+            speed: 2.02,
+            spawnInterval: 1880,
+            gravity: 0.31,
+            jump: -6.8,
+            enemyType: "frontline-fighter",
+            enemyTierOffset: 0,
+            enemyHp: 1,
+            enemyPoints: 3,
+            enemyMissPenalty: 1,
+            enemySpawnBase: 2520,
+            enemySpawnFloor: 1580,
+            enemySpawnScoreRamp: 4,
+            enemyStartDelay: 3400,
+            enemyApproachFactor: 0.92,
+            obstacleRampDuration: 18,
+            obstacleRampStartMultiplier: 2,
             sky: ["#e3e3e3", "#cfcfcf"],
             ground: ["#b2c18a", "#7a9153"],
             parallax: {
@@ -1304,15 +1341,19 @@
             }
           },
           {
-            id: "cloud_bank",
-            name: "Cloud Bank",
-            scoreStart: 90,
-            scoreEnd: 145,
-            obstacle: "none",
-            speed: 2.35,
-            spawnInterval: 1420,
-            gravity: 0.33,
-            jump: -7.2,
+            id: "observation_line",
+            name: "Observation Line",
+            scoreStart: 75,
+            scoreEnd: 105,
+            obstacle: "balloon",
+            speed: 2.02,
+            spawnInterval: 2260,
+            gravity: 0.31,
+            jump: -6.8,
+            enemyType: "none",
+            obstacleHp: 2,
+            obstaclePoints: 3,
+            obstacleStartDelay: 1600,
             sky: ["#9aa7c3", "#d8dde7"],
             ground: ["#8c8b6a", "#494736"],
             parallax: {
@@ -1324,17 +1365,61 @@
             }
           },
           {
-            id: "observation_line",
-            name: "Observation Line",
-            scoreStart: 145,
-            scoreEnd: Infinity,
-            obstacle: "balloon",
-            speed: 2.6,
-            spawnInterval: 1320,
-            gravity: 0.35,
-            jump: -7.4,
+            id: "contested_line",
+            name: "Contested Line",
+            scoreStart: 105,
+            scoreEnd: 145,
+            obstacle: "flak",
+            speed: 2.18,
+            spawnInterval: 1880,
+            gravity: 0.33,
+            jump: -7.0,
+            enemyType: "frontline-fighter",
+            enemyTierOffset: 0,
+            enemyHp: 1,
+            enemyPoints: 3,
+            enemyMissPenalty: 1,
+            enemySpawnBase: 2360,
+            enemySpawnFloor: 1460,
+            enemySpawnScoreRamp: 5,
+            enemyStartDelay: 2200,
+            enemyApproachFactor: 0.98,
+            obstacleRampDuration: 18,
+            obstacleRampStartMultiplier: 2,
             sky: ["#5b7b9a", "#cfd7e0"],
             ground: ["#5c6b40", "#2f3a20"],
+            parallax: {
+              farColor: "#37474f",
+              midColor: "#4e342e",
+              foreColor: "#263238",
+              theme: "battlefield",
+              customLayers: BELGIUM_CAMPAIGN_LAYERS
+            }
+          },
+          {
+            id: "ace_pursuit",
+            name: "Ace Pursuit",
+            scoreStart: 145,
+            scoreEnd: Infinity,
+            obstacle: "flak",
+            speed: 2.32,
+            spawnInterval: 1880,
+            gravity: 0.34,
+            jump: -7.2,
+            enemyType: "frontline-fighter",
+            enemyTierOffset: 1,
+            enemyHp: 3,
+            enemyPoints: 6,
+            enemyMissPenalty: 2,
+            enemySpawnBase: 3380,
+            enemySpawnFloor: 2480,
+            enemySpawnScoreRamp: 3,
+            enemyStartDelay: 2200,
+            enemyApproachFactor: 1,
+            obstacleRampDuration: 18,
+            obstacleRampStartMultiplier: 2,
+            sky: ["#536a86", "#c4ced8"],
+            ground: ["#566540", "#2a331e"],
             parallax: {
               farColor: "#37474f",
               midColor: "#4e342e",
@@ -1913,12 +1998,14 @@
     }
 
     function getObstacleSpawnInterval(level) {
-      let spawnInterval = level.spawnInterval;
+      let spawnInterval = level.obstacleSpawnInterval || level.spawnInterval;
 
-      if (currentStageIndex === 1 && level.obstacle === "flak") {
+      if (level.obstacle === "flak") {
         const flakStageScore = Math.max(0, score - level.scoreStart);
-        const ramp = Math.min(1, flakStageScore / 20);
-        const intervalMultiplier = 2 - ramp;
+        const rampDuration = level.obstacleRampDuration || 20;
+        const ramp = Math.min(1, flakStageScore / rampDuration);
+        const startMultiplier = level.obstacleRampStartMultiplier || 2;
+        const intervalMultiplier = startMultiplier - ((startMultiplier - 1) * ramp);
         spawnInterval *= intervalMultiplier;
       }
 
@@ -1994,7 +2081,8 @@
       const level = getCurrentStage();
       if (!level.obstacle || level.obstacle === "none") return;
       if (!lastSpawnTime) lastSpawnTime = timestamp;
-      if (currentStageIndex === 0 && timestamp - roundStartTime < 2200) return;
+      const obstacleStartDelay = level.obstacleStartDelay ?? (currentStageIndex === 0 ? 2200 : 0);
+      if (timestamp - roundStartTime < obstacleStartDelay) return;
       if (timestamp - lastSpawnTime < getObstacleSpawnInterval(level)) return;
 
       lastSpawnTime = timestamp;
@@ -2027,8 +2115,8 @@
         const balloonAsset = getBalloonObstacleAsset();
         obstacle.variant = getBalloonVariantForCurrentFaction();
         obstacle.r = balloonAsset.radius;
-        obstacle.points = 2;
-        obstacle.hp = 1;
+        obstacle.points = level.obstaclePoints ?? 2;
+        obstacle.hp = level.obstacleHp ?? 1;
         obstacle.x = W + obstacle.r + 10;
       } else if (obstacleType === "cloud") {
         obstacle.cloudIndex = Math.floor(Math.random() * cloudAssets.length);
@@ -2042,19 +2130,13 @@
     }
 
     function chooseEnemyType() {
-      const roll = Math.random();
-
-      if (currentFaction === "britain") {
-        if (currentStageIndex >= 3 && roll > 0.76) return "zeppelin";
-        return "german-fighter";
-      }
-
-      if (currentStageIndex >= 3 && roll > 0.74) return "british-bomber";
-      return "british-fighter";
+      const level = getCurrentStage();
+      return level.enemyType && level.enemyType !== "none" ? level.enemyType : null;
     }
 
-    function createEnemy(type, y) {
+    function createEnemy(type, y, level = getCurrentStage()) {
       const map = {
+        "frontline-fighter": { width: 58, height: 24, speedFactor: 1.16, hp: 1, points: 3, missPenalty: 1, bobAmp: 8, bobFreq: 0.004 },
         "german-fighter": { width: 58, height: 24, speedFactor: 1.18, hp: 1, points: 3, missPenalty: 1, bobAmp: 8, bobFreq: 0.004 },
         "german-bomber": { width: 84, height: 30, speedFactor: 0.88, hp: 2, points: 5, missPenalty: 2, bobAmp: 5, bobFreq: 0.0028 },
         "british-fighter": { width: 58, height: 24, speedFactor: 1.16, hp: 1, points: 3, missPenalty: 1, bobAmp: 8, bobFreq: 0.0042 },
@@ -2069,13 +2151,13 @@
         baseY: y,
         width: base.width,
         height: base.height,
-        speedFactor: base.speedFactor,
+        speedFactor: level.enemySpeedFactor ?? base.speedFactor,
         type,
-        hp: base.hp,
-        points: base.points,
-        missPenalty: base.missPenalty,
-        bobAmp: base.bobAmp,
-        bobFreq: base.bobFreq,
+        hp: level.enemyHp ?? base.hp,
+        points: level.enemyPoints ?? base.points,
+        missPenalty: level.enemyMissPenalty ?? base.missPenalty,
+        bobAmp: level.enemyBobAmp ?? base.bobAmp,
+        bobFreq: level.enemyBobFreq ?? base.bobFreq,
         phase: Math.random() * Math.PI * 2
       };
     }
@@ -2105,25 +2187,27 @@
     }
 
     function spawnEnemy(timestamp) {
+      const level = getCurrentStage();
       if (!lastEnemySpawnTime) lastEnemySpawnTime = timestamp;
-      if (currentStageIndex === 0 && timestamp - roundStartTime < 4200) return;
+      const enemyType = chooseEnemyType();
+      if (!enemyType) return;
+      const enemyStartDelay = level.enemyStartDelay ?? (currentStageIndex === 0 ? 4200 : 0);
+      if (timestamp - roundStartTime < enemyStartDelay) return;
 
-      const isOpeningLevel = currentStageIndex === 0;
-      const spawnBase = isOpeningLevel ? 3050 : 2500;
-      const spawnFloor = isOpeningLevel ? 1780 : 1350;
-      const scoreRamp = isOpeningLevel ? 3 : 7;
+      const spawnBase = level.enemySpawnBase ?? (currentStageIndex === 0 ? 3050 : 2500);
+      const spawnFloor = level.enemySpawnFloor ?? (currentStageIndex === 0 ? 1780 : 1350);
+      const scoreRamp = level.enemySpawnScoreRamp ?? (currentStageIndex === 0 ? 3 : 7);
       const spawnEvery = Math.max(
         spawnFloor,
-        spawnBase - currentStageIndex * 230 - Math.min(score, 80) * scoreRamp
+        spawnBase - Math.min(Math.max(0, score - level.scoreStart), 80) * scoreRamp
       );
       if (timestamp - lastEnemySpawnTime < spawnEvery) return;
 
       lastEnemySpawnTime = timestamp;
 
-      const type = chooseEnemyType();
-      const y = pickEnemySpawnY(type);
+      const y = pickEnemySpawnY(enemyType);
       lastEnemySpawnY = y;
-      enemies.push(createEnemy(type, y));
+      enemies.push(createEnemy(enemyType, y, level));
     }
 
     function tryAutoFire(planeCx, planeCy, timestamp) {
@@ -2239,7 +2323,7 @@
       }
       obstacles = activeObstacles;
 
-      const enemyApproachFactor = currentStageIndex === 0 ? 0.9 : 1.0;
+      const enemyApproachFactor = level.enemyApproachFactor ?? (currentStageIndex === 0 ? 0.9 : 1.0);
       for (const enemy of enemies) {
         enemy.x -= levelSpeed * enemy.speedFactor * enemyApproachFactor * speedFactor;
         enemy.y = enemy.baseY + Math.sin(timestamp * enemy.bobFreq + enemy.phase) * enemy.bobAmp;
