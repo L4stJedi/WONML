@@ -1081,12 +1081,122 @@
       pupstd: { lengthMeters: 5.88 }
     };
 
+    const DEFAULT_PLANE_FLIGHT_PROFILE = {
+      gravityMultiplier: 0.9,
+      jumpMultiplier: 1,
+      speedMultiplier: 1,
+      maxFallSpeed: 7.8,
+      hitboxFactor: 0.56,
+      enemyHitboxFactor: 0.29,
+      durabilityBias: "standard"
+    };
+
+    const PLANE_FLIGHT_PROFILES = {
+      e3std: {
+        gravityMultiplier: 0.9,
+        jumpMultiplier: 0.98,
+        speedMultiplier: 0.95,
+        maxFallSpeed: 7.3,
+        hitboxFactor: 0.55,
+        enemyHitboxFactor: 0.28,
+        durabilityBias: "standard"
+      },
+      albatrosdvstd: {
+        gravityMultiplier: 0.93,
+        jumpMultiplier: 1.02,
+        speedMultiplier: 0.99,
+        maxFallSpeed: 7.7,
+        hitboxFactor: 0.56,
+        enemyHitboxFactor: 0.28,
+        durabilityBias: "standard"
+      },
+      dr1std: {
+        gravityMultiplier: 0.84,
+        jumpMultiplier: 1.16,
+        speedMultiplier: 1.0,
+        maxFallSpeed: 6.9,
+        hitboxFactor: 0.53,
+        enemyHitboxFactor: 0.27,
+        durabilityBias: "nimble"
+      },
+      d7std: {
+        gravityMultiplier: 0.98,
+        jumpMultiplier: 1.05,
+        speedMultiplier: 1.03,
+        maxFallSpeed: 8.6,
+        hitboxFactor: 0.55,
+        enemyHitboxFactor: 0.28,
+        durabilityBias: "steady"
+      },
+      d7rb: {
+        gravityMultiplier: 0.98,
+        jumpMultiplier: 1.05,
+        speedMultiplier: 1.03,
+        maxFallSpeed: 8.6,
+        hitboxFactor: 0.55,
+        enemyHitboxFactor: 0.28,
+        durabilityBias: "steady"
+      },
+      d7vik: {
+        gravityMultiplier: 0.98,
+        jumpMultiplier: 1.05,
+        speedMultiplier: 1.03,
+        maxFallSpeed: 8.6,
+        hitboxFactor: 0.55,
+        enemyHitboxFactor: 0.28,
+        durabilityBias: "steady"
+      },
+      dh1: {
+        gravityMultiplier: 0.9,
+        jumpMultiplier: 0.97,
+        speedMultiplier: 0.95,
+        maxFallSpeed: 7.4,
+        hitboxFactor: 0.56,
+        enemyHitboxFactor: 0.28,
+        durabilityBias: "standard"
+      },
+      dh2: {
+        gravityMultiplier: 0.88,
+        jumpMultiplier: 1.03,
+        speedMultiplier: 0.99,
+        maxFallSpeed: 7.1,
+        hitboxFactor: 0.55,
+        enemyHitboxFactor: 0.27,
+        durabilityBias: "nimble"
+      },
+      pupstd: {
+        gravityMultiplier: 0.86,
+        jumpMultiplier: 1.1,
+        speedMultiplier: 1.02,
+        maxFallSpeed: 7.0,
+        hitboxFactor: 0.54,
+        enemyHitboxFactor: 0.27,
+        durabilityBias: "nimble"
+      },
+      dh9: {
+        gravityMultiplier: 0.97,
+        jumpMultiplier: 0.9,
+        speedMultiplier: 0.94,
+        maxFallSpeed: 8.1,
+        hitboxFactor: 0.58,
+        enemyHitboxFactor: 0.31,
+        durabilityBias: "heavy"
+      }
+    };
+
     function getPlaneSizeMetrics(type) {
       const length = PLANE_SIZE_DATA[type]?.lengthMeters || 7.2;
       return {
         gameplayWidth: Math.round(length * 11.7),
         thumbWidth: Math.round(length * 9.2),
         hangarWidth: Math.round(length * 15.5)
+      };
+    }
+
+    function getPlaneFlightProfile(type) {
+      return {
+        ...DEFAULT_PLANE_FLIGHT_PROFILE,
+        ...(PLANE_FLIGHT_PROFILES[type] || {})
       };
     }
 
@@ -1784,7 +1894,8 @@
     function flap() {
       const level = getCurrentStage();
       const { jumpMultiplier } = getDamageFlightState();
-      plane.vy = level.jump * jumpMultiplier;
+      const planeProfile = getPlaneFlightProfile(planeType);
+      plane.vy = level.jump * planeProfile.jumpMultiplier * jumpMultiplier;
     }
 
     function updateLevelByScore() {
@@ -2077,6 +2188,7 @@
       updateBurstButton(timestamp);
 
       const level = getCurrentStage();
+      const planeProfile = getPlaneFlightProfile(planeType);
 
       let levelSpeed = level.speed;
 
@@ -2086,34 +2198,14 @@
         levelSpeed += extra;
       }
 
-      let planeSpeedFactor = 1.0;
-      if (planeType === "e3std") {
-        planeSpeedFactor = 0.95;
-      } else if (planeType === "dr1std") {
-        planeSpeedFactor = 1.0;
-      } else if (planeType === "d7std") {
-        planeSpeedFactor = 1.03;
-      } else if (planeType === "d7rb") {
-        planeSpeedFactor = 1.03;
-      } else if (planeType === "d7vik") {
-        planeSpeedFactor = 1.03;
-      } else if (planeType === "dh1") {
-        planeSpeedFactor = 0.95;
-      } else if (planeType === "dh2") {
-        planeSpeedFactor = 1.0;
-      } else if (planeType === "dh9") {
-        planeSpeedFactor = 0.94;
-      } else if (planeType === "pupstd") {
-        planeSpeedFactor = 1.02;
-      }
-
-      planeSpeedFactor *= getDamageFlightState(timestamp).speedMultiplier;
+      let planeSpeedFactor = planeProfile.speedMultiplier * getDamageFlightState(timestamp).speedMultiplier;
 
       levelSpeed *= planeSpeedFactor;
 
       const speedFactor = dt / (1000 / 60);
 
-      plane.vy += level.gravity * speedFactor;
+      plane.vy += level.gravity * planeProfile.gravityMultiplier * speedFactor;
+      plane.vy = Math.min(plane.vy, planeProfile.maxFallSpeed);
       plane.y += plane.vy * speedFactor;
 
       spawnObstacle(timestamp);
@@ -2186,17 +2278,7 @@
         return;
       }
 
-      let planeFactor = 0.56;
-      if (planeType === "e3std") planeFactor = 0.56;
-      if (planeType === "dr1std") planeFactor = 0.58;
-      if (planeType === "d7std") planeFactor = 0.59;
-      if (planeType === "d7rb") planeFactor = 0.59;
-      if (planeType === "d7vik") planeFactor = 0.59;
-      if (planeType === "dh1") planeFactor = 0.57;
-      if (planeType === "dh2") planeFactor = 0.57;
-      if (planeType === "dh9") planeFactor = 0.57;
-      if (planeType === "pupstd") planeFactor = 0.58;
-      const planeR = Math.min(plane.width, plane.height) * planeFactor;
+      const planeR = Math.min(plane.width, plane.height) * planeProfile.hitboxFactor;
 
       for (const o of obstacles) {
         const dx = planeCx - o.x;
@@ -2240,7 +2322,11 @@
         const enemy = enemies[i];
         const ex = enemy.x;
         const ey = enemy.y;
-        const er = Math.max(enemy.width, enemy.height) * (enemy.type === "zeppelin" ? 0.38 : 0.29);
+        const enemyPlaneType = getEnemyPlaneType(enemy.type);
+        const enemyProfile = enemyPlaneType ? getPlaneFlightProfile(enemyPlaneType) : null;
+        const er = Math.max(enemy.width, enemy.height) * (enemy.type === "zeppelin"
+          ? 0.38
+          : (enemyProfile?.enemyHitboxFactor || 0.29));
 
         if (enemy.x + enemy.width * 0.5 < plane.x) {
           awardScore(-enemy.missPenalty);
