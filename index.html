@@ -222,9 +222,111 @@
       cursor: default;
       filter: saturate(0.55);
     }
+
+    .access-gate {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background:
+        linear-gradient(180deg, rgba(12, 18, 28, 0.84) 0%, rgba(15, 18, 24, 0.9) 100%);
+      backdrop-filter: blur(10px);
+      z-index: 50;
+    }
+
+    .access-gate.is-hidden {
+      display: none;
+    }
+
+    .access-card {
+      width: min(420px, 100%);
+      padding: 24px 22px 20px;
+      border-radius: 20px;
+      background: rgba(246, 238, 220, 0.96);
+      color: #2a2016;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.34);
+      border: 1px solid rgba(76, 58, 35, 0.16);
+    }
+
+    .access-card h1 {
+      margin: 0 0 10px;
+      font-size: 26px;
+      color: #2b1c0c;
+      text-align: center;
+    }
+
+    .access-card p {
+      margin: 0 0 16px;
+      color: #604d3a;
+      font-size: 14px;
+      line-height: 1.45;
+      text-align: center;
+    }
+
+    .access-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .access-form input {
+      width: 100%;
+      border-radius: 12px;
+      border: 1px solid rgba(92, 69, 43, 0.24);
+      background: rgba(255, 251, 242, 0.98);
+      padding: 12px 14px;
+      font-size: 16px;
+      color: #2a2016;
+      outline: none;
+    }
+
+    .access-form input:focus {
+      border-color: rgba(181, 128, 49, 0.68);
+      box-shadow: 0 0 0 3px rgba(213, 170, 96, 0.16);
+    }
+
+    .access-form button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff1cc;
+      background: linear-gradient(180deg, rgba(100, 71, 34, 0.98) 0%, rgba(67, 47, 21, 0.98) 100%);
+      cursor: pointer;
+    }
+
+    .access-note {
+      margin-top: 12px;
+      font-size: 12px;
+      line-height: 1.4;
+      color: #7a6857;
+      text-align: center;
+    }
+
+    .access-error {
+      min-height: 18px;
+      font-size: 12px;
+      color: #a12722;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
+  <div id="accessGate" class="access-gate">
+    <div class="access-card">
+      <h1>Early Access</h1>
+      <p>This prototype build is private for invited testers. Enter the access code to continue.</p>
+      <form id="accessForm" class="access-form">
+        <input id="accessInput" type="password" placeholder="Enter access code" autocomplete="current-password" />
+        <button type="submit">Enter The Hangar</button>
+      </form>
+      <div id="accessError" class="access-error"></div>
+      <div class="access-note">This is a lightweight prototype gate for early feedback builds.</div>
+    </div>
+  </div>
+
   <div class="game-wrapper">
     <canvas id="game" width="480" height="640"></canvas>
 
@@ -266,6 +368,10 @@
     const livesEl = document.getElementById("lives");
     const currentPilotEl = document.getElementById("currentPilot");
     const bestPilotEl = document.getElementById("bestPilot");
+    const accessGateEl = document.getElementById("accessGate");
+    const accessFormEl = document.getElementById("accessForm");
+    const accessInputEl = document.getElementById("accessInput");
+    const accessErrorEl = document.getElementById("accessError");
 
     const bgmRun = document.getElementById("bgmRun");
     const burstBtn = document.getElementById("burstBtn");
@@ -296,11 +402,14 @@
       leaderboard: `${STORAGE_REVISION}_leaderboard`,
       hangarStats: `${STORAGE_REVISION}_hangar_stats`,
       lastPilot: `${STORAGE_REVISION}_last_pilot`,
+      earlyAccess: `${STORAGE_REVISION}_early_access`,
       legacyBest: "ww1_fokker_best",
       legacyBestPilot: "ww1_fokker_best_pilot",
       legacyLeaderboard: "ww1_leaderboard",
       legacyLastPilot: "ww1_last_pilot"
     };
+    const EARLY_ACCESS_HASH = "61cf72c4ae2febe3d5116f60f47bff98f49d2dcaaae33e936d50c51583a73e3c";
+    let accessUnlocked = false;
 
     function getStoredValue(key, legacyKey) {
       const current = localStorage.getItem(key);
@@ -314,27 +423,104 @@
       return legacy;
     }
 
+    async function sha256Hex(text) {
+      const encoded = new TextEncoder().encode(text);
+      const digest = await crypto.subtle.digest("SHA-256", encoded);
+      return Array.from(new Uint8Array(digest))
+        .map(byte => byte.toString(16).padStart(2, "0"))
+        .join("");
+    }
+
+    function unlockEarlyAccess() {
+      accessUnlocked = true;
+      localStorage.setItem(STORAGE_KEYS.earlyAccess, "ok");
+      if (accessGateEl) {
+        accessGateEl.classList.add("is-hidden");
+      }
+      if (accessErrorEl) {
+        accessErrorEl.textContent = "";
+      }
+    }
+
+    function focusAccessInput() {
+      if (accessInputEl && !accessUnlocked) {
+        requestAnimationFrame(() => accessInputEl.focus());
+      }
+    }
+
+    async function handleAccessSubmit(evt) {
+      evt.preventDefault();
+      if (!accessInputEl || !accessErrorEl) return;
+
+      const attempt = accessInputEl.value.trim();
+      if (!attempt) {
+        accessErrorEl.textContent = "Enter the access code first.";
+        focusAccessInput();
+        return;
+      }
+
+      accessErrorEl.textContent = "Checking access code...";
+
+      try {
+        const attemptHash = await sha256Hex(attempt);
+        if (attemptHash === EARLY_ACCESS_HASH) {
+          accessInputEl.value = "";
+          unlockEarlyAccess();
+          return;
+        }
+        accessErrorEl.textContent = "That code is not valid.";
+      } catch (error) {
+        console.error("Early access check failed:", error);
+        accessErrorEl.textContent = "The access check failed on this device.";
+      }
+
+      focusAccessInput();
+    }
+
+    function initEarlyAccessGate() {
+      if (localStorage.getItem(STORAGE_KEYS.earlyAccess) === "ok") {
+        unlockEarlyAccess();
+        return;
+      }
+
+      if (accessGateEl) {
+        accessGateEl.classList.remove("is-hidden");
+      }
+      focusAccessInput();
+    }
+
     // === Supabase setup ===
     const { createClient } = supabase;
     const supabaseUrl = "https://jcwmwblvpakstbkifpki.supabase.co";
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impjd213Ymx2cGFrc3Ria2lmcGtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzQzODcsImV4cCI6MjA4OTI1MDM4N30.aROdC_urHemSqKX2Oz0ejBLn64hRQsoT3ZBDX72re30";
     const sb = createClient(supabaseUrl, supabaseKey);
 
-    // Screens: splash, hangar, planeSelectGerman, planeSelectBritish, game
+    // Screens: splash, campaignMap, hangar, planeSelectGerman, planeSelectBritish, game
     let screen = "splash";
 
     let germanEntryRect = null;
     let britishEntryRect = null;
     let hangarEntryRect = null;
+    let campaignMapEntryRect = null;
     let germanPlaneChoices = [];
     let britishPlaneChoices = [];
     let hangarFactionTabs = [];
     let hangarSectionTabs = [];
     let hangarPlaneChoices = [];
     let hangarBackRect = null;
+    let campaignMapBackRect = null;
+    let campaignMapStartRect = null;
+    let campaignMarkerRects = [];
     let currentHangarFaction = "germany";
     let currentHangarSection = "service";
     let selectedHangarPlaneType = "e3std";
+    let selectedCampaignMapId = "belgium";
+    let campaignMapPanX = 0;
+    let campaignMapPanY = 0;
+    let campaignMapPointerActive = false;
+    let campaignMapPointerMoved = false;
+    let campaignMapPointerStart = null;
+    let campaignMapLastPoint = null;
 
     function fillRoundedRect(x, y, w, h, r) {
       ctx.beginPath();
@@ -540,6 +726,7 @@
     const frenchRoundel = loadSplashAsset("assets/backgrounds/menu/FrenchRoundel.png");
     const italianRoundel = loadSplashAsset("assets/backgrounds/menu/ItalianRoundel.png");
     const russianRoundel = loadSplashAsset("assets/backgrounds/menu/RussianRoundel.png");
+    const campaignMapAsset = loadSplashAsset("assets/backgrounds/map/CampaignMap.png");
     const belgiumSkyLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/SkyLayer.png");
     const belgiumFarBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium1_seamless.png");
     const belgiumFarBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium2_seamless.png");
@@ -914,6 +1101,20 @@
       }
     ];
 
+    const CAMPAIGN_MAP_NODES = [
+      { id: "belgium", order: 1, label: "Belgium", subtitle: "German invasion of Belgium and France", front: "Western Front", mapX: 0.263, mapY: 0.223 },
+      { id: "marne", order: 2, label: "Marne", subtitle: "First Battle of the Marne", front: "Western Front", mapX: 0.196, mapY: 0.378 },
+      { id: "ypres", order: 3, label: "Ypres", subtitle: "First Battle of Ypres", front: "Western Front", mapX: 0.209, mapY: 0.264 },
+      { id: "gallipoli", order: 4, label: "Gallipoli", subtitle: "Gallipoli Campaign", front: "Mediterranean Front", mapX: 0.885, mapY: 0.902 },
+      { id: "gorlice", order: 5, label: "Gorlice-Tarnow", subtitle: "Gorlice-Tarnow Offensive", front: "Eastern Front", mapX: 0.874, mapY: 0.358 },
+      { id: "verdun", order: 6, label: "Verdun", subtitle: "Battle of Verdun", front: "Western Front", mapX: 0.373, mapY: 0.385 },
+      { id: "somme", order: 7, label: "Somme", subtitle: "Battle of the Somme", front: "Western Front", mapX: 0.245, mapY: 0.335 },
+      { id: "aisne", order: 8, label: "Aisne", subtitle: "Nivelle Offensive / Second Battle of the Aisne", front: "Western Front", mapX: 0.304, mapY: 0.344 },
+      { id: "passchendaele", order: 9, label: "Passchendaele", subtitle: "Third Battle of Ypres", front: "Western Front", mapX: 0.186, mapY: 0.198 },
+      { id: "spring", order: 10, label: "Spring Offensive", subtitle: "German Spring Offensive", front: "Western Front", mapX: 0.233, mapY: 0.297 }
+    ];
+    const FIRST_LOCKED_CAMPAIGN_ORDER = 2;
+
     const PLANE_WIDTH = 52;
     const PLANE_HEIGHT = 28;
     const PLANE_X = 90;
@@ -1044,6 +1245,10 @@
     }
 
     updateMuteButtonIcon();
+
+    if (accessFormEl) {
+      accessFormEl.addEventListener("submit", handleAccessSubmit);
+    }
 
     if (burstBtn) {
       const triggerBurst = (e) => {
@@ -1366,7 +1571,6 @@
       lastShotTime = 0;
       roundStartTime = 0;
       burstModeUntil = 0;
-      currentCampaignIndex = 0;
       currentStageIndex = 0;
       activeCampaignIntro = getCurrentCampaignIntro();
       campaignIntroUntil = performance.now() + 4200;
@@ -2878,6 +3082,66 @@
       }
     }
 
+    function getCampaignMapNode(id = selectedCampaignMapId) {
+      return CAMPAIGN_MAP_NODES.find(node => node.id === id) || CAMPAIGN_MAP_NODES[0];
+    }
+
+    function isCampaignUnlocked(node) {
+      return node.order < FIRST_LOCKED_CAMPAIGN_ORDER;
+    }
+
+    function isCampaignImplemented(node) {
+      return CAMPAIGNS.some(campaign => campaign.id === node.id);
+    }
+
+    function getCampaignMapDrawMetrics() {
+      const viewport = { x: 16, y: 72, w: W - 32, h: H - 210 };
+      const fitScale = Math.max(viewport.w / campaignMapAsset.img.width, viewport.h / campaignMapAsset.img.height);
+      const scale = fitScale * 1.28;
+      const drawW = campaignMapAsset.img.width * scale;
+      const drawH = campaignMapAsset.img.height * scale;
+      const minPanX = Math.min(0, viewport.w - drawW);
+      const minPanY = Math.min(0, viewport.h - drawH);
+      return { viewport, scale, drawW, drawH, minPanX, minPanY };
+    }
+
+    function clampCampaignMapPan() {
+      if (!campaignMapAsset.loaded) return;
+      const { minPanX, minPanY } = getCampaignMapDrawMetrics();
+      campaignMapPanX = Math.min(0, Math.max(minPanX, campaignMapPanX));
+      campaignMapPanY = Math.min(0, Math.max(minPanY, campaignMapPanY));
+    }
+
+    function resetCampaignMapPan() {
+      campaignMapPanX = 0;
+      campaignMapPanY = 0;
+      clampCampaignMapPan();
+    }
+
+    function openCampaignMap() {
+      selectedCampaignMapId = getCurrentCampaign()?.id || getCampaignMapNode(selectedCampaignMapId)?.id || "belgium";
+      screen = "campaignMap";
+      resetCampaignMapPan();
+      drawCampaignMap();
+    }
+
+    function startSelectedCampaign() {
+      const node = getCampaignMapNode();
+      if (!node || !isCampaignUnlocked(node) || !isCampaignImplemented(node)) return false;
+
+      const campaignIndex = CAMPAIGNS.findIndex(campaign => campaign.id === node.id);
+      if (campaignIndex < 0) return false;
+
+      currentCampaignIndex = campaignIndex;
+      screen = "game";
+      updateOverlayVisibility();
+      hintEl.textContent = GAMEPLAY_HINT;
+      resetGame();
+      flap();
+      startGameLoop();
+      return true;
+    }
+
     function drawWrappedText(text, x, y, maxWidth, lineHeight, maxLines = 99) {
       const words = String(text || "").split(/\s+/);
       const lines = [];
@@ -3097,6 +3361,147 @@
       hintEl.textContent = "Browse your aircraft collection";
     }
 
+    function drawCampaignMap() {
+      if (screen !== "campaignMap") return;
+      updateOverlayVisibility();
+
+      ctx.clearRect(0, 0, W, H);
+      ctx.fillStyle = "#efe2c2";
+      ctx.fillRect(0, 0, W, H);
+
+      const topShade = ctx.createLinearGradient(0, 0, 0, H);
+      topShade.addColorStop(0, "rgba(30, 24, 16, 0.16)");
+      topShade.addColorStop(0.6, "rgba(255,255,255,0)");
+      topShade.addColorStop(1, "rgba(20, 18, 16, 0.18)");
+      ctx.fillStyle = topShade;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#fff1c8";
+      ctx.strokeStyle = "rgba(34, 20, 10, 0.82)";
+      ctx.lineWidth = 3.4;
+      ctx.font = "24px " + UI_FONT;
+      ctx.strokeText("Campaign Map", W / 2, 44);
+      ctx.fillText("Campaign Map", W / 2, 44);
+
+      campaignMapBackRect = { x: 18, y: 18, w: 78, h: 30 };
+      ctx.fillStyle = "rgba(26, 22, 17, 0.72)";
+      fillRoundedRect(campaignMapBackRect.x, campaignMapBackRect.y, campaignMapBackRect.w, campaignMapBackRect.h, 12);
+      ctx.fillStyle = "#fff0c8";
+      ctx.font = "13px " + UI_FONT;
+      ctx.fillText("Back", campaignMapBackRect.x + campaignMapBackRect.w / 2, 38);
+
+      const viewport = { x: 16, y: 72, w: W - 32, h: H - 210 };
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(viewport.x + 18, viewport.y);
+      ctx.lineTo(viewport.x + viewport.w - 18, viewport.y);
+      ctx.quadraticCurveTo(viewport.x + viewport.w, viewport.y, viewport.x + viewport.w, viewport.y + 18);
+      ctx.lineTo(viewport.x + viewport.w, viewport.y + viewport.h - 18);
+      ctx.quadraticCurveTo(viewport.x + viewport.w, viewport.y + viewport.h, viewport.x + viewport.w - 18, viewport.y + viewport.h);
+      ctx.lineTo(viewport.x + 18, viewport.y + viewport.h);
+      ctx.quadraticCurveTo(viewport.x, viewport.y + viewport.h, viewport.x, viewport.y + viewport.h - 18);
+      ctx.lineTo(viewport.x, viewport.y + 18);
+      ctx.quadraticCurveTo(viewport.x, viewport.y, viewport.x + 18, viewport.y);
+      ctx.closePath();
+      ctx.clip();
+
+      if (campaignMapAsset.loaded) {
+        clampCampaignMapPan();
+        const metrics = getCampaignMapDrawMetrics();
+        const drawX = metrics.viewport.x + campaignMapPanX;
+        const drawY = metrics.viewport.y + campaignMapPanY;
+
+        ctx.drawImage(campaignMapAsset.img, drawX, drawY, metrics.drawW, metrics.drawH);
+
+        campaignMarkerRects = [];
+        CAMPAIGN_MAP_NODES.forEach((node) => {
+          const px = drawX + node.mapX * metrics.drawW;
+          const py = drawY + node.mapY * metrics.drawH;
+          const unlocked = isCampaignUnlocked(node);
+          const implemented = isCampaignImplemented(node);
+          const selected = node.id === selectedCampaignMapId;
+          const radius = selected ? 14 : 11;
+
+          ctx.save();
+          ctx.globalAlpha = unlocked ? 1 : 0.84;
+          ctx.fillStyle = unlocked
+            ? (implemented ? "rgba(215, 173, 82, 0.96)" : "rgba(187, 156, 96, 0.9)")
+            : "rgba(74, 70, 62, 0.92)";
+          ctx.strokeStyle = selected ? "rgba(255, 244, 214, 0.98)" : "rgba(52, 34, 16, 0.86)";
+          ctx.lineWidth = selected ? 3.2 : 2;
+          ctx.beginPath();
+          ctx.arc(px, py, radius, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = unlocked ? "#2e1b08" : "#e6dac1";
+          ctx.font = "bold 11px " + UI_FONT;
+          ctx.textAlign = "center";
+          ctx.fillText(String(node.order), px, py + 4);
+          ctx.restore();
+
+          campaignMarkerRects.push({
+            id: node.id,
+            x: px - 18,
+            y: py - 18,
+            w: 36,
+            h: 36
+          });
+        });
+      } else {
+        ctx.fillStyle = "#d9ccb1";
+        fillRoundedRect(viewport.x + 20, viewport.y + 20, viewport.w - 40, viewport.h - 40, 18);
+      }
+      ctx.restore();
+
+      ctx.strokeStyle = "rgba(52, 34, 16, 0.3)";
+      ctx.lineWidth = 1.4;
+      ctx.strokeRect(viewport.x + 0.5, viewport.y + 0.5, viewport.w - 1, viewport.h - 1);
+
+      const infoY = H - 122;
+      const infoH = 96;
+      ctx.fillStyle = "rgba(22, 18, 14, 0.66)";
+      fillRoundedRect(16, infoY, W - 32, infoH, 18);
+
+      const selectedNode = getCampaignMapNode();
+      const unlocked = isCampaignUnlocked(selectedNode);
+      const implemented = isCampaignImplemented(selectedNode);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#fff1c8";
+      ctx.font = "17px " + UI_FONT;
+      ctx.fillText(`${selectedNode.order}. ${selectedNode.label}`, 30, infoY + 26);
+
+      ctx.fillStyle = "#f7e2b1";
+      ctx.font = "12px " + UI_FONT;
+      ctx.fillText(selectedNode.subtitle, 30, infoY + 46);
+      ctx.fillText(selectedNode.front, 30, infoY + 64);
+
+      const statusLabel = !unlocked
+        ? "Locked - opens in historical order"
+        : implemented
+          ? "Playable now"
+          : "Mapped - content to come";
+      ctx.fillStyle = unlocked ? "rgba(207, 244, 186, 0.95)" : "rgba(255, 220, 181, 0.95)";
+      ctx.font = "12px " + UI_FONT;
+      ctx.fillText(statusLabel, 30, infoY + 82);
+
+      campaignMapStartRect = null;
+      if (unlocked && implemented) {
+        campaignMapStartRect = { x: W - 138, y: infoY + 24, w: 100, h: 38 };
+        ctx.fillStyle = "rgba(214, 174, 86, 0.96)";
+        fillRoundedRect(campaignMapStartRect.x, campaignMapStartRect.y, campaignMapStartRect.w, campaignMapStartRect.h, 14);
+        ctx.fillStyle = "#2a1b08";
+        ctx.textAlign = "center";
+        ctx.font = "bold 14px " + UI_FONT;
+        ctx.fillText("Fly", campaignMapStartRect.x + campaignMapStartRect.w / 2, campaignMapStartRect.y + 24);
+      }
+
+      ctx.textAlign = "center";
+      hintEl.textContent = "Drag the map and tap a campaign marker";
+    }
+
     // ---------- SPLASH SCREEN ----------
     function drawSplash() {
       if (screen !== "splash") return;
@@ -3133,7 +3538,14 @@
       ctx.strokeText("Choose your side", W / 2, H * 0.34 + 6);
       ctx.fillText("Choose your side", W / 2, H * 0.34 + 6);
 
-      hangarEntryRect = { x: W / 2 - 60, y: H * 0.73, w: 120, h: 36 };
+      campaignMapEntryRect = { x: W / 2 - 126, y: H * 0.73, w: 112, h: 36 };
+      hangarEntryRect = { x: W / 2 + 14, y: H * 0.73, w: 112, h: 36 };
+      ctx.fillStyle = "rgba(24, 20, 16, 0.72)";
+      fillRoundedRect(campaignMapEntryRect.x, campaignMapEntryRect.y, campaignMapEntryRect.w, campaignMapEntryRect.h, 12);
+      ctx.fillStyle = "#fff2cb";
+      ctx.font = "14px " + UI_FONT;
+      ctx.fillText("Campaigns", campaignMapEntryRect.x + campaignMapEntryRect.w / 2, campaignMapEntryRect.y + 23);
+
       ctx.fillStyle = "rgba(24, 20, 16, 0.72)";
       fillRoundedRect(hangarEntryRect.x, hangarEntryRect.y, hangarEntryRect.w, hangarEntryRect.h, 12);
       ctx.fillStyle = "#fff2cb";
@@ -3231,7 +3643,7 @@
 
       ctx.textAlign = "center";
 
-      hintEl.textContent = "Tap a side or open the hangar";
+      hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
     }
 
     // ---------- GERMAN PLANE SELECT (uses DR3 thumbnail) ----------
@@ -3458,6 +3870,10 @@
         drawSplash();
         return;
       }
+      if (screen === "campaignMap") {
+        drawCampaignMap();
+        return;
+      }
       if (screen === "hangar") {
         drawHangar();
         return;
@@ -3473,6 +3889,64 @@
       if (screen === "game") {
         drawScene();
       }
+    }
+
+    function beginCampaignMapPointer(evt) {
+      const point = getCanvasCoordinates(evt);
+      campaignMapPointerActive = true;
+      campaignMapPointerMoved = false;
+      campaignMapPointerStart = point;
+      campaignMapLastPoint = point;
+    }
+
+    function updateCampaignMapPointer(evt) {
+      if (!campaignMapPointerActive || screen !== "campaignMap") return;
+      const point = getCanvasCoordinates(evt);
+      const dx = point.x - campaignMapLastPoint.x;
+      const dy = point.y - campaignMapLastPoint.y;
+      const startDx = point.x - campaignMapPointerStart.x;
+      const startDy = point.y - campaignMapPointerStart.y;
+
+      if (Math.abs(startDx) > 6 || Math.abs(startDy) > 6) {
+        campaignMapPointerMoved = true;
+      }
+
+      if (campaignMapPointerMoved) {
+        campaignMapPanX += dx;
+        campaignMapPanY += dy;
+        clampCampaignMapPan();
+        drawCampaignMap();
+      }
+
+      campaignMapLastPoint = point;
+    }
+
+    function endCampaignMapPointer(evt) {
+      if (!campaignMapPointerActive || screen !== "campaignMap") return;
+
+      const point = evt ? getCanvasCoordinates(evt) : campaignMapLastPoint;
+      const inside = (r) => r && point.x >= r.x && point.x <= r.x + r.w && point.y >= r.y && point.y <= r.y + r.h;
+
+      if (!campaignMapPointerMoved) {
+        if (inside(campaignMapBackRect)) {
+          screen = "splash";
+          hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
+          drawSplash();
+        } else if (inside(campaignMapStartRect)) {
+          startSelectedCampaign();
+        } else {
+          const clickedMarker = campaignMarkerRects.find(rect => inside(rect));
+          if (clickedMarker) {
+            selectedCampaignMapId = clickedMarker.id;
+            drawCampaignMap();
+          }
+        }
+      }
+
+      campaignMapPointerActive = false;
+      campaignMapPointerMoved = false;
+      campaignMapPointerStart = null;
+      campaignMapLastPoint = null;
     }
 
     function getCanvasCoordinates(evt) {
@@ -3496,6 +3970,8 @@
     }
 
     function handleInput(evt) {
+      if (!accessUnlocked) return;
+
       // start music on first interaction
       startBgmIfNeeded();
       ensureAirplaneSmokePlayback();
@@ -3518,14 +3994,18 @@
             drawBritishWIP();
             return;
           }
-        if (inside(hangarEntryRect)) {
-          currentHangarFaction = currentFaction;
-          currentHangarSection = "service";
-          selectedHangarPlaneType = planeType;
-          screen = "hangar";
-          drawHangar();
-          return;
-        }
+          if (inside(campaignMapEntryRect)) {
+            openCampaignMap();
+            return;
+          }
+          if (inside(hangarEntryRect)) {
+            currentHangarFaction = currentFaction;
+            currentHangarSection = "service";
+            selectedHangarPlaneType = planeType;
+            screen = "hangar";
+            drawHangar();
+            return;
+          }
           return;
         } else {
           ensurePilotName();
@@ -3540,10 +4020,22 @@
         }
       }
 
+      if (screen === "campaignMap") {
+        if (!evt) {
+          screen = "splash";
+          hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
+          drawSplash();
+          return;
+        }
+
+        beginCampaignMapPointer(evt);
+        return;
+      }
+
       if (screen === "hangar") {
         if (!evt) {
           screen = "splash";
-          hintEl.textContent = "Tap a side or open the hangar";
+          hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
           drawSplash();
           return;
         }
@@ -3553,7 +4045,7 @@
 
         if (inside(hangarBackRect)) {
           screen = "splash";
-          hintEl.textContent = "Tap a side or open the hangar";
+          hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
           drawSplash();
           return;
         }
@@ -3583,7 +4075,7 @@
         }
 
         screen = "splash";
-        hintEl.textContent = "Tap a side or open the hangar";
+        hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
         drawSplash();
         return;
       }
@@ -3696,6 +4188,7 @@
     }
 
     window.addEventListener("keydown", (e) => {
+      if (!accessUnlocked) return;
       if (e.code === "KeyX") {
         e.preventDefault();
         activateBurstMode();
@@ -3712,9 +4205,37 @@
       handleInput(e);
     });
 
+    window.addEventListener("mousemove", (e) => {
+      if (screen === "campaignMap") {
+        e.preventDefault();
+        updateCampaignMapPointer(e);
+      }
+    });
+
+    window.addEventListener("mouseup", (e) => {
+      if (screen === "campaignMap") {
+        e.preventDefault();
+        endCampaignMapPointer(e);
+      }
+    });
+
     window.addEventListener("touchstart", (e) => {
       e.preventDefault();
       handleInput(e);
+    }, { passive: false });
+
+    window.addEventListener("touchmove", (e) => {
+      if (screen === "campaignMap") {
+        e.preventDefault();
+        updateCampaignMapPointer(e);
+      }
+    }, { passive: false });
+
+    window.addEventListener("touchend", (e) => {
+      if (screen === "campaignMap") {
+        e.preventDefault();
+        endCampaignMapPointer(e);
+      }
     }, { passive: false });
 
     let canvasResolutionRaf = 0;
@@ -3734,6 +4255,7 @@
     resetGame();
     updateOverlayVisibility();
     drawSplash();
+    initEarlyAccessGate();
   </script>
 </body>
 </html>

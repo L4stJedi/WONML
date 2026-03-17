@@ -436,6 +436,42 @@ After finishing the campaign path, unlock:
 
 Free Flight should mix threats, atmospheres, and aircraft eras from all unlocked campaigns, and let the player choose any unlocked aircraft.
 
+### Late-Game Online Mode
+
+After the full campaign path and `Free Flight` are in place, add:
+
+- `Duel Mode`
+
+This should be a late-stage retention and community feature, not a core prototype priority.
+
+Core rules:
+
+- both players keep the same screen direction as the main game
+- each player sees their own aircraft on the left
+- the opponent is always presented as the threat on the right
+- keep the same basic flight language: climb, auto-fire, burst abilities
+
+Recommended match structure:
+
+1. player A attacks, player B defends
+2. player B attacks, player A defends
+3. final deciding round
+
+Fairness rule:
+
+- if a player leaves, it counts as a forfeit
+- the other player receives the win and credit
+- do not invalidate the whole match just because all 3 rounds were not completed
+
+Design goals:
+
+- short matches
+- readable combat
+- no pay-to-win aircraft advantage
+- mirrored or tightly balanced power use
+
+This mode should sit on top of the finished single-player game, not compete with building it.
+
 ## Gameplay Systems
 
 ### Flight and Damage
@@ -581,6 +617,13 @@ Future production feature:
 - potentially squadron-based recognition or standings later
 
 This gives social identity without requiring full multiplayer combat.
+
+Later, squadrons should connect naturally to:
+
+- `Duel Mode`
+- squadron reputation
+- ace boards
+- shared identity and long-term community retention
 
 ### Custom Liveries
 
@@ -744,6 +787,7 @@ Focus:
 - squadron identity
 - pilot profile sync
 - later cosmetic sync / sharing
+- later `Duel Mode`
 
 Exit criteria:
 
@@ -773,12 +817,27 @@ When making new features, prefer:
 - one working version first
 - then polish
 - then breadth
+- roadmap-first decisions unless there is a strong reason to change course
 
 Avoid:
 
 - overbuilding social systems before the prototype is fun
 - introducing too many factions at once
 - letting art style drift between asset batches
+
+## Roadmap Discipline
+
+Use this rule during development:
+
+- if a new idea strengthens the current roadmap phase, keep it
+- if a new idea is good but belongs to a later phase, capture it and postpone it
+- if a new idea conflicts with the current phase, call it out explicitly before acting on it
+
+In practice:
+
+- prototype phase should stay focused on the single-player campaign loop
+- community and PvP features are valuable, but belong later
+- Belgium vertical-slice quality remains more important than adding broad online systems too early
 
 ## Short Summary
 
