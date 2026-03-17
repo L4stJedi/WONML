@@ -270,6 +270,13 @@
       gap: 12px;
     }
 
+    .access-input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
     .access-form input {
       width: 100%;
       border-radius: 12px;
@@ -297,6 +304,11 @@
       cursor: pointer;
     }
 
+    .access-toggle {
+      min-width: 76px;
+      white-space: nowrap;
+    }
+
     .access-note {
       margin-top: 12px;
       font-size: 12px;
@@ -319,7 +331,10 @@
       <h1>Early Access</h1>
       <p>This prototype build is private for invited testers. Enter the access code to continue.</p>
       <form id="accessForm" class="access-form">
-        <input id="accessInput" type="password" placeholder="Enter access code" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" />
+        <div class="access-input-row">
+          <input id="accessInput" type="password" placeholder="Enter access code" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" />
+          <button id="accessToggle" class="access-toggle" type="button" aria-pressed="false">Show</button>
+        </div>
         <button type="submit">Enter The Hangar</button>
       </form>
       <div id="accessError" class="access-error"></div>
@@ -371,6 +386,7 @@
     const accessGateEl = document.getElementById("accessGate");
     const accessFormEl = document.getElementById("accessForm");
     const accessInputEl = document.getElementById("accessInput");
+    const accessToggleEl = document.getElementById("accessToggle");
     const accessErrorEl = document.getElementById("accessError");
 
     const bgmRun = document.getElementById("bgmRun");
@@ -447,6 +463,13 @@
       if (accessInputEl && !accessUnlocked) {
         requestAnimationFrame(() => accessInputEl.focus());
       }
+    }
+
+    function updateAccessToggle() {
+      if (!accessToggleEl || !accessInputEl) return;
+      const showing = accessInputEl.type === "text";
+      accessToggleEl.textContent = showing ? "Hide" : "Show";
+      accessToggleEl.setAttribute("aria-pressed", showing ? "true" : "false");
     }
 
     function normalizeAccessCode(value) {
@@ -1265,6 +1288,15 @@
 
     if (accessFormEl) {
       accessFormEl.addEventListener("submit", handleAccessSubmit);
+    }
+
+    if (accessToggleEl && accessInputEl) {
+      accessToggleEl.addEventListener("click", () => {
+        accessInputEl.type = accessInputEl.type === "password" ? "text" : "password";
+        updateAccessToggle();
+        focusAccessInput();
+      });
+      updateAccessToggle();
     }
 
     if (burstBtn) {
