@@ -40,6 +40,7 @@
       background: rgba(0, 0, 0, 0.25);
       box-shadow: 0 14px 40px rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(6px);
+      transform-origin: center center;
     }
 
     canvas {
@@ -371,6 +372,7 @@
 
   <script>
     // === DOM & canvas ===
+    const gameWrapperEl = document.querySelector(".game-wrapper");
     const canvas = document.getElementById("game");
     /** @type {CanvasRenderingContext2D} */
     const ctx = canvas.getContext("2d");
@@ -406,6 +408,18 @@
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
+    }
+
+    function syncGameWrapperScale() {
+      if (!gameWrapperEl) return;
+
+      const wrapperWidth = W + 32;
+      const wrapperHeight = H + 32;
+      const availableWidth = Math.max(280, window.innerWidth - 12);
+      const availableHeight = Math.max(320, window.innerHeight - 12);
+      const scale = Math.min(1, availableWidth / wrapperWidth, availableHeight / wrapperHeight);
+
+      gameWrapperEl.style.transform = `scale(${scale})`;
     }
 
     const UI_FONT = "Segoe UI, Tahoma, Geneva, Verdana, sans-serif";
@@ -4299,6 +4313,7 @@
       canvasResolutionRaf = requestAnimationFrame(() => {
         canvasResolutionRaf = 0;
         syncCanvasResolution();
+        syncGameWrapperScale();
         redrawCurrentScreen();
       });
     }
@@ -4307,6 +4322,7 @@
     window.addEventListener("orientationchange", queueCanvasResolutionSync);
 
     syncCanvasResolution();
+    syncGameWrapperScale();
     resetGame();
     updateOverlayVisibility();
     drawSplash();
