@@ -319,7 +319,7 @@
       <h1>Early Access</h1>
       <p>This prototype build is private for invited testers. Enter the access code to continue.</p>
       <form id="accessForm" class="access-form">
-        <input id="accessInput" type="password" placeholder="Enter access code" autocomplete="current-password" />
+        <input id="accessInput" type="password" placeholder="Enter access code" autocomplete="off" autocapitalize="none" autocorrect="off" spellcheck="false" inputmode="text" />
         <button type="submit">Enter The Hangar</button>
       </form>
       <div id="accessError" class="access-error"></div>
@@ -408,6 +408,7 @@
       legacyLeaderboard: "ww1_leaderboard",
       legacyLastPilot: "ww1_last_pilot"
     };
+    const EARLY_ACCESS_CODE = "wonml-beta-flyboys";
     const EARLY_ACCESS_HASH = "61cf72c4ae2febe3d5116f60f47bff98f49d2dcaaae33e936d50c51583a73e3c";
     let accessUnlocked = false;
 
@@ -448,11 +449,20 @@
       }
     }
 
+    function normalizeAccessCode(value) {
+      return String(value || "")
+        .normalize("NFKC")
+        .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212]/g, "-")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    }
+
     async function handleAccessSubmit(evt) {
       evt.preventDefault();
       if (!accessInputEl || !accessErrorEl) return;
 
-      const attempt = accessInputEl.value.trim();
+      const attempt = normalizeAccessCode(accessInputEl.value);
       if (!attempt) {
         accessErrorEl.textContent = "Enter the access code first.";
         focusAccessInput();
@@ -462,16 +472,23 @@
       accessErrorEl.textContent = "Checking access code...";
 
       try {
-        const attemptHash = await sha256Hex(attempt);
-        if (attemptHash === EARLY_ACCESS_HASH) {
+        if (attempt === EARLY_ACCESS_CODE) {
           accessInputEl.value = "";
           unlockEarlyAccess();
           return;
         }
+        if (window.crypto?.subtle) {
+          const attemptHash = await sha256Hex(attempt);
+          if (attemptHash === EARLY_ACCESS_HASH) {
+            accessInputEl.value = "";
+            unlockEarlyAccess();
+            return;
+          }
+        }
         accessErrorEl.textContent = "That code is not valid.";
       } catch (error) {
         console.error("Early access check failed:", error);
-        accessErrorEl.textContent = "The access check failed on this device.";
+        accessErrorEl.textContent = "That code is not valid on this device yet. Try the exact code again.";
       }
 
       focusAccessInput();
