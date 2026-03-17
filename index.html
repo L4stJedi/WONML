@@ -33,6 +33,13 @@
       touch-action: none;
     }
 
+    body.compact-layout {
+      align-items: flex-start;
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+      background: linear-gradient(180deg, #2a4972 0%, #1e2a3a 100%);
+    }
+
     .game-wrapper {
       position: relative;
       padding: 16px;
@@ -43,11 +50,24 @@
       transform-origin: center center;
     }
 
+    body.compact-layout .game-wrapper {
+      padding: 4px;
+      border-radius: 10px;
+      background: transparent;
+      box-shadow: none;
+      backdrop-filter: none;
+    }
+
     canvas {
       display: block;
       background: #6bb34d;
       border-radius: 16px;
       box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    body.compact-layout canvas {
+      border-radius: 12px;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
     }
 
     .hud {
@@ -158,6 +178,11 @@
       z-index: 5;
     }
 
+    body.compact-layout .mute-btn {
+      top: 10px;
+      right: 10px;
+    }
+
     .mute-btn:hover {
       background:
         radial-gradient(circle at 30% 28%, rgba(255, 246, 219, 0.28) 0, rgba(255, 246, 219, 0) 36%),
@@ -207,6 +232,56 @@
         inset 0 1px 0 rgba(255, 249, 231, 0.9);
       z-index: 5;
       display: none;
+    }
+
+    .burst-btn.is-left {
+      left: 20px;
+      right: auto;
+    }
+
+    body.compact-layout .burst-btn {
+      right: 12px;
+      bottom: 58px;
+    }
+
+    body.compact-layout .burst-btn.is-left {
+      left: 12px;
+      right: auto;
+    }
+
+    .hand-btn {
+      position: absolute;
+      top: 64px;
+      right: 20px;
+      min-width: 82px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: none;
+      background: rgba(26, 22, 17, 0.72);
+      color: #fff1cc;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Baskerville, Georgia, serif;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1.1;
+      cursor: pointer;
+      box-shadow:
+        0 4px 12px rgba(0,0,0,0.32),
+        inset 0 1px 0 rgba(255, 241, 206, 0.16);
+      z-index: 5;
+      display: none;
+      white-space: pre-line;
+      text-align: center;
+    }
+
+    .hand-btn:hover {
+      background: rgba(18, 15, 12, 0.82);
+    }
+
+    body.compact-layout .hand-btn {
+      top: 56px;
+      right: 10px;
+      min-width: 76px;
+      padding: 7px 8px;
     }
 
     .burst-btn.active {
@@ -363,6 +438,7 @@
     <!-- Music controls + audio -->
     <button id="burstBtn" class="burst-btn">BURST
 1 XP</button>
+    <button id="handBtn" class="hand-btn" aria-label="Switch burst hand"></button>
     <button id="muteBtn" class="mute-btn" aria-label="Toggle sound"></button>
     <audio id="bgmRun" src="assets/audio/bgm_run.mp3" loop></audio>
   </div>
@@ -393,6 +469,7 @@
 
     const bgmRun = document.getElementById("bgmRun");
     const burstBtn = document.getElementById("burstBtn");
+    const handBtn = document.getElementById("handBtn");
     const muteBtn = document.getElementById("muteBtn");
 
     const W = Number(canvas.getAttribute("width")) || 480;
@@ -413,12 +490,15 @@
     function syncGameWrapperScale() {
       if (!gameWrapperEl) return;
 
-      const wrapperWidth = W + 32;
-      const wrapperHeight = H + 32;
-      const availableWidth = Math.max(280, window.innerWidth - 12);
-      const availableHeight = Math.max(320, window.innerHeight - 12);
+      const compactLayout = window.innerWidth < 430 || window.innerHeight < 760;
+      const wrapperPad = compactLayout ? 8 : 32;
+      const availableWidth = Math.max(280, window.innerWidth - (compactLayout ? 4 : 12));
+      const availableHeight = Math.max(320, window.innerHeight - (compactLayout ? 4 : 12));
+      const wrapperWidth = W + wrapperPad;
+      const wrapperHeight = H + wrapperPad;
       const scale = Math.min(1, availableWidth / wrapperWidth, availableHeight / wrapperHeight);
 
+      document.body.classList.toggle("compact-layout", compactLayout);
       gameWrapperEl.style.transform = `scale(${scale})`;
     }
 
@@ -432,6 +512,7 @@
       leaderboard: `${STORAGE_REVISION}_leaderboard`,
       hangarStats: `${STORAGE_REVISION}_hangar_stats`,
       lastPilot: `${STORAGE_REVISION}_last_pilot`,
+      burstHand: `${STORAGE_REVISION}_burst_hand`,
       earlyAccess: `${STORAGE_REVISION}_early_access`,
       legacyBest: "ww1_fokker_best",
       legacyBestPilot: "ww1_fokker_best_pilot",
@@ -441,6 +522,7 @@
     const EARLY_ACCESS_CODE = "wonml-beta-flyboys";
     const EARLY_ACCESS_HASH = "61cf72c4ae2febe3d5116f60f47bff98f49d2dcaaae33e936d50c51583a73e3c";
     let accessUnlocked = false;
+    let burstHand = localStorage.getItem(STORAGE_KEYS.burstHand) === "left" ? "left" : "right";
 
     function getStoredValue(key, legacyKey) {
       const current = localStorage.getItem(key);
@@ -1277,6 +1359,18 @@
       muteBtn.setAttribute("title", bgmMuted ? "Sound off" : "Sound on");
     }
 
+    function updateBurstHandUi() {
+      if (burstBtn) {
+        burstBtn.classList.toggle("is-left", burstHand === "left");
+      }
+      if (handBtn) {
+        const usingLeft = burstHand === "left";
+        handBtn.textContent = usingLeft ? "Burst\nLeft" : "Burst\nRight";
+        handBtn.setAttribute("aria-pressed", usingLeft ? "true" : "false");
+        handBtn.setAttribute("title", usingLeft ? "Burst button on the left" : "Burst button on the right");
+      }
+    }
+
     function startBgmIfNeeded() {
       if (!bgmRun || bgmStarted) return;
       bgmStarted = true;
@@ -1299,6 +1393,15 @@
     }
 
     updateMuteButtonIcon();
+    updateBurstHandUi();
+
+    if (handBtn) {
+      handBtn.addEventListener("click", () => {
+        burstHand = burstHand === "left" ? "right" : "left";
+        localStorage.setItem(STORAGE_KEYS.burstHand, burstHand);
+        updateBurstHandUi();
+      });
+    }
 
     if (accessFormEl) {
       accessFormEl.addEventListener("submit", handleAccessSubmit);
@@ -1404,6 +1507,7 @@
       const showHud = screen === "game";
       const showMute = true;
       const showBurst = screen === "game" && !gameOver;
+      const showHand = screen !== "game";
       if (scoreEl && scoreEl.closest(".hud")) {
         scoreEl.closest(".hud").style.display = showHud ? "flex" : "none";
       }
@@ -1413,6 +1517,10 @@
       if (burstBtn) {
         burstBtn.style.display = showBurst ? "block" : "none";
       }
+      if (handBtn) {
+        handBtn.style.display = showHand ? "block" : "none";
+      }
+      updateBurstHandUi();
       updateBurstButton();
     }
 
