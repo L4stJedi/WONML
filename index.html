@@ -234,7 +234,38 @@
       display: none;
     }
 
+    .rapid-btn {
+      position: absolute;
+      right: 20px;
+      bottom: 124px;
+      min-width: 78px;
+      padding: 10px 12px 9px;
+      border-radius: 14px;
+      border: 1.5px solid rgba(40, 44, 67, 0.92);
+      background:
+        linear-gradient(180deg, rgba(189, 226, 255, 0.96) 0%, rgba(88, 141, 201, 0.96) 100%);
+      color: #10243b;
+      font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Baskerville, Georgia, serif;
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      line-height: 1.05;
+      text-align: center;
+      white-space: pre-line;
+      cursor: pointer;
+      box-shadow:
+        0 5px 14px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(232, 245, 255, 0.9);
+      z-index: 5;
+      display: none;
+    }
+
     .burst-btn.is-left {
+      left: 20px;
+      right: auto;
+    }
+
+    .rapid-btn.is-left {
       left: 20px;
       right: auto;
     }
@@ -244,7 +275,17 @@
       bottom: 58px;
     }
 
+    body.compact-layout .rapid-btn {
+      right: 12px;
+      bottom: 120px;
+    }
+
     body.compact-layout .burst-btn.is-left {
+      left: 12px;
+      right: auto;
+    }
+
+    body.compact-layout .rapid-btn.is-left {
       left: 12px;
       right: auto;
     }
@@ -293,7 +334,22 @@
         inset 0 1px 0 rgba(255, 252, 236, 0.96);
     }
 
+    .rapid-btn.active {
+      background:
+        linear-gradient(180deg, rgba(218, 241, 255, 0.98) 0%, rgba(98, 186, 255, 0.98) 100%);
+      box-shadow:
+        0 0 0 2px rgba(153, 223, 255, 0.26),
+        0 6px 18px rgba(54, 147, 255, 0.28),
+        inset 0 1px 0 rgba(242, 250, 255, 0.98);
+    }
+
     .burst-btn:disabled {
+      opacity: 0.42;
+      cursor: default;
+      filter: saturate(0.55);
+    }
+
+    .rapid-btn:disabled {
       opacity: 0.42;
       cursor: default;
       filter: saturate(0.55);
@@ -424,7 +480,7 @@
     <div class="hud">
       <div><span class="label">Score:</span><span id="score">0</span></div>
       <div><span class="label">XP:</span><span id="xp">0 (0/5)</span></div>
-      <div><span class="label">Best:</span><span id="best">0</span></div>
+      <div><span class="label">Your Best:</span><span id="best">0</span></div>
       <div><span class="label">Stage:</span><span id="levelName">Fokker Eindecker</span></div>
       <div><span class="label">Lives:</span><span id="lives">❤❤❤</span></div>
       <div><span class="label">Pilot:</span><span id="currentPilot">-</span></div>
@@ -436,6 +492,8 @@
     </div>
 
     <!-- Music controls + audio -->
+    <button id="rapidBtn" class="rapid-btn">RAPID
+1 XP</button>
     <button id="burstBtn" class="burst-btn">BURST
 1 XP</button>
     <button id="handBtn" class="hand-btn" aria-label="Switch burst hand"></button>
@@ -468,6 +526,7 @@
     const accessErrorEl = document.getElementById("accessError");
 
     const bgmRun = document.getElementById("bgmRun");
+    const rapidBtn = document.getElementById("rapidBtn");
     const burstBtn = document.getElementById("burstBtn");
     const handBtn = document.getElementById("handBtn");
     const muteBtn = document.getElementById("muteBtn");
@@ -504,11 +563,14 @@
 
     const UI_FONT = "Segoe UI, Tahoma, Geneva, Verdana, sans-serif";
     const GAME_TITLE = "Wings Over No Man's Land";
-    const GAMEPLAY_HINT = "Tap or press SPACE to fly\nPress X or BURST for double burst";
+    const GAMEPLAY_HINT = "Tap or press SPACE to fly\nX = BURST, C = RAPID";
+    const MAIN_MENU_HINT = "Tap a side, view campaigns, open settings, or open the hangar";
+    const TESTER_NOTES_HINT = "Review the latest changes, then continue to the main menu";
     const STORAGE_REVISION = "wonml_r2";
     const STORAGE_KEYS = {
       best: `${STORAGE_REVISION}_best`,
       bestPilot: `${STORAGE_REVISION}_best_pilot`,
+      pilotBests: `${STORAGE_REVISION}_pilot_bests`,
       leaderboard: `${STORAGE_REVISION}_leaderboard`,
       hangarStats: `${STORAGE_REVISION}_hangar_stats`,
       lastPilot: `${STORAGE_REVISION}_last_pilot`,
@@ -553,6 +615,9 @@
       if (accessErrorEl) {
         accessErrorEl.textContent = "";
       }
+      screen = "testerNotes";
+      hintEl.textContent = TESTER_NOTES_HINT;
+      redrawCurrentScreen();
     }
 
     function focusAccessInput() {
@@ -631,13 +696,14 @@
     const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impjd213Ymx2cGFrc3Ria2lmcGtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzQzODcsImV4cCI6MjA4OTI1MDM4N30.aROdC_urHemSqKX2Oz0ejBLn64hRQsoT3ZBDX72re30";
     const sb = createClient(supabaseUrl, supabaseKey);
 
-    // Screens: splash, campaignMap, hangar, planeSelectGerman, planeSelectBritish, game
+    // Screens: testerNotes, splash, campaignMap, settings, hangar, planeSelectGerman, planeSelectBritish, game
     let screen = "splash";
 
     let germanEntryRect = null;
     let britishEntryRect = null;
     let hangarEntryRect = null;
     let campaignMapEntryRect = null;
+    let settingsEntryRect = null;
     let germanPlaneChoices = [];
     let britishPlaneChoices = [];
     let hangarFactionTabs = [];
@@ -647,6 +713,11 @@
     let campaignMapBackRect = null;
     let campaignMapStartRect = null;
     let campaignMarkerRects = [];
+    let gameOverRestartRect = null;
+    let gameOverMenuRect = null;
+    let settingsBackRect = null;
+    let settingsFireHandRect = null;
+    let testerNotesContinueRect = null;
     let currentHangarFaction = "germany";
     let currentHangarSection = "service";
     let selectedHangarPlaneType = "e3std";
@@ -1450,8 +1521,12 @@
     const PLANE_HEIGHT = 28;
     const PLANE_X = 90;
     const XP_PER_ACE_STEP = 5;
+    const BASE_FIRE_INTERVAL = 320;
+    const RAPID_FIRE_INTERVAL = 185;
     const DOUBLE_BURST_XP_COST = 1;
     const DOUBLE_BURST_DURATION = 6500;
+    const RAPID_FIRE_XP_COST = 1;
+    const RAPID_FIRE_DURATION = 6500;
     let currentCampaignIndex = 0;
     let currentStageIndex = 0;
 
@@ -1471,6 +1546,7 @@
     let lastShotTime = 0;
     let roundStartTime = 0;
     let burstModeUntil = 0;
+    let rapidFireUntil = 0;
     let activeCampaignIntro = null;
     let campaignIntroUntil = 0;
 
@@ -1507,6 +1583,7 @@
     // High score & leaderboard
     let bestScore = parseInt(getStoredValue(STORAGE_KEYS.best, STORAGE_KEYS.legacyBest) || "0", 10);
     let bestPilotName = getStoredValue(STORAGE_KEYS.bestPilot, STORAGE_KEYS.legacyBestPilot) || "-";
+    let pilotBestScores = {};
 
     let leaderboard = [];
 
@@ -1517,6 +1594,65 @@
       } catch (e) {
         console.log("Cannot save leaderboard locally:", e);
       }
+    }
+
+    function loadPilotBestScores() {
+      const raw = localStorage.getItem(STORAGE_KEYS.pilotBests);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") {
+          pilotBestScores = parsed;
+        }
+      } catch (e) {
+        console.log("Cannot parse pilot best scores locally:", e);
+      }
+    }
+
+    function savePilotBestScores() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.pilotBests, JSON.stringify(pilotBestScores));
+      } catch (e) {
+        console.log("Cannot save pilot best scores locally:", e);
+      }
+    }
+
+    function getPilotBestScore(name) {
+      if (!name) return null;
+
+      let best = Number(pilotBestScores[name]) || 0;
+      const leaderboardEntry = leaderboard.find(entry => entry.name === name);
+      if (leaderboardEntry && leaderboardEntry.score > best) {
+        best = leaderboardEntry.score;
+      }
+      if (name === bestPilotName && bestScore > best) {
+        best = bestScore;
+      }
+      return best;
+    }
+
+    function setPilotBestScore(name, scoreValue) {
+      if (!name) return 0;
+      const normalized = Math.max(0, Number(scoreValue) || 0);
+      const previous = Number(pilotBestScores[name]) || 0;
+      if (normalized > previous) {
+        pilotBestScores[name] = normalized;
+        savePilotBestScores();
+      }
+      return Number(pilotBestScores[name]) || 0;
+    }
+
+    function formatTopAceLine() {
+      if (bestScore > 0 && bestPilotName && bestPilotName !== "-") {
+        return `${bestPilotName} - ${bestScore}`;
+      }
+      return "No aces recorded yet";
+    }
+
+    function updateBestDisplays() {
+      const playerBest = getCurrentPilotBestScore();
+      bestEl.textContent = String(playerBest ?? 0);
+      bestPilotEl.textContent = formatTopAceLine();
     }
 
     function saveHangarStats() {
@@ -1555,14 +1691,17 @@
     }
 
     function updateBurstHandUi() {
+      if (rapidBtn) {
+        rapidBtn.classList.toggle("is-left", burstHand === "left");
+      }
       if (burstBtn) {
         burstBtn.classList.toggle("is-left", burstHand === "left");
       }
       if (handBtn) {
         const usingLeft = burstHand === "left";
-        handBtn.textContent = usingLeft ? "Burst\nLeft" : "Burst\nRight";
+        handBtn.textContent = usingLeft ? "Fire Hand\nLeft" : "Fire Hand\nRight";
         handBtn.setAttribute("aria-pressed", usingLeft ? "true" : "false");
-        handBtn.setAttribute("title", usingLeft ? "Burst button on the left" : "Burst button on the right");
+        handBtn.setAttribute("title", usingLeft ? "Fire buttons on the left" : "Fire buttons on the right");
       }
     }
 
@@ -1622,6 +1761,17 @@
       burstBtn.addEventListener("touchstart", triggerBurst, { passive: false });
     }
 
+    if (rapidBtn) {
+      const triggerRapid = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        activateRapidFire();
+      };
+
+      rapidBtn.addEventListener("mousedown", triggerRapid);
+      rapidBtn.addEventListener("touchstart", triggerRapid, { passive: false });
+    }
+
     // === Load leaderboard from Supabase (global) ===
     async function initLeaderboard() {
       // 1) Local cache
@@ -1656,13 +1806,12 @@
         console.log("Online leaderboard not available, using local only.", err);
       }
 
-      if (leaderboard.length > 0) {
+      if (leaderboard.length > 0 && leaderboard[0].score >= bestScore) {
         bestScore = leaderboard[0].score;
         bestPilotName = leaderboard[0].name || "-";
       }
 
-      bestEl.textContent = bestScore;
-      bestPilotEl.textContent = bestPilotName;
+      updateBestDisplays();
 
       if (screen === "splash") {
         drawSplash();
@@ -1670,6 +1819,7 @@
     }
 
     // call once on load
+    loadPilotBestScores();
     loadHangarStats();
     initLeaderboard();
 
@@ -1693,16 +1843,14 @@
     let planeType = "e3std";
 
     scoreEl.textContent = score;
-    bestEl.textContent = bestScore;
     levelNameEl.textContent = getCurrentStage().name;
-    bestPilotEl.textContent = bestPilotName;
     currentPilotEl.textContent = currentPilotName || "-";
+    updateBestDisplays();
 
     function updateOverlayVisibility() {
       const showHud = screen === "game";
       const showMute = true;
       const showBurst = screen === "game" && !gameOver;
-      const showHand = screen !== "game";
       if (scoreEl && scoreEl.closest(".hud")) {
         scoreEl.closest(".hud").style.display = showHud ? "flex" : "none";
       }
@@ -1712,11 +1860,14 @@
       if (burstBtn) {
         burstBtn.style.display = showBurst ? "block" : "none";
       }
+      if (rapidBtn) {
+        rapidBtn.style.display = showBurst ? "block" : "none";
+      }
       if (handBtn) {
-        handBtn.style.display = showHand ? "block" : "none";
+        handBtn.style.display = "none";
       }
       updateBurstHandUi();
-      updateBurstButton();
+      updatePowerButtons();
     }
 
     function updateLivesDisplay() {
@@ -1758,39 +1909,70 @@
       return burstModeUntil > timestamp;
     }
 
+    function isRapidFireActive(timestamp = performance.now()) {
+      return rapidFireUntil > timestamp;
+    }
+
     function updateXpDisplay() {
       const progress = enemiesShotDown % XP_PER_ACE_STEP;
       xpEl.textContent = `${xpPoints} (${progress}/${XP_PER_ACE_STEP})`;
-      updateBurstButton();
+      updatePowerButtons();
     }
 
-    function updateBurstButton(timestamp = performance.now()) {
-      if (!burstBtn) return;
-
-      const active = isBurstModeActive(timestamp);
-      burstBtn.classList.toggle("active", active);
-
-      if (active) {
-        const seconds = Math.max(0, Math.ceil((burstModeUntil - timestamp) / 1000));
-        burstBtn.textContent = `BURST\n${seconds}s`;
-        burstBtn.disabled = false;
-        return;
+    function updatePowerButtons(timestamp = performance.now()) {
+      if (burstBtn) {
+        const burstActive = isBurstModeActive(timestamp);
+        burstBtn.classList.toggle("active", burstActive);
+        if (burstActive) {
+          const seconds = Math.max(0, Math.ceil((burstModeUntil - timestamp) / 1000));
+          burstBtn.textContent = `BURST\n${seconds}s`;
+          burstBtn.disabled = false;
+        } else {
+          burstBtn.textContent = xpPoints >= DOUBLE_BURST_XP_COST ? "BURST\n1 XP" : "BURST\nNEED XP";
+          burstBtn.disabled = xpPoints < DOUBLE_BURST_XP_COST || isRapidFireActive(timestamp);
+        }
       }
 
-      burstBtn.textContent = xpPoints >= DOUBLE_BURST_XP_COST ? "BURST\n1 XP" : "BURST\nNEED XP";
-      burstBtn.disabled = xpPoints < DOUBLE_BURST_XP_COST;
+      if (rapidBtn) {
+        const rapidActive = isRapidFireActive(timestamp);
+        rapidBtn.classList.toggle("active", rapidActive);
+        if (rapidActive) {
+          const seconds = Math.max(0, Math.ceil((rapidFireUntil - timestamp) / 1000));
+          rapidBtn.textContent = `RAPID\n${seconds}s`;
+          rapidBtn.disabled = false;
+        } else {
+          rapidBtn.textContent = xpPoints >= RAPID_FIRE_XP_COST ? "RAPID\n1 XP" : "RAPID\nNEED XP";
+          rapidBtn.disabled = xpPoints < RAPID_FIRE_XP_COST || isBurstModeActive(timestamp);
+        }
+      }
     }
 
     function activateBurstMode(timestamp = performance.now()) {
       if (screen !== "game" || gameOver || xpPoints < DOUBLE_BURST_XP_COST) {
-        updateBurstButton(timestamp);
+        updatePowerButtons(timestamp);
         return false;
       }
 
       xpPoints -= DOUBLE_BURST_XP_COST;
+      rapidFireUntil = 0;
       burstModeUntil = Math.max(burstModeUntil, timestamp) + DOUBLE_BURST_DURATION;
       updateXpDisplay();
       hintEl.textContent = "Double burst engaged";
+      return true;
+    }
+
+    function activateRapidFire(timestamp = performance.now()) {
+      if (screen !== "game" || gameOver || xpPoints < RAPID_FIRE_XP_COST) {
+        updatePowerButtons(timestamp);
+        return false;
+      }
+
+      xpPoints -= RAPID_FIRE_XP_COST;
+      burstModeUntil = 0;
+      rapidFireUntil = 0;
+      rapidFireUntil = Math.max(rapidFireUntil, timestamp) + RAPID_FIRE_DURATION;
+      updateXpDisplay();
+      hintEl.textContent = "Rapid fire engaged";
       return true;
     }
 
@@ -1798,15 +1980,18 @@
       score += points;
       scoreEl.textContent = score;
 
+      if (currentPilotName && score > (getCurrentPilotBestScore() || 0)) {
+        setPilotBestScore(currentPilotName, score);
+      }
+
       if (score > bestScore) {
         bestScore = score;
         bestPilotName = currentPilotName || bestPilotName || "Unknown";
-        bestEl.textContent = bestScore;
-        bestPilotEl.textContent = bestPilotName;
         localStorage.setItem(STORAGE_KEYS.best, String(bestScore));
         localStorage.setItem(STORAGE_KEYS.bestPilot, bestPilotName);
       }
 
+      updateBestDisplays();
       updateLevelByScore();
       checkUnlocks();
     }
@@ -1836,6 +2021,7 @@
         currentPilotName = name;
         currentPilotEl.textContent = currentPilotName;
         localStorage.setItem(STORAGE_KEYS.lastPilot, currentPilotName);
+        updateBestDisplays();
       }
     }
 
@@ -1845,6 +2031,7 @@
 
       const name = currentPilotName;
       const newScore = score;
+      setPilotBestScore(name, newScore);
 
       // 1) Update local leaderboard
       let entry = leaderboard.find(e => e.name === name);
@@ -1863,14 +2050,13 @@
 
       saveLeaderboard();
 
-      if (leaderboard.length > 0) {
+      if (leaderboard.length > 0 && leaderboard[0].score >= bestScore) {
         bestScore = leaderboard[0].score;
         bestPilotName = leaderboard[0].name || "-";
-        bestEl.textContent = bestScore;
-        bestPilotEl.textContent = bestPilotName;
         localStorage.setItem(STORAGE_KEYS.best, String(bestScore));
         localStorage.setItem(STORAGE_KEYS.bestPilot, bestPilotName);
       }
+      updateBestDisplays();
 
       // 2) Insert into Supabase (one row per run)
       try {
@@ -1888,17 +2074,7 @@
 
     function getCurrentPilotBestScore() {
       if (!currentPilotName) return null;
-
-      const leaderboardEntry = leaderboard.find(entry => entry.name === currentPilotName);
-      if (leaderboardEntry) {
-        return leaderboardEntry.score;
-      }
-
-      if (currentPilotName === bestPilotName) {
-        return bestScore;
-      }
-
-      return 0;
+      return getPilotBestScore(currentPilotName) ?? 0;
     }
 
     function resetGame() {
@@ -1946,7 +2122,7 @@
       parallax.far = 0;
       parallax.mid = 0;
       parallax.fore = 0;
-      updateBurstButton();
+      updatePowerButtons();
     }
 
     function startGameLoop() {
@@ -2210,15 +2386,27 @@
       enemies.push(createEnemy(enemyType, y, level));
     }
 
-    function tryAutoFire(planeCx, planeCy, timestamp) {
-      if (timestamp - lastShotTime < 320) return;
-
-      const target = enemies.find(enemy =>
+    function getAutoFireTarget(planeCx, planeCy) {
+      const enemyTarget = enemies.find(enemy =>
         enemy.x > planeCx &&
         enemy.x < planeCx + 220 &&
         Math.abs(enemy.y - planeCy) < (enemy.type === "zeppelin" ? 56 : 34)
       );
+      if (enemyTarget) return enemyTarget;
 
+      return obstacles.find(obstacle =>
+        obstacle.type === "balloon" &&
+        obstacle.x > planeCx &&
+        obstacle.x < planeCx + 240 &&
+        Math.abs(obstacle.y - planeCy) < (obstacle.r + 26)
+      );
+    }
+
+    function tryAutoFire(planeCx, planeCy, timestamp) {
+      const fireInterval = isRapidFireActive(timestamp) ? RAPID_FIRE_INTERVAL : BASE_FIRE_INTERVAL;
+      if (timestamp - lastShotTime < fireInterval) return;
+
+      const target = getAutoFireTarget(planeCx, planeCy);
       if (!target) return;
 
       lastShotTime = timestamp;
@@ -2269,7 +2457,7 @@
 
     function update(dt, timestamp) {
       if (!roundStartTime) roundStartTime = timestamp;
-      updateBurstButton(timestamp);
+      updatePowerButtons(timestamp);
 
       const level = getCurrentStage();
       const planeProfile = getPlaneFlightProfile(planeType);
@@ -3327,19 +3515,61 @@
       }
 
       if (gameOver) {
-        ctx.fillStyle = "rgba(0,0,0,0.65)";
-        ctx.fillRect(0, H / 2 - 70, W, 140);
+        const modalW = 354;
+        const modalH = 234;
+        const modalX = (W - modalW) / 2;
+        const modalY = (H - modalH) / 2 - 8;
+        const lineX = modalX + 24;
+        const statStartY = modalY + 92;
+        const playerBest = getCurrentPilotBestScore() || 0;
+        const runDuration = formatRunDuration(roundStartTime ? performance.now() - roundStartTime : 0);
+
+        ctx.fillStyle = "rgba(8, 10, 14, 0.62)";
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.fillStyle = "rgba(25, 22, 18, 0.88)";
+        fillRoundedRect(modalX, modalY, modalW, modalH, 20);
+        ctx.strokeStyle = "rgba(255, 231, 174, 0.28)";
+        ctx.lineWidth = 1.6;
+        ctx.strokeRect(modalX + 0.8, modalY + 0.8, modalW - 1.6, modalH - 1.6);
 
         ctx.textAlign = "center";
-
-        ctx.font = "30px " + UI_FONT;
+        ctx.font = "28px " + UI_FONT;
         ctx.fillStyle = "#ffeb3b";
-        ctx.fillText("Game Over", W / 2, H / 2 - 20);
+        ctx.fillText("Patrol Report", W / 2, modalY + 38);
 
-        ctx.font = "17px " + UI_FONT;
-        ctx.fillStyle = "#ffe082";
-        ctx.fillText(`Score: ${score}  •  Best: ${bestScore}`, W / 2, H / 2 + 6);
-        ctx.fillText("Tap or press SPACE to return to menu", W / 2, H / 2 + 34);
+        ctx.font = "18px " + UI_FONT;
+        ctx.fillStyle = "#ffe7ad";
+        ctx.fillText(`Score: ${score}`, W / 2, modalY + 66);
+
+        ctx.textAlign = "left";
+        ctx.font = "13px " + UI_FONT;
+        ctx.fillStyle = "#fff4d5";
+        ctx.fillText(`Pilot: ${currentPilotName || "Unknown"}`, lineX, statStartY);
+        ctx.fillText(`Your best: ${playerBest}`, lineX, statStartY + 22);
+        ctx.fillText(`Kills: ${runPlaneKills}  •  XP banked: ${xpPoints}`, lineX, statStartY + 44);
+        ctx.fillText(`Stage reached: ${getCurrentStage().name}`, lineX, statStartY + 66);
+        ctx.fillText(`Time aloft: ${runDuration}`, lineX, statStartY + 88);
+        ctx.fillText(`Top Ace: ${formatTopAceLine()}`, lineX, statStartY + 110);
+
+        gameOverRestartRect = { x: modalX + 26, y: modalY + modalH - 50, w: 140, h: 34 };
+        gameOverMenuRect = { x: modalX + modalW - 166, y: modalY + modalH - 50, w: 140, h: 34 };
+
+        ctx.fillStyle = "rgba(214, 174, 86, 0.96)";
+        fillRoundedRect(gameOverRestartRect.x, gameOverRestartRect.y, gameOverRestartRect.w, gameOverRestartRect.h, 12);
+        ctx.fillStyle = "#2a1b08";
+        ctx.textAlign = "center";
+        ctx.font = "bold 14px " + UI_FONT;
+        ctx.fillText("Fly Again", gameOverRestartRect.x + gameOverRestartRect.w / 2, gameOverRestartRect.y + 22);
+
+        ctx.fillStyle = "rgba(31, 39, 51, 0.92)";
+        fillRoundedRect(gameOverMenuRect.x, gameOverMenuRect.y, gameOverMenuRect.w, gameOverMenuRect.h, 12);
+        ctx.fillStyle = "#f8edcf";
+        ctx.fillText("Main Menu", gameOverMenuRect.x + gameOverMenuRect.w / 2, gameOverMenuRect.y + 22);
+
+        ctx.font = "11px " + UI_FONT;
+        ctx.fillStyle = "rgba(255, 244, 214, 0.74)";
+        ctx.fillText("SPACE to restart • ESC for menu", W / 2, modalY + modalH - 14);
       }
     }
 
@@ -3503,6 +3733,36 @@
       visible.forEach((line, index) => {
         ctx.fillText(line, x, y + index * lineHeight);
       });
+    }
+
+    function formatRunDuration(ms) {
+      const totalSeconds = Math.max(0, Math.round((ms || 0) / 1000));
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return minutes > 0 ? `${minutes}m ${String(seconds).padStart(2, "0")}s` : `${seconds}s`;
+    }
+
+    function restartCurrentRun() {
+      screen = "game";
+      updateOverlayVisibility();
+      hintEl.textContent = GAMEPLAY_HINT;
+      resetGame();
+      flap();
+      startGameLoop();
+    }
+
+    function returnToMainMenu() {
+      gameOver = false;
+      screen = "splash";
+      updateOverlayVisibility();
+      hintEl.textContent = MAIN_MENU_HINT;
+      drawSplash();
+
+      if (bgmRun) {
+        bgmRun.pause();
+        bgmRun.currentTime = 0;
+        bgmStarted = false;
+      }
     }
 
     function drawHangar() {
@@ -3702,6 +3962,170 @@
       hintEl.textContent = "Browse your aircraft collection";
     }
 
+    function drawSettings() {
+      if (screen !== "settings") return;
+      updateOverlayVisibility();
+
+      ctx.clearRect(0, 0, W, H);
+      if (!drawImageCover(menuBackground, 0, 0, W, H)) {
+        ctx.fillStyle = "#f1eadb";
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      ctx.fillStyle = "rgba(18, 16, 14, 0.56)";
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#fff1c7";
+      ctx.strokeStyle = "rgba(34, 20, 10, 0.82)";
+      ctx.lineWidth = 3.4;
+      ctx.font = "26px " + UI_FONT;
+      ctx.strokeText("Settings", W / 2, 54);
+      ctx.fillText("Settings", W / 2, 54);
+
+      settingsBackRect = { x: 20, y: 20, w: 78, h: 32 };
+      ctx.fillStyle = "rgba(26, 22, 17, 0.72)";
+      fillRoundedRect(settingsBackRect.x, settingsBackRect.y, settingsBackRect.w, settingsBackRect.h, 12);
+      ctx.fillStyle = "#fff0c8";
+      ctx.font = "13px " + UI_FONT;
+      ctx.fillText("Back", settingsBackRect.x + settingsBackRect.w / 2, 41);
+
+      const panelX = 38;
+      const panelY = 92;
+      const panelW = W - 76;
+      const panelH = 430;
+      ctx.fillStyle = "rgba(245, 236, 217, 0.92)";
+      fillRoundedRect(panelX, panelY, panelW, panelH, 20);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#2a1f15";
+      ctx.font = "20px " + UI_FONT;
+      ctx.fillText("Control Layout", panelX + 22, panelY + 34);
+
+      ctx.fillStyle = "#6f5c45";
+      ctx.font = "12px " + UI_FONT;
+      drawWrappedText(
+        "Choose which side gets the BURST and RAPID buttons. This keeps left-handed and right-handed pilots on even footing.",
+        panelX + 22,
+        panelY + 58,
+        panelW - 44,
+        18,
+        3
+      );
+
+      settingsFireHandRect = { x: panelX + 22, y: panelY + 126, w: panelW - 44, h: 74 };
+      ctx.fillStyle = "rgba(219, 193, 142, 0.96)";
+      fillRoundedRect(settingsFireHandRect.x, settingsFireHandRect.y, settingsFireHandRect.w, settingsFireHandRect.h, 16);
+      ctx.fillStyle = "#2f220f";
+      ctx.font = "16px " + UI_FONT;
+      ctx.fillText("Fire Buttons", settingsFireHandRect.x + 18, settingsFireHandRect.y + 27);
+      ctx.font = "13px " + UI_FONT;
+      ctx.fillStyle = "#5f4d37";
+      ctx.fillText("Current side", settingsFireHandRect.x + 18, settingsFireHandRect.y + 50);
+      ctx.fillStyle = "#2f220f";
+      ctx.font = "bold 16px " + UI_FONT;
+      ctx.fillText(burstHand === "left" ? "Left Hand" : "Right Hand", settingsFireHandRect.x + 120, settingsFireHandRect.y + 51);
+      ctx.textAlign = "right";
+      ctx.font = "13px " + UI_FONT;
+      ctx.fillStyle = "#2f220f";
+      ctx.fillText("Tap to switch", settingsFireHandRect.x + settingsFireHandRect.w - 18, settingsFireHandRect.y + 51);
+
+      const futureX = panelX + 22;
+      const futureW = panelW - 44;
+      const futureRows = [
+        { y: panelY + 222, title: "Music & Sound", note: "Audio mix and soundtrack settings will live here later." },
+        { y: panelY + 294, title: "Pilot Profile", note: "Portraits, medals, rank, and career identity are planned here." },
+        { y: panelY + 366, title: "More Options Ahead", note: "This menu will grow as WONML gets closer to release quality." }
+      ];
+
+      futureRows.forEach((row) => {
+        ctx.fillStyle = "rgba(255, 250, 241, 0.9)";
+        fillRoundedRect(futureX, row.y, futureW, 54, 14);
+        ctx.fillStyle = "#2a1f15";
+        ctx.textAlign = "left";
+        ctx.font = "15px " + UI_FONT;
+        ctx.fillText(row.title, futureX + 16, row.y + 22);
+        ctx.fillStyle = "#786650";
+        ctx.font = "11px " + UI_FONT;
+        ctx.fillText(row.note, futureX + 16, row.y + 40);
+      });
+
+      ctx.textAlign = "center";
+      hintEl.textContent = "Adjust your setup before the next patrol";
+    }
+
+    function drawTesterNotes() {
+      if (screen !== "testerNotes") return;
+      updateOverlayVisibility();
+
+      ctx.clearRect(0, 0, W, H);
+      if (!drawImageCover(menuBackground, 0, 0, W, H)) {
+        ctx.fillStyle = "#f1eadb";
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      ctx.fillStyle = "rgba(15, 18, 24, 0.62)";
+      ctx.fillRect(0, 0, W, H);
+
+      const panelX = 34;
+      const panelY = 56;
+      const panelW = W - 68;
+      const panelH = 492;
+      ctx.fillStyle = "rgba(24, 20, 16, 0.84)";
+      fillRoundedRect(panelX, panelY, panelW, panelH, 20);
+
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#fff1c8";
+      ctx.strokeStyle = "rgba(34, 20, 10, 0.82)";
+      ctx.lineWidth = 3.2;
+      ctx.font = "24px " + UI_FONT;
+      ctx.strokeText("Tester Briefing", W / 2, panelY + 34);
+      ctx.fillText("Tester Briefing", W / 2, panelY + 34);
+
+      ctx.fillStyle = "#f7e2b1";
+      ctx.font = "13px " + UI_FONT;
+      ctx.fillText("Thanks for the feedback. This build includes the latest fixes and improvements:", W / 2, panelY + 58);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#fff4d5";
+      ctx.font = "13px " + UI_FONT;
+      const bulletX = panelX + 24;
+      const textX = bulletX + 18;
+      const startY = panelY + 94;
+      const lineGap = 58;
+      const notes = [
+        "Cleaner Belgium encounter ladder with same-tier fighters, gentler flak buildup, a balloon phase, and an elite finish.",
+        "Aircraft handling rebalanced so early planes are more forgiving, while later aircraft now feel more distinct.",
+        "Your Best score is now separate from Top Ace, updates more reliably, and is shown more prominently.",
+        "New game-over patrol report with run stats plus clear Fly Again and Main Menu actions.",
+        "Added Settings screen and moved the fire-button hand preference there for left- and right-handed pilots."
+      ];
+
+      notes.forEach((note, index) => {
+        const y = startY + index * lineGap;
+        ctx.fillStyle = "#ffe08a";
+        ctx.font = "18px " + UI_FONT;
+        ctx.fillText("•", bulletX, y);
+        ctx.fillStyle = "#fff4d5";
+        ctx.font = "13px " + UI_FONT;
+        drawWrappedText(note, textX, y, panelW - 62, 17, 3);
+      });
+
+      testerNotesContinueRect = { x: W / 2 - 82, y: panelY + panelH - 54, w: 164, h: 36 };
+      ctx.fillStyle = "rgba(214, 174, 86, 0.96)";
+      fillRoundedRect(testerNotesContinueRect.x, testerNotesContinueRect.y, testerNotesContinueRect.w, testerNotesContinueRect.h, 12);
+      ctx.fillStyle = "#2a1b08";
+      ctx.textAlign = "center";
+      ctx.font = "bold 14px " + UI_FONT;
+      ctx.fillText("Continue", W / 2, testerNotesContinueRect.y + 23);
+
+      ctx.fillStyle = "rgba(255, 244, 214, 0.74)";
+      ctx.font = "11px " + UI_FONT;
+      ctx.fillText("Tap Continue or press SPACE", W / 2, panelY + panelH - 14);
+
+      hintEl.textContent = TESTER_NOTES_HINT;
+    }
+
     function drawCampaignMap() {
       if (screen !== "campaignMap") return;
       updateOverlayVisibility();
@@ -3879,13 +4303,25 @@
       ctx.strokeText("Choose your side", W / 2, H * 0.34 + 6);
       ctx.fillText("Choose your side", W / 2, H * 0.34 + 6);
 
-      campaignMapEntryRect = { x: W / 2 - 126, y: H * 0.73, w: 112, h: 36 };
-      hangarEntryRect = { x: W / 2 + 14, y: H * 0.73, w: 112, h: 36 };
+      const menuButtonY = H * 0.73;
+      const menuButtonW = 96;
+      const menuButtonGap = 12;
+      const menuRowW = menuButtonW * 3 + menuButtonGap * 2;
+      const menuStartX = (W - menuRowW) / 2;
+      campaignMapEntryRect = { x: menuStartX, y: menuButtonY, w: menuButtonW, h: 36 };
+      settingsEntryRect = { x: menuStartX + menuButtonW + menuButtonGap, y: menuButtonY, w: menuButtonW, h: 36 };
+      hangarEntryRect = { x: menuStartX + (menuButtonW + menuButtonGap) * 2, y: menuButtonY, w: menuButtonW, h: 36 };
       ctx.fillStyle = "rgba(24, 20, 16, 0.72)";
       fillRoundedRect(campaignMapEntryRect.x, campaignMapEntryRect.y, campaignMapEntryRect.w, campaignMapEntryRect.h, 12);
       ctx.fillStyle = "#fff2cb";
       ctx.font = "14px " + UI_FONT;
       ctx.fillText("Campaigns", campaignMapEntryRect.x + campaignMapEntryRect.w / 2, campaignMapEntryRect.y + 23);
+
+      ctx.fillStyle = "rgba(24, 20, 16, 0.72)";
+      fillRoundedRect(settingsEntryRect.x, settingsEntryRect.y, settingsEntryRect.w, settingsEntryRect.h, 12);
+      ctx.fillStyle = "#fff2cb";
+      ctx.font = "14px " + UI_FONT;
+      ctx.fillText("Settings", settingsEntryRect.x + settingsEntryRect.w / 2, settingsEntryRect.y + 23);
 
       ctx.fillStyle = "rgba(24, 20, 16, 0.72)";
       fillRoundedRect(hangarEntryRect.x, hangarEntryRect.y, hangarEntryRect.w, hangarEntryRect.h, 12);
@@ -3944,26 +4380,25 @@
       ctx.textAlign = "left";
       ctx.fillStyle = "rgba(255, 247, 226, 0.95)";
       ctx.font = "15px " + UI_FONT;
-      ctx.fillText("Top Ace", stripX + 20, stripY + 26);
-
-      const aceLine = leaderboard.length > 0
-        ? `${leaderboard[0].name} - ${leaderboard[0].score}`
-        : "No aces recorded yet";
       const playerBest = getCurrentPilotBestScore();
       const playerBestLine = currentPilotName
         ? `${currentPilotName} - ${playerBest ?? 0}`
         : "Fly your first patrol to record it";
+      const aceLine = formatTopAceLine();
       ctx.font = "13px " + UI_FONT;
       ctx.fillStyle = "rgba(255, 247, 226, 0.88)";
-      ctx.fillText(aceLine, stripX + 20, stripY + 46);
+      ctx.fillText(playerBestLine, stripX + 20, stripY + 46);
 
       ctx.fillStyle = "rgba(255, 247, 226, 0.95)";
       ctx.font = "15px " + UI_FONT;
-      ctx.fillText("Your Best", stripX + 20, stripY + 72);
+      ctx.fillText("Your Best", stripX + 20, stripY + 26);
 
       ctx.fillStyle = "rgba(255, 247, 226, 0.88)";
       ctx.font = "13px " + UI_FONT;
-      ctx.fillText(playerBestLine, stripX + 20, stripY + 92);
+      ctx.fillText("Top Ace", stripX + 20, stripY + 72);
+
+      ctx.fillStyle = "rgba(255, 247, 226, 0.82)";
+      ctx.fillText(aceLine, stripX + 20, stripY + 92);
 
       ctx.textAlign = "center";
       const futureY = stripY + 28;
@@ -3984,7 +4419,7 @@
 
       ctx.textAlign = "center";
 
-      hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
+      hintEl.textContent = MAIN_MENU_HINT;
     }
 
     // ---------- GERMAN PLANE SELECT (uses DR3 thumbnail) ----------
@@ -4207,12 +4642,20 @@
     }
 
     function redrawCurrentScreen() {
+      if (screen === "testerNotes") {
+        drawTesterNotes();
+        return;
+      }
       if (screen === "splash") {
         drawSplash();
         return;
       }
       if (screen === "campaignMap") {
         drawCampaignMap();
+        return;
+      }
+      if (screen === "settings") {
+        drawSettings();
         return;
       }
       if (screen === "hangar") {
@@ -4271,7 +4714,7 @@
       if (!campaignMapPointerMoved) {
         if (inside(campaignMapBackRect)) {
           screen = "splash";
-          hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
+          hintEl.textContent = MAIN_MENU_HINT;
           drawSplash();
         } else if (inside(campaignMapStartRect)) {
           startSelectedCampaign();
@@ -4317,6 +4760,24 @@
       startBgmIfNeeded();
       ensureAirplaneSmokePlayback();
 
+      if (screen === "testerNotes") {
+        if (!evt) {
+          screen = "splash";
+          hintEl.textContent = MAIN_MENU_HINT;
+          drawSplash();
+          return;
+        }
+
+        const { x, y } = getCanvasCoordinates(evt);
+        const inside = (r) => r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+        if (inside(testerNotesContinueRect)) {
+          screen = "splash";
+          hintEl.textContent = MAIN_MENU_HINT;
+          drawSplash();
+        }
+        return;
+      }
+
       if (screen === "splash") {
         if (evt) {
           const { x, y } = getCanvasCoordinates(evt);
@@ -4337,6 +4798,11 @@
           }
           if (inside(campaignMapEntryRect)) {
             openCampaignMap();
+            return;
+          }
+          if (inside(settingsEntryRect)) {
+            screen = "settings";
+            drawSettings();
             return;
           }
           if (inside(hangarEntryRect)) {
@@ -4364,7 +4830,7 @@
       if (screen === "campaignMap") {
         if (!evt) {
           screen = "splash";
-          hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
+          hintEl.textContent = MAIN_MENU_HINT;
           drawSplash();
           return;
         }
@@ -4373,10 +4839,39 @@
         return;
       }
 
+      if (screen === "settings") {
+        if (!evt) {
+          screen = "splash";
+          hintEl.textContent = MAIN_MENU_HINT;
+          drawSplash();
+          return;
+        }
+
+        const { x, y } = getCanvasCoordinates(evt);
+        const inside = (r) => r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+
+        if (inside(settingsBackRect)) {
+          screen = "splash";
+          hintEl.textContent = MAIN_MENU_HINT;
+          drawSplash();
+          return;
+        }
+
+        if (inside(settingsFireHandRect)) {
+          burstHand = burstHand === "left" ? "right" : "left";
+          localStorage.setItem(STORAGE_KEYS.burstHand, burstHand);
+          updateBurstHandUi();
+          drawSettings();
+          return;
+        }
+
+        return;
+      }
+
       if (screen === "hangar") {
         if (!evt) {
           screen = "splash";
-          hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
+          hintEl.textContent = MAIN_MENU_HINT;
           drawSplash();
           return;
         }
@@ -4386,7 +4881,7 @@
 
         if (inside(hangarBackRect)) {
           screen = "splash";
-          hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
+          hintEl.textContent = MAIN_MENU_HINT;
           drawSplash();
           return;
         }
@@ -4416,7 +4911,7 @@
         }
 
         screen = "splash";
-        hintEl.textContent = "Tap a side, view campaigns, or open the hangar";
+        hintEl.textContent = MAIN_MENU_HINT;
         drawSplash();
         return;
       }
@@ -4459,7 +4954,7 @@
           return;
         } else {
           screen = "splash";
-          hintEl.textContent = "Tap a side to enter";
+          hintEl.textContent = MAIN_MENU_HINT;
           drawSplash();
           return;
         }
@@ -4500,25 +4995,27 @@
         }
 
         screen = "splash";
-        hintEl.textContent = "Tap a side to enter";
+        hintEl.textContent = MAIN_MENU_HINT;
         drawSplash();
         return;
       }
 
       if (gameOver) {
-        gameOver = false;
-        screen = "splash";
-        updateOverlayVisibility();
-        hintEl.textContent = "Tap a side to enter";
-        drawSplash();
-
-        // Stop game music when returning to main menu
-        if (bgmRun) {
-          bgmRun.pause();
-          bgmRun.currentTime = 0;  // rewind to start
-          bgmStarted = false;      // allow fresh start next game
+        if (!evt) {
+          restartCurrentRun();
+          return;
         }
 
+        const { x, y } = getCanvasCoordinates(evt);
+        const inside = (r) => r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+        if (inside(gameOverRestartRect)) {
+          restartCurrentRun();
+          return;
+        }
+        if (inside(gameOverMenuRect)) {
+          returnToMainMenu();
+          return;
+        }
         return;
       }
 
@@ -4530,9 +5027,33 @@
 
     window.addEventListener("keydown", (e) => {
       if (!accessUnlocked) return;
+      if (screen === "testerNotes" && (e.code === "Space" || e.code === "Enter" || e.code === "Escape")) {
+        e.preventDefault();
+        screen = "splash";
+        hintEl.textContent = MAIN_MENU_HINT;
+        drawSplash();
+        return;
+      }
+      if (screen === "settings" && (e.code === "Escape" || e.code === "Backspace")) {
+        e.preventDefault();
+        screen = "splash";
+        hintEl.textContent = MAIN_MENU_HINT;
+        drawSplash();
+        return;
+      }
+      if (gameOver && (e.code === "Escape" || e.code === "KeyM")) {
+        e.preventDefault();
+        returnToMainMenu();
+        return;
+      }
       if (e.code === "KeyX") {
         e.preventDefault();
         activateBurstMode();
+        return;
+      }
+      if (e.code === "KeyC") {
+        e.preventDefault();
+        activateRapidFire();
         return;
       }
       if (e.code === "Space" || e.code === "ArrowUp") {
