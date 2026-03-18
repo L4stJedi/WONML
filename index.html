@@ -827,6 +827,18 @@
     pupStdImg.onerror = () => console.error("Could not load assets/planes/britain/SopwithPup_std.png");
     pupStdImg.src = "assets/planes/britain/SopwithPup_std.png";
 
+    const triStdImg = new Image();
+    let triStdLoaded = false;
+    triStdImg.onload = () => { triStdLoaded = true; };
+    triStdImg.onerror = () => console.error("Could not load assets/planes/britain/SopwithTriplane_std.png");
+    triStdImg.src = "assets/planes/britain/SopwithTriplane_std.png";
+
+    const camelStdImg = new Image();
+    let camelStdLoaded = false;
+    camelStdImg.onload = () => { camelStdLoaded = true; };
+    camelStdImg.onerror = () => console.error("Could not load assets/planes/britain/SopwithCamel_std.png");
+    camelStdImg.src = "assets/planes/britain/SopwithCamel_std.png";
+
     const hangarDr1Rb = loadUiAsset("assets/planes/germany/FokkerDR1_RB.png");
     const hangarDr1WeVo = loadUiAsset("assets/planes/germany/FokkerDR1_WeVo.png");
     const hangarDr1Jj = loadUiAsset("assets/planes/germany/FokkerDR1_JJ.png");
@@ -955,9 +967,13 @@
     const BRITISH_STANDARD_PLANES = [
       { tier: "Tier 1", label: "Airco DH.1", planeType: "dh1" },
       { tier: "Tier 2", label: "Airco DH.2", planeType: "dh2" },
-      { tier: "Tier 3", label: "Sopwith Pup", planeType: "pupstd" },
-      { tier: "Tier 4", label: "Airco DH.9", planeType: "dh9" }
+      { tier: "Tier 3", label: "Sopwith Triplane", planeType: "triplanestd" },
+      { tier: "Tier 4", label: "Sopwith Pup", planeType: "pupstd" },
+      { tier: "Tier 5", label: "Sopwith Camel", planeType: "camelstd" },
+      { tier: "Tier 6", label: "Airco DH.9", planeType: "dh9" }
     ];
+
+    const BRITISH_ENEMY_FIGHTER_PLANES = ["dh1", "dh2", "triplanestd", "camelstd"];
 
     const HANGAR_DATA = {
       germany: [
@@ -1006,11 +1022,25 @@
           note: "A nimble British pusher fighter that helped answer the early German monoplane threat. Light and agile, with good visibility for its pilot."
         },
         {
+          planeType: "triplanestd",
+          label: "Sopwith Triplane",
+          role: "Triplane fighter",
+          years: "1916-1917",
+          note: "A light, elegant British triplane with impressive climb and nimble handling. It helped set the stage for later triplane dogfighting icons."
+        },
+        {
           planeType: "pupstd",
           label: "Sopwith Pup",
           role: "Scout biplane",
           years: "1916-1917",
           note: "Beloved by pilots for its pleasant handling and maneuverability. The Pup was smaller than later fighters, but highly effective in skilled hands."
+        },
+        {
+          planeType: "camelstd",
+          label: "Sopwith Camel",
+          role: "Late-war fighter",
+          years: "1917-1918",
+          note: "One of Britain's most famous fighters. Compact, powerful, and demanding to fly, the Camel became a deadly front-line dogfighter in skilled hands."
         },
         {
           planeType: "dh9",
@@ -1155,8 +1185,10 @@
       d7vik: { lengthMeters: 6.95 },
       dh1: { lengthMeters: 8.84 },
       dh2: { lengthMeters: 7.68 },
+      triplanestd: { lengthMeters: 5.73 },
       dh9: { lengthMeters: 9.22 },
-      pupstd: { lengthMeters: 5.88 }
+      pupstd: { lengthMeters: 5.88 },
+      camelstd: { lengthMeters: 5.72 }
     };
 
     const DEFAULT_PLANE_FLIGHT_PROFILE = {
@@ -1242,6 +1274,15 @@
         enemyHitboxFactor: 0.27,
         durabilityBias: "nimble"
       },
+      triplanestd: {
+        gravityMultiplier: 0.84,
+        jumpMultiplier: 1.14,
+        speedMultiplier: 1.01,
+        maxFallSpeed: 6.9,
+        hitboxFactor: 0.53,
+        enemyHitboxFactor: 0.27,
+        durabilityBias: "nimble"
+      },
       pupstd: {
         gravityMultiplier: 0.86,
         jumpMultiplier: 1.1,
@@ -1250,6 +1291,15 @@
         hitboxFactor: 0.54,
         enemyHitboxFactor: 0.27,
         durabilityBias: "nimble"
+      },
+      camelstd: {
+        gravityMultiplier: 0.89,
+        jumpMultiplier: 1.12,
+        speedMultiplier: 1.05,
+        maxFallSpeed: 7.6,
+        hitboxFactor: 0.54,
+        enemyHitboxFactor: 0.27,
+        durabilityBias: "aggressive"
       },
       dh9: {
         gravityMultiplier: 0.97,
@@ -1294,8 +1344,10 @@
       if (type === "d7std") return { img: d7StdImg, loaded: d7StdLoaded, scale: 0.058, rotation: 0, ...sizeMetrics };
       if (type === "dh1") return { img: dh1Img, loaded: dh1Loaded, scale: 0.056, rotation: 0, ...sizeMetrics };
       if (type === "dh2") return { img: dh2Img, loaded: dh2Loaded, scale: 0.056, rotation: 0, ...sizeMetrics };
+      if (type === "triplanestd") return { img: triStdImg, loaded: triStdLoaded, scale: 0.057, rotation: 0, ...sizeMetrics };
       if (type === "dh9") return { img: dh9Img, loaded: dh9Loaded, scale: 0.056, rotation: 0, ...sizeMetrics };
       if (type === "pupstd") return { img: pupStdImg, loaded: pupStdLoaded, scale: 0.057, rotation: 0, ...sizeMetrics };
+      if (type === "camelstd") return { img: camelStdImg, loaded: camelStdLoaded, scale: 0.057, rotation: 0, ...sizeMetrics };
       return { img: d7StdImg, loaded: d7StdLoaded, scale: 0.058, rotation: 0, ...sizeMetrics };
     }
 
@@ -1314,6 +1366,16 @@
       return faction === "britain" ? BRITISH_STANDARD_PLANES : GERMAN_STANDARD_PLANES;
     }
 
+    function getEnemyFighterProgression(faction) {
+      if (faction === "britain") {
+        return BRITISH_ENEMY_FIGHTER_PLANES.map((planeType, index) => ({
+          planeType,
+          tier: `Tier ${index + 1}`
+        }));
+      }
+      return GERMAN_STANDARD_PLANES;
+    }
+
     function getPlaneTierIndex(type, faction = currentFaction) {
       const progression = getStandardPlaneProgression(faction);
       const idx = progression.findIndex(entry => entry.planeType === type);
@@ -1323,7 +1385,7 @@
     function getOpposingPlaneTypeForTierOffset(offset = 0) {
       const opposingFaction = currentFaction === "germany" ? "britain" : "germany";
       const ownTierIndex = getPlaneTierIndex(planeType, currentFaction);
-      const opposingProgression = getStandardPlaneProgression(opposingFaction);
+      const opposingProgression = getEnemyFighterProgression(opposingFaction);
       const targetIndex = Math.max(0, Math.min(opposingProgression.length - 1, ownTierIndex + offset));
       return opposingProgression[targetIndex]?.planeType || opposingProgression[0]?.planeType || null;
     }
@@ -1334,7 +1396,7 @@
       }
       if (enemyType === "german-fighter") return getStandardPlaneProgression("germany")[0].planeType;
       if (enemyType === "german-bomber") return "d7rb";
-      if (enemyType === "british-fighter") return getStandardPlaneProgression("britain")[0].planeType;
+      if (enemyType === "british-fighter") return getEnemyFighterProgression("britain")[0].planeType;
       if (enemyType === "british-bomber") return dh9Loaded ? "dh9" : "dh1";
       return null;
     }
@@ -1885,7 +1947,14 @@
     }
 
     function syncFactionWithPlane() {
-      currentFaction = (planeType === "dh1" || planeType === "dh2" || planeType === "dh9" || planeType === "pupstd") ? "britain" : "germany";
+      currentFaction = (
+        planeType === "dh1" ||
+        planeType === "dh2" ||
+        planeType === "triplanestd" ||
+        planeType === "pupstd" ||
+        planeType === "camelstd" ||
+        planeType === "dh9"
+      ) ? "britain" : "germany";
     }
 
     function getPlaneHangarStats(type) {
@@ -4546,17 +4615,15 @@
 
       britishPlaneChoices = [];
 
-      const startY = H * 0.26;
-      const rowH = 96;
+      const startY = 152;
+      const rowH = 68;
       const rowX = 40;
       const rowW = W - 80;
 
-      const entries = [
-        { tier: "Tier 1", label: "Airco DH.1", planeType: "dh1", loaded: dh1Loaded, img: dh1Img },
-        { tier: "Tier 2", label: "Airco DH.2", planeType: "dh2", loaded: dh2Loaded, img: dh2Img },
-        { tier: "Tier 3", label: "Sopwith Pup", planeType: "pupstd", loaded: pupStdLoaded, img: pupStdImg },
-        { tier: "Tier 4", label: "Airco DH.9", planeType: "dh9", loaded: dh9Loaded, img: dh9Img }
-      ];
+      const entries = BRITISH_STANDARD_PLANES.map(entry => ({
+        ...entry,
+        sprite: getPlaneSprite(entry.planeType)
+      }));
 
       entries.forEach((entry, i) => {
         const y = startY + i * rowH;
@@ -4569,29 +4636,28 @@
         ctx.lineWidth = 1;
         ctx.strokeRect(rowX + 0.5, y + 0.5, rowW - 1, rowH - 15);
 
-        const thumbX = rowX + 102;
+        const thumbX = rowX + 90;
         const thumbY = y + (rowH - 14) / 2;
 
-        if (entry.loaded) {
-          const maxW = 176;
-          const maxH = 74;
-          const sprite = getPlaneSprite(entry.planeType);
-          const desiredThumbWidth = sprite.thumbWidth * 1.42;
-          const { imgW, imgH } = getSpriteDrawSize(sprite, desiredThumbWidth, maxW, maxH);
-          ctx.drawImage(entry.img, thumbX - imgW / 2, thumbY - imgH / 2, imgW, imgH);
+        if (entry.sprite.loaded) {
+          const maxW = 152;
+          const maxH = 48;
+          const desiredThumbWidth = entry.sprite.thumbWidth * 1.28;
+          const { imgW, imgH } = getSpriteDrawSize(entry.sprite, desiredThumbWidth, maxW, maxH);
+          ctx.drawImage(entry.sprite.img, thumbX - imgW / 2, thumbY - imgH / 2, imgW, imgH);
         } else {
           ctx.fillStyle = "#b0bec5";
-          ctx.fillRect(thumbX - 50, thumbY - 20, 100, 40);
+          ctx.fillRect(thumbX - 42, thumbY - 18, 84, 36);
         }
 
         ctx.textAlign = "left";
         ctx.fillStyle = "#263238";
-        ctx.font = "14px " + UI_FONT;
-        ctx.fillText(`${entry.tier} - ${entry.label}`, rowX + 194, y + 34);
-
         ctx.font = "13px " + UI_FONT;
+        ctx.fillText(`${entry.tier} - ${entry.label}`, rowX + 172, y + 25);
+
+        ctx.font = "12px " + UI_FONT;
         ctx.fillStyle = "#2e7d32";
-        ctx.fillText("Ready", rowX + 194, y + 54);
+        ctx.fillText("Ready", rowX + 172, y + 43);
 
         ctx.restore();
 
@@ -4600,13 +4666,15 @@
           y,
           w: rowW,
           h: rowH - 14,
-          planeType: entry.planeType
+          planeType: entry.planeType,
+          tier: entry.tier
         });
       });
 
       ctx.textAlign = "center";
       ctx.fillStyle = "#5d4037";
       ctx.font = "13px " + UI_FONT;
+      ctx.fillText("Ace liveries unlock through events or supporter purchases", W / 2, H - 52);
       ctx.fillText("Tap anywhere outside rows to go back", W / 2, H - 30);
     }
 
