@@ -3516,11 +3516,11 @@
 
       if (gameOver) {
         const modalW = 354;
-        const modalH = 234;
+        const modalH = 312;
         const modalX = (W - modalW) / 2;
         const modalY = (H - modalH) / 2 - 8;
         const lineX = modalX + 24;
-        const statStartY = modalY + 92;
+        const statStartY = modalY + 98;
         const playerBest = getCurrentPilotBestScore() || 0;
         const runDuration = formatRunDuration(roundStartTime ? performance.now() - roundStartTime : 0);
 
@@ -3546,26 +3546,26 @@
         ctx.font = "13px " + UI_FONT;
         ctx.fillStyle = "#fff4d5";
         ctx.fillText(`Pilot: ${currentPilotName || "Unknown"}`, lineX, statStartY);
-        ctx.fillText(`Your best: ${playerBest}`, lineX, statStartY + 22);
-        ctx.fillText(`Kills: ${runPlaneKills}  •  XP banked: ${xpPoints}`, lineX, statStartY + 44);
-        ctx.fillText(`Stage reached: ${getCurrentStage().name}`, lineX, statStartY + 66);
-        ctx.fillText(`Time aloft: ${runDuration}`, lineX, statStartY + 88);
-        ctx.fillText(`Top Ace: ${formatTopAceLine()}`, lineX, statStartY + 110);
+        ctx.fillText(`Your best: ${playerBest}`, lineX, statStartY + 28);
+        ctx.fillText(`Kills: ${runPlaneKills}  •  XP banked: ${xpPoints}`, lineX, statStartY + 56);
+        ctx.fillText(`Stage reached: ${getCurrentStage().name}`, lineX, statStartY + 84);
+        ctx.fillText(`Time aloft: ${runDuration}`, lineX, statStartY + 112);
+        ctx.fillText(`Top Ace: ${formatTopAceLine()}`, lineX, statStartY + 140);
 
-        gameOverRestartRect = { x: modalX + 26, y: modalY + modalH - 50, w: 140, h: 34 };
-        gameOverMenuRect = { x: modalX + modalW - 166, y: modalY + modalH - 50, w: 140, h: 34 };
+        gameOverRestartRect = { x: modalX + 26, y: modalY + modalH - 58, w: 140, h: 36 };
+        gameOverMenuRect = { x: modalX + modalW - 166, y: modalY + modalH - 58, w: 140, h: 36 };
 
         ctx.fillStyle = "rgba(214, 174, 86, 0.96)";
         fillRoundedRect(gameOverRestartRect.x, gameOverRestartRect.y, gameOverRestartRect.w, gameOverRestartRect.h, 12);
         ctx.fillStyle = "#2a1b08";
         ctx.textAlign = "center";
         ctx.font = "bold 14px " + UI_FONT;
-        ctx.fillText("Fly Again", gameOverRestartRect.x + gameOverRestartRect.w / 2, gameOverRestartRect.y + 22);
+        ctx.fillText("Fly Again", gameOverRestartRect.x + gameOverRestartRect.w / 2, gameOverRestartRect.y + 23);
 
         ctx.fillStyle = "rgba(31, 39, 51, 0.92)";
         fillRoundedRect(gameOverMenuRect.x, gameOverMenuRect.y, gameOverMenuRect.w, gameOverMenuRect.h, 12);
         ctx.fillStyle = "#f8edcf";
-        ctx.fillText("Main Menu", gameOverMenuRect.x + gameOverMenuRect.w / 2, gameOverMenuRect.y + 22);
+        ctx.fillText("Main Menu", gameOverMenuRect.x + gameOverMenuRect.w / 2, gameOverMenuRect.y + 23);
 
         ctx.font = "11px " + UI_FONT;
         ctx.fillStyle = "rgba(255, 244, 214, 0.74)";
