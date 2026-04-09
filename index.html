@@ -3697,11 +3697,12 @@
         ctx.textAlign = "center";
         ctx.fillStyle = "#ffe7ad";
         ctx.font = "700 22px " + UI_FONT;
-        ctx.fillText(activeCampaignIntro.title, W / 2, 122);
+        // intro box is W-112 wide; keep 16px padding each side → maxWidth = W-144
+        drawTruncatedText(activeCampaignIntro.title, W / 2, 122, W - 144);
 
         ctx.fillStyle = "#fff4d8";
         ctx.font = "16px " + UI_FONT;
-        ctx.fillText(activeCampaignIntro.subtitle, W / 2, 148);
+        drawTruncatedText(activeCampaignIntro.subtitle, W / 2, 148, W - 144);
         ctx.restore();
       }
 
@@ -3736,12 +3737,13 @@
         ctx.textAlign = "left";
         ctx.font = "13px " + UI_FONT;
         ctx.fillStyle = "#fff4d5";
-        ctx.fillText(`Pilot: ${currentPilotName || "Unknown"}`, lineX, statStartY);
-        ctx.fillText(`Your best: ${playerBest}`, lineX, statStartY + 28);
-        ctx.fillText(`Kills: ${runPlaneKills}  •  XP banked: ${xpPoints}`, lineX, statStartY + 56);
-        ctx.fillText(`Stage reached: ${getCurrentStage().name}`, lineX, statStartY + 84);
-        ctx.fillText(`Time aloft: ${runDuration}`, lineX, statStartY + 112);
-        ctx.fillText(`Top Ace: ${formatTopAceLine()}`, lineX, statStartY + 140);
+        const statLineW = modalW - 48; // 16px padding each side inside modal
+        drawTruncatedText(`Pilot: ${currentPilotName || "Unknown"}`, lineX, statStartY, statLineW);
+        drawTruncatedText(`Your best: ${playerBest}`, lineX, statStartY + 28, statLineW);
+        drawTruncatedText(`Kills: ${runPlaneKills}  \u2022  XP banked: ${xpPoints}`, lineX, statStartY + 56, statLineW);
+        drawTruncatedText(`Stage reached: ${getCurrentStage().name}`, lineX, statStartY + 84, statLineW);
+        drawTruncatedText(`Time aloft: ${runDuration}`, lineX, statStartY + 112, statLineW);
+        drawTruncatedText(`Top Ace: ${formatTopAceLine()}`, lineX, statStartY + 140, statLineW);
 
         gameOverRestartRect = { x: modalX + 26, y: modalY + modalH - 58, w: 140, h: 36 };
         gameOverMenuRect = { x: modalX + modalW - 166, y: modalY + modalH - 58, w: 140, h: 36 };
@@ -3909,6 +3911,8 @@
       return true;
     }
 
+    // drawWrappedText — shared helper used by every screen that renders variable-length text.
+    // Returns the number of lines actually drawn so callers can advance their y-cursor.
     function drawWrappedText(text, x, y, maxWidth, lineHeight, maxLines = 99) {
       const words = String(text || "").split(/\s+/);
       const lines = [];
@@ -3929,6 +3933,21 @@
       visible.forEach((line, index) => {
         ctx.fillText(line, x, y + index * lineHeight);
       });
+      return visible.length;
+    }
+
+    // drawTruncatedText — draws a single line, truncating with "…" if it exceeds maxWidth.
+    function drawTruncatedText(text, x, y, maxWidth) {
+      const str = String(text || "");
+      if (ctx.measureText(str).width <= maxWidth) {
+        ctx.fillText(str, x, y);
+        return;
+      }
+      let truncated = str;
+      while (truncated.length > 0 && ctx.measureText(truncated + "\u2026").width > maxWidth) {
+        truncated = truncated.slice(0, -1);
+      }
+      ctx.fillText(truncated + "\u2026", x, y);
     }
 
     function formatRunDuration(ms) {
@@ -4061,11 +4080,14 @@
 
         ctx.textAlign = "left";
         ctx.fillStyle = "#2c2115";
-        ctx.font = (currentHangarSection === "special" ? "11px " : "13px ") + UI_FONT;
-        ctx.fillText(entry.label, listX + (currentHangarSection === "special" ? 58 : 72), y + (currentHangarSection === "special" ? 18 : 28));
+        const isSpecialSection = currentHangarSection === "special";
+        const listTextX = listX + (isSpecialSection ? 58 : 72);
+        const listTextW = listX + listW - listTextX - 8; // 8px right margin inside list cell
+        ctx.font = (isSpecialSection ? "11px " : "13px ") + UI_FONT;
+        drawTruncatedText(entry.label, listTextX, y + (isSpecialSection ? 18 : 28), listTextW);
         ctx.fillStyle = "#6b5842";
-        ctx.font = (currentHangarSection === "special" ? "9px " : "11px ") + UI_FONT;
-        ctx.fillText(entry.role, listX + (currentHangarSection === "special" ? 58 : 72), y + (currentHangarSection === "special" ? 30 : 46));
+        ctx.font = (isSpecialSection ? "9px " : "11px ") + UI_FONT;
+        drawTruncatedText(entry.role, listTextX, y + (isSpecialSection ? 30 : 46), listTextW);
 
         hangarPlaneChoices.push({ x: listX + 8, y, w: listW - 16, h: rowH - 10, key: entryKey });
       });
@@ -4091,11 +4113,12 @@
         ctx.textAlign = "left";
         ctx.fillStyle = "#2a1f15";
         ctx.font = "21px " + UI_FONT;
-        ctx.fillText(selected.label, detailX + 18, detailY + 32);
+        // detailW minus 18px left padding and 18px right padding
+        drawTruncatedText(selected.label, detailX + 18, detailY + 32, detailW - 36);
 
         ctx.fillStyle = "#7c6546";
         ctx.font = "13px " + UI_FONT;
-        ctx.fillText(`${selected.role} • ${selected.years}`, detailX + 18, detailY + 54);
+        drawTruncatedText(`${selected.role} \u2022 ${selected.years}`, detailX + 18, detailY + 54, detailW - 36);
 
         ctx.fillStyle = "rgba(231, 216, 185, 0.9)";
         fillRoundedRect(detailX + 16, detailY + 74, detailW - 32, 170, 14);
@@ -4122,12 +4145,13 @@
         ctx.font = "14px " + UI_FONT;
         ctx.fillText(currentHangarSection === "special" ? "Unlock Notes" : "Service Record", detailX + 30, statsY + 24);
         ctx.font = "12px " + UI_FONT;
+        const statsLineW = detailW - 44; // 30px left offset + 14px right margin
         if (currentHangarSection === "special") {
-          ctx.fillText("Event reward or supporter livery", detailX + 30, statsY + 46);
-          ctx.fillText("Requires base aircraft ownership", detailX + 30, statsY + 64);
+          drawTruncatedText("Event reward or supporter livery", detailX + 30, statsY + 46, statsLineW);
+          drawTruncatedText("Requires base aircraft ownership", detailX + 30, statsY + 64, statsLineW);
         } else {
-          ctx.fillText(`Flights: ${stats.flights || 0}`, detailX + 30, statsY + 44);
-          ctx.fillText(`Kills: ${stats.kills || 0}  •  Best score: ${stats.bestScore || 0}`, detailX + 30, statsY + 62);
+          drawTruncatedText(`Flights: ${stats.flights || 0}`, detailX + 30, statsY + 44, statsLineW);
+          drawTruncatedText(`Kills: ${stats.kills || 0}  \u2022  Best score: ${stats.bestScore || 0}`, detailX + 30, statsY + 62, statsLineW);
         }
       } else {
         ctx.textAlign = "left";
@@ -4154,7 +4178,7 @@
       ctx.textAlign = "center";
       ctx.fillStyle = "#f5e5bc";
       ctx.font = "13px " + UI_FONT;
-      ctx.fillText("View service aircraft, special liveries, and your personal record", W / 2, H - 26);
+      drawTruncatedText("View service aircraft, special liveries, and your personal record", W / 2, H - 26, W - 32);
       hintEl.textContent = "Browse your aircraft collection";
     }
 
@@ -4243,7 +4267,7 @@
         ctx.fillText(row.title, futureX + 16, row.y + 22);
         ctx.fillStyle = "#786650";
         ctx.font = "11px " + UI_FONT;
-        ctx.fillText(row.note, futureX + 16, row.y + 40);
+        drawTruncatedText(row.note, futureX + 16, row.y + 40, futureW - 32);
       });
 
       ctx.textAlign = "center";
@@ -4280,15 +4304,19 @@
 
       ctx.fillStyle = "#f7e2b1";
       ctx.font = "13px " + UI_FONT;
-      ctx.fillText("Thanks for the feedback. This build includes the latest fixes and improvements:", W / 2, panelY + 58);
+      // Header line can be long — wrap it with 16px padding each side
+      ctx.textAlign = "left";
+      drawWrappedText(
+        "Thanks for the feedback. This build includes the latest fixes and improvements:",
+        panelX + 16, panelY + 58, panelW - 32, 17, 2
+      );
 
       ctx.textAlign = "left";
       ctx.fillStyle = "#fff4d5";
       ctx.font = "13px " + UI_FONT;
       const bulletX = panelX + 24;
       const textX = bulletX + 18;
-      const startY = panelY + 94;
-      const lineGap = 58;
+      const startY = panelY + 98;
       const notes = [
         "Cleaner Belgium encounter ladder with same-tier fighters, gentler flak buildup, a balloon phase, and an elite finish.",
         "Aircraft handling rebalanced so early planes are more forgiving, while later aircraft now feel more distinct.",
@@ -4297,14 +4325,18 @@
         "Added Settings screen and moved the fire-button hand preference there for left- and right-handed pilots."
       ];
 
-      notes.forEach((note, index) => {
-        const y = startY + index * lineGap;
+      // Advance y dynamically so wrapped bullets never overlap each other
+      let bulletCursorY = startY;
+      const bulletLineH = 17;
+      const bulletGutter = 10; // extra space between bullets
+      notes.forEach((note) => {
         ctx.fillStyle = "#ffe08a";
         ctx.font = "18px " + UI_FONT;
-        ctx.fillText("•", bulletX, y);
+        ctx.fillText("\u2022", bulletX, bulletCursorY);
         ctx.fillStyle = "#fff4d5";
         ctx.font = "13px " + UI_FONT;
-        drawWrappedText(note, textX, y, panelW - 62, 17, 3);
+        const linesDrawn = drawWrappedText(note, textX, bulletCursorY, panelW - 62, bulletLineH, 3);
+        bulletCursorY += Math.max(linesDrawn, 1) * bulletLineH + bulletGutter;
       });
 
       testerNotesContinueRect = { x: W / 2 - 82, y: panelY + panelH - 54, w: 164, h: 36 };
@@ -4432,12 +4464,14 @@
       ctx.textAlign = "left";
       ctx.fillStyle = "#fff1c8";
       ctx.font = "17px " + UI_FONT;
-      ctx.fillText(`${selectedNode.order}. ${selectedNode.label}`, 30, infoY + 26);
+      // Info panel is W-32 wide; reserve space for the Fly button (≈120px) and 16px padding each side
+      const infoTextW = W - 32 - 130; // leaves room for Fly button
+      drawTruncatedText(`${selectedNode.order}. ${selectedNode.label}`, 30, infoY + 26, infoTextW);
 
       ctx.fillStyle = "#f7e2b1";
       ctx.font = "12px " + UI_FONT;
-      ctx.fillText(selectedNode.subtitle, 30, infoY + 46);
-      ctx.fillText(selectedNode.front, 30, infoY + 64);
+      drawTruncatedText(selectedNode.subtitle, 30, infoY + 46, infoTextW);
+      drawTruncatedText(selectedNode.front, 30, infoY + 64, infoTextW);
 
       const statusLabel = !unlocked
         ? "Locked - opens in historical order"
@@ -4446,7 +4480,7 @@
           : "Mapped - content to come";
       ctx.fillStyle = unlocked ? "rgba(207, 244, 186, 0.95)" : "rgba(255, 220, 181, 0.95)";
       ctx.font = "12px " + UI_FONT;
-      ctx.fillText(statusLabel, 30, infoY + 82);
+      drawTruncatedText(statusLabel, 30, infoY + 82, infoTextW);
 
       campaignMapStartRect = null;
       if (unlocked && implemented) {
@@ -4581,9 +4615,11 @@
         ? `${currentPilotName} - ${playerBest ?? 0}`
         : "Fly your first patrol to record it";
       const aceLine = formatTopAceLine();
+      // Left column of strip ends before the "More nations ahead" section (~50% of stripW)
+      const stripColW = Math.floor(stripW * 0.48) - 20; // 20px left padding, stop before right icons
       ctx.font = "13px " + UI_FONT;
       ctx.fillStyle = "rgba(255, 247, 226, 0.88)";
-      ctx.fillText(playerBestLine, stripX + 20, stripY + 46);
+      drawTruncatedText(playerBestLine, stripX + 20, stripY + 46, stripColW);
 
       ctx.fillStyle = "rgba(255, 247, 226, 0.95)";
       ctx.font = "15px " + UI_FONT;
@@ -4594,7 +4630,7 @@
       ctx.fillText("Top Ace", stripX + 20, stripY + 72);
 
       ctx.fillStyle = "rgba(255, 247, 226, 0.82)";
-      ctx.fillText(aceLine, stripX + 20, stripY + 92);
+      drawTruncatedText(aceLine, stripX + 20, stripY + 92, stripColW);
 
       ctx.textAlign = "center";
       const futureY = stripY + 28;
@@ -4694,7 +4730,8 @@
         ctx.textAlign = "left";
         ctx.fillStyle = "#263238";
         ctx.font = "14px " + UI_FONT;
-        ctx.fillText(`${entry.tier} – ${entry.label}`, rowX + 160, y + 32);
+        const germanLabelW = rowX + rowW - (rowX + 160) - 16; // 16px right margin
+        drawTruncatedText(`${entry.tier} \u2013 ${entry.label}`, rowX + 160, y + 32, germanLabelW);
 
         ctx.font = "13px " + UI_FONT;
         ctx.fillStyle = entry.unlocked ? "#2e7d32" : "#b0bec5";
@@ -4716,8 +4753,8 @@
       ctx.textAlign = "center";
       ctx.fillStyle = "#5d4037";
       ctx.font = "13px " + UI_FONT;
-      ctx.fillText("Ace liveries unlock through events or supporter purchases", W / 2, H - 52);
-      ctx.fillText("Tap anywhere outside rows to go back", W / 2, H - 30);
+      drawTruncatedText("Ace liveries unlock through events or supporter purchases", W / 2, H - 52, W - 32);
+      drawTruncatedText("Tap anywhere outside rows to go back", W / 2, H - 30, W - 32);
     }
 
     function drawBritishWIP() {
@@ -4781,7 +4818,8 @@
         ctx.textAlign = "left";
         ctx.fillStyle = "#263238";
         ctx.font = "13px " + UI_FONT;
-        ctx.fillText(`${entry.tier} - ${entry.label}`, rowX + 172, y + 25);
+        const britishLabelW = rowX + rowW - (rowX + 172) - 16; // 16px right margin
+        drawTruncatedText(`${entry.tier} - ${entry.label}`, rowX + 172, y + 25, britishLabelW);
 
         ctx.font = "12px " + UI_FONT;
         ctx.fillStyle = entry.unlocked ? "#2e7d32" : "#b0bec5";
@@ -4803,8 +4841,8 @@
       ctx.textAlign = "center";
       ctx.fillStyle = "#5d4037";
       ctx.font = "13px " + UI_FONT;
-      ctx.fillText("Ace liveries unlock through events or supporter purchases", W / 2, H - 52);
-      ctx.fillText("Tap anywhere outside rows to go back", W / 2, H - 30);
+      drawTruncatedText("Ace liveries unlock through events or supporter purchases", W / 2, H - 52, W - 32);
+      drawTruncatedText("Tap anywhere outside rows to go back", W / 2, H - 30, W - 32);
     }
 
     function endGame() {
