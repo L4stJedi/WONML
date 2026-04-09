@@ -2916,6 +2916,7 @@
     }
 
     function getBalloonObstacleAsset(variant = getBalloonVariantForCurrentFaction()) {
+      // TODO: BallonGermany.png needs replacement — photorealistic, wrong style
       if (variant === "germany") {
         return {
           img: balloonGermanImg,
@@ -3134,7 +3135,7 @@
 
       lastShotTime = timestamp;
       const burstPattern = isBurstModeActive(timestamp)
-        ? [{ yOffset: -4, vy: -0.7 }, { yOffset: 4, vy: 0.7 }]
+        ? [{ yOffset: -4, vy: -2.2 }, { yOffset: 4, vy: 2.2 }]
         : [{ yOffset: 0, vy: 0 }];
 
       for (const shotSpec of burstPattern) {
