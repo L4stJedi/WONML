@@ -755,10 +755,24 @@
     let gameOverMenuRect = null;
     let settingsBackRect = null;
     let settingsFireHandRect = null;
+    let settingsVolDecRect = null;
+    let settingsVolIncRect = null;
     let testerNotesContinueRect = null;
     let currentHangarFaction = "germany";
     let currentHangarSection = "service";
     let selectedHangarPlaneType = "e3std";
+
+    // Hangar description scroll state
+    let hangarDescScrollY = 0;
+    let hangarDescScrollMax = 0;
+    let hangarDescPanelRect = null; // set each frame by drawHangar
+    let hangarDescPointerActive = false;
+    let hangarDescPointerMoved = false;
+    let hangarDescPointerStartY = 0;
+    let hangarDescPointerLastY = 0;
+    let hangarDescScrollAtStart = 0;
+    let hangarDescVelocity = 0;
+    let hangarDescMomentumRaf = 0;
     let selectedCampaignMapId = "belgium";
     let campaignMapPanX = 0;
     let campaignMapPanY = 0;
@@ -2390,6 +2404,11 @@
       muteBtn.addEventListener("click", () => {
         bgmMuted = !bgmMuted;
         bgmRun.muted = bgmMuted;
+        // Also mute/unmute Web Audio SFX via masterGain
+        if (masterGain && audioCtx) {
+          masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+          masterGain.gain.setValueAtTime(bgmMuted ? 0 : masterVolume, audioCtx.currentTime);
+        }
         updateMuteButtonIcon();
       });
     }
@@ -2677,6 +2696,8 @@
         hintEl.textContent = "XP gained - burst ready";
       }
       updateXpDisplay();
+      // Audio: enemy destroyed SFX
+      playSFX("sfx_explosion_enemy_death_v1", explosionGainNode, 0.10);
     }
 
     function ensurePilotName() {
@@ -2871,6 +2892,8 @@
       completedCampaigns.push(campaignId);
       saveCompletedCampaigns();
       checkUnlocks();
+      // Audio: campaign complete sting
+      playSFX("sfx_ui_campaign_complete_v1", uiGainNode, 0);
     }
 
     function getObstacleSpawnInterval(level) {
@@ -3124,6 +3147,8 @@
           ttl: 880
         });
       }
+      // Audio: gun fire SFX on every shot that fires
+      playSFX("sfx_gun_vickers_burst_short_v1", gunGainNode, 0.05);
     }
 
     function registerHit(timestamp) {
@@ -3136,6 +3161,11 @@
       lives = Math.max(0, 3 - damageLevel);
       plane.hitRecoveryUntil = timestamp + (damageLevel === 1 ? 850 : 1200);
       updateLivesDisplay();
+
+      // Audio: player hit SFX (damage level 1 or 2 — death handled by endGame)
+      if (damageLevel < 3) {
+        playSFX("sfx_hit_player_light_v1", hitGainNode, 0.08);
+      }
 
       if (damageLevel >= 3) {
         damageLevel = 3;
@@ -4487,6 +4517,90 @@
       return visible.length;
     }
 
+    // drawScrollableDescPanel — renders multi-line text inside a clipped panel with
+    // a drag-scroll offset and a thin scroll-indicator bar on the right edge.
+    // Returns the total content height so the caller can store scrollMax.
+    function drawScrollableDescPanel(text, panelX, panelY, panelW, panelH, scrollY) {
+      const fontSize = 12;
+      const lineH = 18;
+      const padLeft = 0;
+      const padTop = 4;
+
+      // Measure wrapped lines using the current ctx font (caller must set it)
+      const words = String(text || "").split(/\s+/);
+      const lines = [];
+      let current = "";
+      for (const word of words) {
+        const next = current ? `${current} ${word}` : word;
+        if (ctx.measureText(next).width <= panelW - padLeft || !current) {
+          current = next;
+        } else {
+          lines.push(current);
+          current = word;
+        }
+      }
+      if (current) lines.push(current);
+
+      const totalContentH = padTop + lines.length * lineH;
+
+      // Clip to panel bounds
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(panelX, panelY, panelW, panelH);
+      ctx.clip();
+
+      // Draw lines offset by scrollY
+      lines.forEach((line, i) => {
+        const lineY = panelY + padTop + i * lineH - scrollY;
+        if (lineY + lineH < panelY || lineY > panelY + panelH) return; // out of view
+        ctx.fillText(line, panelX + padLeft, lineY + fontSize);
+      });
+
+      // Downward fade + chevron when more content is below
+      if (scrollY < totalContentH - panelH - 2) {
+        const fadeH = 22;
+        const grad = ctx.createLinearGradient(0, panelY + panelH - fadeH, 0, panelY + panelH);
+        grad.addColorStop(0, "rgba(245, 236, 217, 0)");
+        grad.addColorStop(1, "rgba(245, 236, 217, 0.88)");
+        ctx.fillStyle = grad;
+        ctx.fillRect(panelX, panelY + panelH - fadeH, panelW, fadeH);
+
+        // Down chevron
+        ctx.strokeStyle = "rgba(74, 57, 37, 0.72)";
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        const chev = { cx: panelX + panelW / 2, cy: panelY + panelH - 5 };
+        ctx.moveTo(chev.cx - 6, chev.cy - 3);
+        ctx.lineTo(chev.cx, chev.cy + 3);
+        ctx.lineTo(chev.cx + 6, chev.cy - 3);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+
+      // Scroll indicator bar on right edge (only when content overflows)
+      if (totalContentH > panelH) {
+        const barX = panelX + panelW + 3;
+        const barTrackH = panelH;
+        const thumbRatio = Math.min(1, panelH / totalContentH);
+        const thumbH = Math.max(20, barTrackH * thumbRatio);
+        const thumbY = panelY + (scrollY / (totalContentH - panelH)) * (barTrackH - thumbH);
+
+        ctx.save();
+        ctx.fillStyle = "rgba(74, 57, 37, 0.18)";
+        ctx.beginPath();
+        ctx.roundRect(barX, panelY, 4, barTrackH, 2);
+        ctx.fill();
+        ctx.fillStyle = "rgba(74, 57, 37, 0.52)";
+        ctx.beginPath();
+        ctx.roundRect(barX, thumbY, 4, thumbH, 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      return totalContentH;
+    }
+
     // drawTruncatedText — draws a single line, truncating with "…" if it exceeds maxWidth.
     function drawTruncatedText(text, x, y, maxWidth) {
       const str = String(text || "");
@@ -4685,9 +4799,19 @@
           ctx.restore();
         }
 
+        // Description scrollable panel — sits between the aircraft image and Service Record
+        const descPanelX = detailX + 18;
+        const descPanelY = detailY + 258;
+        const descPanelW = detailW - 36;
+        const descPanelH = 42; // fixed height; Service Record panel starts 6px below
+        hangarDescPanelRect = { x: descPanelX, y: descPanelY, w: descPanelW, h: descPanelH };
         ctx.fillStyle = "#4a3925";
         ctx.font = "12px " + UI_FONT;
-        drawWrappedText(selected.note, detailX + 18, detailY + 258, detailW - 36, 18, 3);
+        const totalDescH = drawScrollableDescPanel(
+          selected.note, descPanelX, descPanelY, descPanelW, descPanelH,
+          Math.max(0, Math.min(hangarDescScrollY, hangarDescScrollMax))
+        );
+        hangarDescScrollMax = Math.max(0, totalDescH - descPanelH);
 
         const statsY = detailY + 306;
         ctx.fillStyle = "rgba(32, 26, 21, 0.74)";
@@ -4803,10 +4927,43 @@
 
       const futureX = panelX + 22;
       const futureW = panelW - 44;
+
+      // --- Master Volume control (live) ---
+      const volRowY = panelY + 222;
+      ctx.fillStyle = "rgba(219, 193, 142, 0.96)";
+      fillRoundedRect(futureX, volRowY, futureW, 74, 14);
+
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#2f220f";
+      ctx.font = "16px " + UI_FONT;
+      ctx.fillText("Master Volume", futureX + 18, volRowY + 27);
+
+      // Volume bar background
+      const barX = futureX + 18;
+      const barY = volRowY + 40;
+      const barW = futureW - 80;
+      const barH = 10;
+      ctx.fillStyle = "rgba(100, 78, 48, 0.3)";
+      fillRoundedRect(barX, barY, barW, barH, 5);
+
+      // Volume bar fill
+      ctx.fillStyle = "#7a5c2e";
+      fillRoundedRect(barX, barY, Math.max(0, barW * masterVolume), barH, 5);
+
+      // Percentage label
+      ctx.textAlign = "right";
+      ctx.font = "bold 14px " + UI_FONT;
+      ctx.fillStyle = "#2f220f";
+      ctx.fillText(Math.round(masterVolume * 100) + "%", futureX + futureW - 18, volRowY + 51);
+
+      // Dec / Inc tap targets
+      settingsVolDecRect = { x: futureX + 18, y: volRowY, w: 36, h: 74 };
+      settingsVolIncRect = { x: futureX + futureW - 54, y: volRowY, w: 36, h: 74 };
+
+      // Remaining future-feature rows
       const futureRows = [
-        { y: panelY + 222, title: "Music & Sound", note: "Audio mix and soundtrack settings will live here later." },
-        { y: panelY + 294, title: "Pilot Profile", note: "Portraits, medals, rank, and career identity are planned here." },
-        { y: panelY + 366, title: "More Options Ahead", note: "This menu will grow as WONML gets closer to release quality." }
+        { y: panelY + 310, title: "Pilot Profile", note: "Portraits, medals, rank, and career identity are planned here." },
+        { y: panelY + 382, title: "More Options Ahead", note: "This menu will grow as WONML gets closer to release quality." }
       ];
 
       futureRows.forEach((row) => {
@@ -5406,6 +5563,9 @@
           scoreSubmitted = true;
           updateLeaderboardForCurrentPilot();
         }
+        // Audio: stop engine loop + play game-over sting
+        stopEngineLoop();
+        playSFX("sfx_ui_gameover_v1", uiGainNode, 0);
       }
       updateOverlayVisibility();
       drawScene();
@@ -5518,6 +5678,71 @@
       campaignMapPointerStart = null;
       campaignMapLastPoint = null;
     }
+
+    // ---- Hangar description scroll drag ----
+    function insideRect(r, x, y) {
+      return r && x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+    }
+
+    function stopHangarDescMomentum() {
+      if (hangarDescMomentumRaf) {
+        cancelAnimationFrame(hangarDescMomentumRaf);
+        hangarDescMomentumRaf = 0;
+      }
+    }
+
+    function beginHangarDescPointer(evt) {
+      if (screen !== "hangar") return false;
+      const point = getCanvasCoordinates(evt);
+      if (!insideRect(hangarDescPanelRect, point.x, point.y)) return false;
+      stopHangarDescMomentum();
+      hangarDescPointerActive = true;
+      hangarDescPointerMoved = false;
+      hangarDescPointerStartY = point.y;
+      hangarDescPointerLastY = point.y;
+      hangarDescScrollAtStart = hangarDescScrollY;
+      hangarDescVelocity = 0;
+      return true;
+    }
+
+    function updateHangarDescPointer(evt) {
+      if (!hangarDescPointerActive || screen !== "hangar") return;
+      const point = getCanvasCoordinates(evt);
+      const dy = point.y - hangarDescPointerLastY;
+      if (Math.abs(point.y - hangarDescPointerStartY) > 4) hangarDescPointerMoved = true;
+      hangarDescVelocity = dy;
+      hangarDescScrollY = Math.max(0, Math.min(
+        hangarDescScrollAtStart + (hangarDescPointerStartY - point.y),
+        hangarDescScrollMax
+      ));
+      hangarDescPointerLastY = point.y;
+      drawHangar();
+    }
+
+    function endHangarDescPointer() {
+      if (!hangarDescPointerActive) return;
+      hangarDescPointerActive = false;
+
+      // Momentum deceleration over ~400ms
+      let velocity = -hangarDescVelocity * 3; // invert: dragging down scrolls down
+      const startTime = performance.now();
+      const DECAY_MS = 400;
+
+      function momentum(ts) {
+        const elapsed = ts - startTime;
+        if (elapsed >= DECAY_MS || Math.abs(velocity) < 0.3) {
+          hangarDescMomentumRaf = 0;
+          return;
+        }
+        const factor = 1 - elapsed / DECAY_MS;
+        hangarDescScrollY = Math.max(0, Math.min(hangarDescScrollY + velocity * factor, hangarDescScrollMax));
+        drawHangar();
+        hangarDescMomentumRaf = requestAnimationFrame(momentum);
+      }
+
+      hangarDescMomentumRaf = requestAnimationFrame(momentum);
+    }
+    // ---- end hangar description scroll ----
 
     function getCanvasCoordinates(evt) {
       const rect = canvas.getBoundingClientRect();
@@ -5651,6 +5876,20 @@
           return;
         }
 
+        // Volume decrease tap
+        if (inside(settingsVolDecRect)) {
+          setMasterVolume(Math.max(0, masterVolume - 0.1));
+          drawSettings();
+          return;
+        }
+
+        // Volume increase tap
+        if (inside(settingsVolIncRect)) {
+          setMasterVolume(Math.min(1, masterVolume + 0.1));
+          drawSettings();
+          return;
+        }
+
         return;
       }
 
@@ -5676,6 +5915,8 @@
         if (clickedTab) {
           currentHangarFaction = clickedTab.faction;
           currentHangarSection = "service";
+          hangarDescScrollY = 0;
+          hangarDescScrollMax = 0;
           ensureHangarSelection();
           drawHangar();
           return;
@@ -5684,6 +5925,8 @@
         const clickedSection = hangarSectionTabs.find(tab => inside(tab));
         if (clickedSection) {
           currentHangarSection = clickedSection.section;
+          hangarDescScrollY = 0;
+          hangarDescScrollMax = 0;
           ensureHangarSelection();
           drawHangar();
           return;
@@ -5692,7 +5935,15 @@
         const clickedPlane = hangarPlaneChoices.find(choice => inside(choice));
         if (clickedPlane) {
           selectedHangarPlaneType = clickedPlane.key;
+          hangarDescScrollY = 0;
+          hangarDescScrollMax = 0;
           drawHangar();
+          return;
+        }
+
+        // If the tap was inside the description scroll panel (or was a drag on it),
+        // do not navigate away — the scroll handlers manage that interaction.
+        if (insideRect(hangarDescPanelRect, x, y)) {
           return;
         }
 
@@ -5863,6 +6114,7 @@
     window.addEventListener("mousedown", (e) => {
       if (!accessUnlocked) return;
       e.preventDefault();
+      beginHangarDescPointer(e);
       handleInput(e);
     });
 
@@ -5872,6 +6124,10 @@
         e.preventDefault();
         updateCampaignMapPointer(e);
       }
+      if (screen === "hangar") {
+        e.preventDefault();
+        updateHangarDescPointer(e);
+      }
     });
 
     window.addEventListener("mouseup", (e) => {
@@ -5880,11 +6136,15 @@
         e.preventDefault();
         endCampaignMapPointer(e);
       }
+      if (screen === "hangar") {
+        endHangarDescPointer();
+      }
     });
 
     window.addEventListener("touchstart", (e) => {
       if (!accessUnlocked) return;
       e.preventDefault();
+      beginHangarDescPointer(e);
       handleInput(e);
     }, { passive: false });
 
@@ -5894,6 +6154,10 @@
         e.preventDefault();
         updateCampaignMapPointer(e);
       }
+      if (screen === "hangar") {
+        e.preventDefault();
+        updateHangarDescPointer(e);
+      }
     }, { passive: false });
 
     window.addEventListener("touchend", (e) => {
@@ -5901,6 +6165,9 @@
       if (screen === "campaignMap") {
         e.preventDefault();
         endCampaignMapPointer(e);
+      }
+      if (screen === "hangar") {
+        endHangarDescPointer();
       }
     }, { passive: false });
 
