@@ -1,0 +1,216 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "description": "Unified save data schema for Wings Over No Man's Land. This file defines the structure and field semantics of the single localStorage object that replaces all fragmented wonml_r2_* keys. Nico: use this as the implementation spec. The migration section defines how to assemble this from existing r2 keys on first load.",
+    "last_updated": "2026-04-09",
+    "updated_by": "Enzo Caruso"
+  },
+
+  "localStorage_key": "wonml_save_v1",
+
+  "current_schema_version": 1,
+
+  "version_history": [
+    {
+      "version": 1,
+      "date": "2026-04-09",
+      "author": "Enzo Caruso",
+      "changes": "Initial unified save schema. Consolidates all wonml_r2_* fragmented keys into a single JSON object."
+    }
+  ],
+
+  "top_level_fields": {
+    "schema_version": {
+      "type": "integer",
+      "required": true,
+      "default": 1,
+      "description": "Version of this save data structure. Used by the migration runner to determine if an upgrade is needed. Always write the current schema version when saving."
+    },
+    "player_name": {
+      "type": "string",
+      "required": false,
+      "default": "",
+      "max_length": 64,
+      "description": "Pilot name entered by the player. Prefilled on subsequent sessions. Corresponds to wonml_r2_last_pilot."
+    },
+    "completed_campaigns": {
+      "type": "array",
+      "items_type": "string",
+      "required": true,
+      "default": [],
+      "description": "Array of campaign IDs that the player has completed. Example: ['belgium', 'marne']. Used by checkUnlocks() to determine which aircraft are available. Corresponds to wonml_r2_completed_campaigns."
+    },
+    "unlocked_planes": {
+      "type": "array",
+      "items_type": "string",
+      "required": true,
+      "default": [],
+      "description": "Array of planeType strings explicitly unlocked via campaign rewards. Tier 1 starters are never in this array — they are always available. Example: ['albatrosdvstd', 'dh2']. Corresponds to wonml_r2_unlocked_planes."
+    },
+    "hangar_stats": {
+      "type": "object",
+      "required": true,
+      "default": {},
+      "description": "Per-aircraft career statistics. Keys are planeType strings. Corresponds to wonml_r2_hangar_stats.",
+      "value_schema": {
+        "flights": {
+          "type": "integer",
+          "default": 0,
+          "description": "Total number of runs started with this aircraft."
+        },
+        "kills": {
+          "type": "integer",
+          "default": 0,
+          "description": "Total enemy kills across all runs with this aircraft."
+        },
+        "best_score": {
+          "type": "integer",
+          "default": 0,
+          "description": "Personal best score with this aircraft across all runs and campaigns."
+        },
+        "last_flown_at": {
+          "type": "string",
+          "format": "ISO8601",
+          "default": null,
+          "description": "Timestamp of last run with this aircraft. Added in schema v1. Old saves will have null here. NEW FIELD — did not exist in r2."
+        },
+        "last_campaign_id": {
+          "type": "string",
+          "default": null,
+          "description": "Campaign ID of the last run with this aircraft. Enables 'last flown in: Belgium' display in hangar. NEW FIELD — did not exist in r2."
+        }
+      }
+    },
+    "achievements": {
+      "type": "array",
+      "items_type": "object",
+      "required": true,
+      "default": [],
+      "description": "List of achievements the player has earned.",
+      "item_schema": {
+        "achievement_id": {
+          "type": "string",
+          "description": "Stable ID matching an entry in config/achievements.json."
+        },
+        "earned_at": {
+          "type": "string",
+          "format": "ISO8601",
+          "description": "Timestamp when achievement was earned."
+        },
+        "trigger_context": {
+          "type": "object",
+          "description": "Optional context object recording what triggered the achievement. E.g. { score: 250, campaign_id: 'belgium', plane_type: 'dr1std' }. Useful for display and analytics."
+        }
+      }
+    },
+    "high_scores": {
+      "type": "object",
+      "required": true,
+      "default": {},
+      "description": "Per-campaign personal best scores. Keys are campaign IDs. Example: { 'belgium': 312 }. This replaces the global wonml_r2_best and the pilot_bests structure for the unified save. The global all-time best is simply the max value across all entries here.",
+      "value_schema": {
+        "type": "integer",
+        "description": "Best score ever achieved by this player in this campaign, across all aircraft and runs."
+      }
+    },
+    "pilot_bests": {
+      "type": "object",
+      "required": true,
+      "default": {},
+      "description": "Per-named-pilot best scores (legacy structure from wonml_r2_pilot_bests). Keys are pilot name strings. Retained for compatibility with multi-pilot local play. In the full release, a player_id system should replace this. See migration notes.",
+      "value_schema": {
+        "type": "integer",
+        "description": "Best score ever recorded under this pilot name."
+      }
+    },
+    "leaderboard_cache": {
+      "type": "array",
+      "items_type": "object",
+      "required": true,
+      "default": [],
+      "description": "Local cache of the last-fetched Supabase leaderboard. Displayed when offline. Max 10 entries. Corresponds to wonml_r2_leaderboard.",
+      "item_schema": {
+        "name": { "type": "string" },
+        "score": { "type": "integer" },
+        "campaign_id": { "type": "string", "description": "Present once new Supabase schema is deployed. Null for old entries." },
+        "faction": { "type": "string", "description": "Present once new Supabase schema is deployed. Null for old entries." }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "required": true,
+      "default": {},
+      "description": "Player preferences and UI settings. Consolidates wonml_r2_burst_hand and any future settings.",
+      "value_schema": {
+        "burst_hand": {
+          "type": "string",
+          "enum": ["left", "right"],
+          "default": "right",
+          "description": "Which side of the screen the fire buttons appear on. Corresponds to wonml_r2_burst_hand."
+        },
+        "muted": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether BGM is muted. NEW FIELD — mute state is currently not persisted in r2."
+        }
+      }
+    },
+    "early_access": {
+      "type": "string",
+      "required": false,
+      "default": null,
+      "description": "Early access gate flag. Value 'ok' means the player has entered a valid code. Corresponds to wonml_r2_early_access. Will be removed when open beta begins."
+    },
+    "last_played": {
+      "type": "string",
+      "format": "ISO8601",
+      "required": false,
+      "default": null,
+      "description": "Timestamp of the last time a run was started. Updated at the beginning of each run. NEW FIELD — did not exist in r2."
+    },
+    "total_runs": {
+      "type": "integer",
+      "required": true,
+      "default": 0,
+      "description": "Lifetime total number of runs started. Incremented each time a game begins. NEW FIELD — did not exist in r2. Can be derived on migration by summing all hangar_stats[].flights."
+    }
+  },
+
+  "migration": {
+    "description": "Instructions for Nico to implement the migration from fragmented wonml_r2_* keys to the unified wonml_save_v1 key. Run this once on game load before any other save operations. After successful migration, delete the old keys.",
+    "trigger_condition": "localStorage.getItem('wonml_save_v1') === null AND any wonml_r2_* key exists",
+    "steps": [
+      {
+        "step": 1,
+        "action": "read_old_keys",
+        "description": "Read all wonml_r2_* keys from localStorage into a temporary object. Keys to read: wonml_r2_best, wonml_r2_best_pilot, wonml_r2_pilot_bests, wonml_r2_leaderboard, wonml_r2_hangar_stats, wonml_r2_last_pilot, wonml_r2_burst_hand, wonml_r2_early_access, wonml_r2_completed_campaigns, wonml_r2_unlocked_planes."
+      },
+      {
+        "step": 2,
+        "action": "construct_save_object",
+        "description": "Build the new unified save object. Map old keys as follows:\n- wonml_r2_last_pilot → player_name\n- JSON.parse(wonml_r2_completed_campaigns) || [] → completed_campaigns\n- JSON.parse(wonml_r2_unlocked_planes) || [] → unlocked_planes\n- JSON.parse(wonml_r2_hangar_stats) || {} → hangar_stats (rename 'bestScore' to 'best_score' in each entry; set last_flown_at and last_campaign_id to null)\n- JSON.parse(wonml_r2_pilot_bests) || {} → pilot_bests\n- JSON.parse(wonml_r2_leaderboard) || [] → leaderboard_cache (existing entries have no campaign_id or faction; leave them null)\n- wonml_r2_burst_hand || 'right' → settings.burst_hand\n- wonml_r2_early_access → early_access\n- achievements: [] (no achievement data existed in r2)\n- high_scores: derive from pilot_bests global best and hangar_stats if possible; use wonml_r2_best as the belgium entry if no campaign tracking existed: { belgium: parseInt(wonml_r2_best) || 0 }\n- total_runs: sum all hangar_stats[planeType].flights values\n- last_played: null (no run timestamp existed in r2)\n- schema_version: 1"
+      },
+      {
+        "step": 3,
+        "action": "write_new_key",
+        "description": "Write the assembled object to localStorage.setItem('wonml_save_v1', JSON.stringify(save_object))."
+      },
+      {
+        "step": 4,
+        "action": "delete_old_keys",
+        "description": "Remove all wonml_r2_* keys from localStorage. Also remove legacy ww1_* keys if present: ww1_fokker_best, ww1_fokker_best_pilot, ww1_leaderboard, ww1_last_pilot. Do NOT delete these keys until step 3 has completed successfully."
+      },
+      {
+        "step": 5,
+        "action": "verify",
+        "description": "After deletion, read back wonml_save_v1, JSON.parse it, and verify schema_version === 1 and completed_campaigns is an array. If verification fails, log an error but do not crash — fall back to the newly written object."
+      }
+    ],
+    "future_migration_pattern": "For schema v1 → v2: on load, read wonml_save_v1, check save.schema_version. If < 2, run upgradeToV2(save) which adds any new fields with defaults, sets schema_version to 2, and writes to wonml_save_v2. The old wonml_save_v1 key is left for one release cycle then deleted. This pattern repeats for each future version increment."
+  },
+
+  "schema_version_runner_pseudocode": {
+    "description": "Reference implementation for Nico. This is the pattern to follow for all future schema upgrades.",
+    "code": "function loadSave() {\n  // Try current key first\n  let raw = localStorage.getItem('wonml_save_v1');\n  if (raw) {\n    const save = JSON.parse(raw);\n    if (save.schema_version === CURRENT_SAVE_VERSION) return save;\n    return migrateInPlace(save);\n  }\n  // Check for legacy fragmented keys\n  if (localStorage.getItem('wonml_r2_best') !== null) {\n    return migrateFromR2();\n  }\n  // Fresh install\n  return createDefaultSave();\n}\n\nfunction migrateInPlace(save) {\n  // Apply incremental upgrades\n  if (save.schema_version < 2) upgradeV1ToV2(save);\n  // Add future versions here\n  return save;\n}"
+  }
+}

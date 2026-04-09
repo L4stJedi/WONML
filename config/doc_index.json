@@ -1,0 +1,650 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "description": "Master documentation index for Wings Over No Man's Land. Every team deliverable — campaign docs, art briefs, skill briefs, fix notes, and reviews — is indexed here with its subject entity, author, status, and file path. Jarvis and the team can check this file to find what documentation exists for any campaign, aircraft, or feature. Update this file whenever a new document is created or an existing document's status changes.",
+    "last_updated": "2026-04-09",
+    "updated_by": "Enzo Caruso",
+    "status_values": ["draft", "approved", "superseded", "archived"],
+    "type_values": [
+      "campaign_design",
+      "art_brief",
+      "skill_brief",
+      "hire_proposal",
+      "fix_note",
+      "review",
+      "config",
+      "roadmap",
+      "checklist",
+      "index",
+      "kickoff"
+    ]
+  },
+
+  "documents": [
+
+    {
+      "doc_id": "kickoff_wonml_2026_04_09",
+      "type": "kickoff",
+      "subject_entity": "project:wonml",
+      "title": "WONML Kickoff Triage 2026-04-09",
+      "author": "Jarvis",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "Team Inbox/JARVIS_WONML_KICKOFF_TRIAGE_2026-04-09.md",
+      "notes": "Master kickoff brief. Defines initial task assignments for all team members."
+    },
+
+    {
+      "doc_id": "campaign_index",
+      "type": "index",
+      "subject_entity": "project:wonml",
+      "title": "Campaign Index",
+      "author": "Jarvis",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "Team Inbox/CAMPAIGN_INDEX.md",
+      "notes": "Master index of all 10 campaigns. Single source of truth for campaign order and IDs."
+    },
+
+    {
+      "doc_id": "campaign_belgium_ingame",
+      "type": "campaign_design",
+      "subject_entity": "campaign:belgium",
+      "title": "Belgium Campaign (in-game implementation)",
+      "author": "Nico",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "WONML/index.html",
+      "notes": "Belgium is the only fully implemented campaign as of r2. All 5 stages are live in index.html."
+    },
+
+    {
+      "doc_id": "campaign_config_plan",
+      "type": "campaign_design",
+      "subject_entity": "project:wonml",
+      "title": "Campaign Config Plan",
+      "author": "Nico",
+      "date": null,
+      "status": "approved",
+      "file_path": "WONML/CAMPAIGN_CONFIG_PLAN.md",
+      "notes": "Structural design doc for the CAMPAIGNS data format. Belgium implementation matches this plan closely."
+    },
+
+    {
+      "doc_id": "campaign_02_marne",
+      "type": "campaign_design",
+      "subject_entity": "campaign:marne",
+      "title": "Campaign 02 — Marne",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_02_Marne.md",
+      "notes": "Campaign design document. Not yet implemented in game."
+    },
+
+    {
+      "doc_id": "campaign_03_ypres",
+      "type": "campaign_design",
+      "subject_entity": "campaign:ypres",
+      "title": "Campaign 03 — Ypres",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_03_Ypres.md",
+      "notes": "Campaign design document. Not yet implemented in game."
+    },
+
+    {
+      "doc_id": "campaign_04_gallipoli",
+      "type": "campaign_design",
+      "subject_entity": "campaign:gallipoli",
+      "title": "Campaign 04 — Gallipoli",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_04_Gallipoli.md",
+      "notes": "Campaign design document. Mediterranean Front. Not yet implemented."
+    },
+
+    {
+      "doc_id": "campaign_05_verdun",
+      "type": "campaign_design",
+      "subject_entity": "campaign:verdun",
+      "title": "Campaign 05 — Verdun",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_05_Verdun.md",
+      "notes": "Campaign design document. Not yet implemented."
+    },
+
+    {
+      "doc_id": "campaign_06_somme",
+      "type": "campaign_design",
+      "subject_entity": "campaign:somme",
+      "title": "Campaign 06 — Somme",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_06_Somme.md",
+      "notes": "Campaign design document. Not yet implemented."
+    },
+
+    {
+      "doc_id": "campaign_07_passchendaele",
+      "type": "campaign_design",
+      "subject_entity": "campaign:passchendaele",
+      "title": "Campaign 07 — Passchendaele",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_07_Passchendaele.md",
+      "notes": "Campaign design document. Not yet implemented."
+    },
+
+    {
+      "doc_id": "campaign_08_italian_front",
+      "type": "campaign_design",
+      "subject_entity": "campaign:italian_front",
+      "title": "Campaign 08 — Italian Front",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_08_Italian_Front.md",
+      "notes": "Campaign design document. Note: campaign ID in CAMPAIGN_MAP_NODES is 'aisne' but this doc suggests Italian Front. Discrepancy to resolve with Jarvis."
+    },
+
+    {
+      "doc_id": "campaign_09_spring_offensive",
+      "type": "campaign_design",
+      "subject_entity": "campaign:spring",
+      "title": "Campaign 09 — Spring Offensive",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_09_Spring_Offensive.md",
+      "notes": "Campaign design document. Not yet implemented."
+    },
+
+    {
+      "doc_id": "campaign_10_hundred_days",
+      "type": "campaign_design",
+      "subject_entity": "campaign:hundred_days",
+      "title": "Campaign 10 — Hundred Days",
+      "author": null,
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/CAMPAIGN_10_Hundred_Days.md",
+      "notes": "Campaign design document. Final campaign in the arc. Not yet implemented."
+    },
+
+    {
+      "doc_id": "roadmap",
+      "type": "roadmap",
+      "subject_entity": "project:wonml",
+      "title": "Project Roadmap",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "WONML/ROADMAP.md",
+      "notes": "Master project roadmap."
+    },
+
+    {
+      "doc_id": "belgium_vertical_slice_checklist",
+      "type": "checklist",
+      "subject_entity": "campaign:belgium",
+      "title": "Belgium Vertical Slice Checklist",
+      "author": null,
+      "date": null,
+      "status": "approved",
+      "file_path": "WONML/BELGIUM_VERTICAL_SLICE_CHECKLIST.md",
+      "notes": "Completion checklist for the Belgium campaign vertical slice."
+    },
+
+    {
+      "doc_id": "planned_aircraft_list",
+      "type": "campaign_design",
+      "subject_entity": "project:wonml",
+      "title": "Planned Aircraft List",
+      "author": null,
+      "date": null,
+      "status": "approved",
+      "file_path": "WONML/PLANNED_AIRCRAFT_LIST.md",
+      "notes": "Full planned aircraft roster across all factions and tiers."
+    },
+
+    {
+      "doc_id": "asset_naming",
+      "type": "art_brief",
+      "subject_entity": "project:wonml",
+      "title": "Asset Naming Convention",
+      "author": "Sal",
+      "date": null,
+      "status": "approved",
+      "file_path": "WONML/ASSET_NAMING.md",
+      "notes": "Defines file naming conventions for all game assets. Sal and Benny must follow this when delivering files."
+    },
+
+    {
+      "doc_id": "review_nico_technical",
+      "type": "review",
+      "subject_entity": "project:wonml",
+      "title": "Technical Review — Nico",
+      "author": "Nico",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "Team Inbox/REVIEW_Nico_Technical.md",
+      "notes": "Technical code review of index.html r2."
+    },
+
+    {
+      "doc_id": "review_enzo_data",
+      "type": "review",
+      "subject_entity": "project:wonml",
+      "title": "Data Architecture Review — Enzo",
+      "author": "Enzo Caruso",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "Team Inbox/REVIEW_Enzo_Data.md",
+      "notes": "Data architecture review of index.html r2. Covers localStorage, campaigns, aircraft, Supabase, save versioning."
+    },
+
+    {
+      "doc_id": "review_dante_game_design",
+      "type": "review",
+      "subject_entity": "project:wonml",
+      "title": "Game Design Review — Dante",
+      "author": "Dante",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "Team Inbox/REVIEW_Dante_GameDesign.md",
+      "notes": "Game design review."
+    },
+
+    {
+      "doc_id": "review_luca_historical",
+      "type": "review",
+      "subject_entity": "project:wonml",
+      "title": "Historical Content Review — Luca",
+      "author": "Luca",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "Team Inbox/REVIEW_Luca_Historical.md",
+      "notes": "Historical accuracy review."
+    },
+
+    {
+      "doc_id": "review_vito_copy",
+      "type": "review",
+      "subject_entity": "project:wonml",
+      "title": "Copy Review — Vito",
+      "author": "Vito",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "Team Inbox/REVIEW_Vito_Copy.md",
+      "notes": "Narrative and copy review."
+    },
+
+    {
+      "doc_id": "review_marco_sal_visual",
+      "type": "review",
+      "subject_entity": "project:wonml",
+      "title": "Visual / Art Review — Marco & Sal",
+      "author": "Marco / Sal",
+      "date": "2026-04-09",
+      "status": "approved",
+      "file_path": "Team Inbox/REVIEW_Marco_Sal_Visual.md",
+      "notes": "Visual art review."
+    },
+
+    {
+      "doc_id": "fix_sal_asset_blockers",
+      "type": "fix_note",
+      "subject_entity": "project:wonml",
+      "title": "Asset Blockers — Sal",
+      "author": "Sal",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/FIX_Sal_AssetBlockers.md",
+      "notes": "Blockers list for art/asset delivery."
+    },
+
+    {
+      "doc_id": "fix_nico_code_blockers",
+      "type": "fix_note",
+      "subject_entity": "project:wonml",
+      "title": "Code Blockers — Nico",
+      "author": "Nico",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/FIX_Nico_CodeBlockers.md",
+      "notes": "Blockers list for code/technical issues."
+    },
+
+    {
+      "doc_id": "skill_brief_senior_game_developer",
+      "type": "skill_brief",
+      "subject_entity": "role:senior_game_developer",
+      "title": "Skill Brief — Senior Game Developer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_Senior_Game_Developer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_senior_game_artist",
+      "type": "skill_brief",
+      "subject_entity": "role:senior_game_artist",
+      "title": "Skill Brief — Senior Game Artist",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_Senior_Game_Artist.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_ww1_historical_advisor",
+      "type": "skill_brief",
+      "subject_entity": "role:ww1_historical_advisor",
+      "title": "Skill Brief — WW1 Historical Advisor",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_WW1_Historical_Advisor.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_senior_game_designer",
+      "type": "skill_brief",
+      "subject_entity": "role:senior_game_designer",
+      "title": "Skill Brief — Senior Game Designer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_Senior_Game_Designer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_art_director",
+      "type": "skill_brief",
+      "subject_entity": "role:art_director",
+      "title": "Skill Brief — Art Director",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_Art_Director.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_game_writer",
+      "type": "skill_brief",
+      "subject_entity": "role:game_writer",
+      "title": "Skill Brief — Game Writer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_Game_Writer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_database_specialist",
+      "type": "skill_brief",
+      "subject_entity": "role:database_specialist",
+      "title": "Skill Brief — Database Specialist",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_Database_Specialist.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_sound_designer",
+      "type": "skill_brief",
+      "subject_entity": "role:sound_designer",
+      "title": "Skill Brief — Sound Designer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_Sound_Designer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_2d_animator",
+      "type": "skill_brief",
+      "subject_entity": "role:2d_animator",
+      "title": "Skill Brief — 2D Animator",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_2D_Animator.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "skill_brief_level_campaign_designer",
+      "type": "skill_brief",
+      "subject_entity": "role:level_campaign_designer",
+      "title": "Skill Brief — Level/Campaign Designer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/SKILL_BRIEF_Level_Campaign_Designer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_senior_game_developer",
+      "type": "hire_proposal",
+      "subject_entity": "role:senior_game_developer",
+      "title": "Hire Proposal — Senior Game Developer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_Senior_Game_Developer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_senior_game_artist",
+      "type": "hire_proposal",
+      "subject_entity": "role:senior_game_artist",
+      "title": "Hire Proposal — Senior Game Artist",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_Senior_Game_Artist.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_ww1_historical_advisor",
+      "type": "hire_proposal",
+      "subject_entity": "role:ww1_historical_advisor",
+      "title": "Hire Proposal — WW1 Historical Advisor",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_WW1_Historical_Advisor.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_senior_game_designer",
+      "type": "hire_proposal",
+      "subject_entity": "role:senior_game_designer",
+      "title": "Hire Proposal — Senior Game Designer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_Senior_Game_Designer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_art_director",
+      "type": "hire_proposal",
+      "subject_entity": "role:art_director",
+      "title": "Hire Proposal — Art Director",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_Art_Director.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_game_writer",
+      "type": "hire_proposal",
+      "subject_entity": "role:game_writer",
+      "title": "Hire Proposal — Game Writer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_Game_Writer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_database_specialist",
+      "type": "hire_proposal",
+      "subject_entity": "role:database_specialist",
+      "title": "Hire Proposal — Database Specialist",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_Database_Specialist.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_sound_designer",
+      "type": "hire_proposal",
+      "subject_entity": "role:sound_designer",
+      "title": "Hire Proposal — Sound Designer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_Sound_Designer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_2d_animator",
+      "type": "hire_proposal",
+      "subject_entity": "role:2d_animator",
+      "title": "Hire Proposal — 2D Animator",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_2D_Animator.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "hire_proposal_level_campaign_designer",
+      "type": "hire_proposal",
+      "subject_entity": "role:level_campaign_designer",
+      "title": "Hire Proposal — Level/Campaign Designer",
+      "author": "Jarvis",
+      "date": null,
+      "status": "approved",
+      "file_path": "Team Inbox/HIRE_PROPOSAL_Level_Campaign_Designer.md",
+      "notes": null
+    },
+
+    {
+      "doc_id": "db_design_enzo",
+      "type": "review",
+      "subject_entity": "project:wonml",
+      "title": "Database Architecture Design — Enzo Caruso",
+      "author": "Enzo Caruso",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "Team Inbox/DB_Design_Enzo.md",
+      "notes": "Full database architecture document covering schema versioning, Supabase tables, localStorage, migrations, achievements, and implementation notes."
+    },
+
+    {
+      "doc_id": "config_balance",
+      "type": "config",
+      "subject_entity": "project:wonml",
+      "title": "Balance Config",
+      "author": "Enzo Caruso",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "WONML/config/balance.json",
+      "notes": "All tunable gameplay balance values extracted from index.html. Dante's primary working file for level tuning."
+    },
+
+    {
+      "doc_id": "config_asset_registry",
+      "type": "config",
+      "subject_entity": "project:wonml",
+      "title": "Asset Registry",
+      "author": "Enzo Caruso",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "WONML/config/asset_registry.json",
+      "notes": "Complete catalogue of all game assets with status, path, and context."
+    },
+
+    {
+      "doc_id": "config_knowledge_base",
+      "type": "config",
+      "subject_entity": "project:wonml",
+      "title": "Knowledge Base",
+      "author": "Enzo Caruso",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "WONML/config/knowledge_base.json",
+      "notes": "All historical and narrative text content. Luca and Vito's primary working surface."
+    },
+
+    {
+      "doc_id": "config_achievements",
+      "type": "config",
+      "subject_entity": "project:wonml",
+      "title": "Achievement Definitions",
+      "author": "Enzo Caruso",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "WONML/config/achievements.json",
+      "notes": "Complete achievement definitions. 36 achievements across campaign, aircraft, score, combat, and progression categories."
+    },
+
+    {
+      "doc_id": "config_save_schema",
+      "type": "config",
+      "subject_entity": "project:wonml",
+      "title": "Save Data Schema",
+      "author": "Enzo Caruso",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "WONML/config/save_schema.json",
+      "notes": "Unified save data schema with migration plan from wonml_r2_* fragmented keys."
+    },
+
+    {
+      "doc_id": "config_doc_index",
+      "type": "index",
+      "subject_entity": "project:wonml",
+      "title": "Documentation Index",
+      "author": "Enzo Caruso",
+      "date": "2026-04-09",
+      "status": "draft",
+      "file_path": "WONML/config/doc_index.json",
+      "notes": "This file. Self-referential index entry."
+    }
+
+  ]
+}

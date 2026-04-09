@@ -1,0 +1,583 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "description": "Complete achievement definitions for Wings Over No Man's Land. Each entry defines an achievement that can be earned by a player. The game code checks these definitions at runtime to determine when to award achievements. Nico: load this file at startup and use the trigger_condition and condition_value fields to drive award logic. The achievement_id is the stable key used in player save data.",
+    "last_updated": "2026-04-09",
+    "updated_by": "Enzo Caruso",
+    "trigger_types": [
+      "campaign_completed",
+      "all_campaigns_completed",
+      "aircraft_unlocked",
+      "all_aircraft_unlocked_faction",
+      "all_aircraft_unlocked_all",
+      "score_milestone",
+      "score_beaten_personal_best",
+      "kills_lifetime",
+      "flights_lifetime",
+      "specific_aircraft_used",
+      "specific_aircraft_score",
+      "stage_reached",
+      "special_livery_used"
+    ]
+  },
+
+  "achievements": [
+
+    {
+      "achievement_id": "first_flight",
+      "title": "First Flight",
+      "description": "Complete your first run in any campaign.",
+      "icon": null,
+      "trigger_type": "flights_lifetime",
+      "condition_value": 1,
+      "associated_entity": null,
+      "category": "progression",
+      "hidden": false,
+      "notes": "Awards on the first time a run ends (game over or campaign complete). Does not require a minimum score."
+    },
+
+    {
+      "achievement_id": "belgium_complete_germany",
+      "title": "Advance Through Belgium",
+      "description": "Complete the Belgium campaign as Germany.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "belgium",
+      "condition_faction": "germany",
+      "associated_entity": "campaign:belgium",
+      "category": "campaign",
+      "hidden": false,
+      "notes": "Awarded when Belgium is completed while flying a German aircraft."
+    },
+
+    {
+      "achievement_id": "belgium_complete_britain",
+      "title": "Hold the Line",
+      "description": "Complete the Belgium campaign as Britain.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "belgium",
+      "condition_faction": "britain",
+      "associated_entity": "campaign:belgium",
+      "category": "campaign",
+      "hidden": false,
+      "notes": "Awarded when Belgium is completed while flying a British aircraft."
+    },
+
+    {
+      "achievement_id": "marne_complete",
+      "title": "Miracle of the Marne",
+      "description": "Complete the Marne campaign.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "marne",
+      "condition_faction": null,
+      "associated_entity": "campaign:marne",
+      "category": "campaign",
+      "hidden": false,
+      "notes": "Faction-agnostic. Awards regardless of which side the player flies."
+    },
+
+    {
+      "achievement_id": "ypres_complete",
+      "title": "Salient Survivor",
+      "description": "Complete the First Battle of Ypres.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "ypres",
+      "condition_faction": null,
+      "associated_entity": "campaign:ypres",
+      "category": "campaign",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "gallipoli_complete",
+      "title": "Shores of Gallipoli",
+      "description": "Complete the Gallipoli campaign.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "gallipoli",
+      "condition_faction": null,
+      "associated_entity": "campaign:gallipoli",
+      "category": "campaign",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "gorlice_complete",
+      "title": "Eastern Thunder",
+      "description": "Complete the Gorlice-Tarnow campaign.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "gorlice",
+      "condition_faction": null,
+      "associated_entity": "campaign:gorlice",
+      "category": "campaign",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "verdun_complete",
+      "title": "They Shall Not Pass",
+      "description": "Complete the Battle of Verdun.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "verdun",
+      "condition_faction": null,
+      "associated_entity": "campaign:verdun",
+      "category": "campaign",
+      "hidden": false,
+      "notes": "Title references the famous French phrase from Verdun."
+    },
+
+    {
+      "achievement_id": "somme_complete",
+      "title": "First Day of the Somme",
+      "description": "Complete the Battle of the Somme.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "somme",
+      "condition_faction": null,
+      "associated_entity": "campaign:somme",
+      "category": "campaign",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "aisne_complete",
+      "title": "Nivelle's Gambit",
+      "description": "Complete the Nivelle Offensive campaign.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "aisne",
+      "condition_faction": null,
+      "associated_entity": "campaign:aisne",
+      "category": "campaign",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "passchendaele_complete",
+      "title": "Through the Mud",
+      "description": "Complete the Third Battle of Ypres.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "passchendaele",
+      "condition_faction": null,
+      "associated_entity": "campaign:passchendaele",
+      "category": "campaign",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "spring_complete",
+      "title": "The Last Push",
+      "description": "Complete the German Spring Offensive campaign.",
+      "icon": null,
+      "trigger_type": "campaign_completed",
+      "condition_value": "spring",
+      "condition_faction": null,
+      "associated_entity": "campaign:spring",
+      "category": "campaign",
+      "hidden": false,
+      "notes": "Final campaign in the arc."
+    },
+
+    {
+      "achievement_id": "all_campaigns_complete",
+      "title": "The Great War Ended",
+      "description": "Complete all 10 campaigns.",
+      "icon": null,
+      "trigger_type": "all_campaigns_completed",
+      "condition_value": 10,
+      "associated_entity": null,
+      "category": "campaign",
+      "hidden": false,
+      "notes": "Master campaign completion achievement."
+    },
+
+    {
+      "achievement_id": "unlock_albatros",
+      "title": "Tier Two: Albatros",
+      "description": "Unlock the Albatros D.V.",
+      "icon": null,
+      "trigger_type": "aircraft_unlocked",
+      "condition_value": "albatrosdvstd",
+      "associated_entity": "aircraft:albatrosdvstd",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "Awarded when Belgium is completed and checkUnlocks() grants albatrosdvstd."
+    },
+
+    {
+      "achievement_id": "unlock_dr1",
+      "title": "Tier Three: Dreidecker",
+      "description": "Unlock the Fokker Dr.I.",
+      "icon": null,
+      "trigger_type": "aircraft_unlocked",
+      "condition_value": "dr1std",
+      "associated_entity": "aircraft:dr1std",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "unlock_d7",
+      "title": "Best of the War",
+      "description": "Unlock the Fokker D.VII.",
+      "icon": null,
+      "trigger_type": "aircraft_unlocked",
+      "condition_value": "d7std",
+      "associated_entity": "aircraft:d7std",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "The D.VII was specifically named in the Armistice terms — the only aircraft so honoured."
+    },
+
+    {
+      "achievement_id": "unlock_dh2",
+      "title": "Pusher Upgrade",
+      "description": "Unlock the Airco DH.2.",
+      "icon": null,
+      "trigger_type": "aircraft_unlocked",
+      "condition_value": "dh2",
+      "associated_entity": "aircraft:dh2",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "unlock_triplane",
+      "title": "Three Wings",
+      "description": "Unlock the Sopwith Triplane.",
+      "icon": null,
+      "trigger_type": "aircraft_unlocked",
+      "condition_value": "triplanestd",
+      "associated_entity": "aircraft:triplanestd",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "unlock_pup",
+      "title": "The Beloved Pup",
+      "description": "Unlock the Sopwith Pup.",
+      "icon": null,
+      "trigger_type": "aircraft_unlocked",
+      "condition_value": "pupstd",
+      "associated_entity": "aircraft:pupstd",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "unlock_camel",
+      "title": "Hump of Death",
+      "description": "Unlock the Sopwith Camel.",
+      "icon": null,
+      "trigger_type": "aircraft_unlocked",
+      "condition_value": "camelstd",
+      "associated_entity": "aircraft:camelstd",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "Named after the characteristic hump fairing over the twin Vickers guns."
+    },
+
+    {
+      "achievement_id": "unlock_dh9",
+      "title": "Long-Range Striker",
+      "description": "Unlock the Airco DH.9.",
+      "icon": null,
+      "trigger_type": "aircraft_unlocked",
+      "condition_value": "dh9",
+      "associated_entity": "aircraft:dh9",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "all_germany_unlocked",
+      "title": "German Air Service",
+      "description": "Unlock all standard German aircraft.",
+      "icon": null,
+      "trigger_type": "all_aircraft_unlocked_faction",
+      "condition_value": "germany",
+      "associated_entity": null,
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "Requires all 4 standard German aircraft to be unlocked: e3std, albatrosdvstd, dr1std, d7std."
+    },
+
+    {
+      "achievement_id": "all_britain_unlocked",
+      "title": "Royal Flying Corps",
+      "description": "Unlock all standard British aircraft.",
+      "icon": null,
+      "trigger_type": "all_aircraft_unlocked_faction",
+      "condition_value": "britain",
+      "associated_entity": null,
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "Requires all 6 standard British aircraft to be unlocked."
+    },
+
+    {
+      "achievement_id": "fly_every_rfc_ace",
+      "title": "Ace of the RFC",
+      "description": "Fly in a run using each standard RFC aircraft at least once.",
+      "icon": null,
+      "trigger_type": "specific_aircraft_used",
+      "condition_value": ["dh1", "dh2", "pupstd", "triplanestd", "camelstd", "dh9"],
+      "associated_entity": null,
+      "category": "aircraft",
+      "hidden": true,
+      "notes": "Historical milestone. Checks hangar_stats to confirm each aircraft has at least 1 flight. Hidden until earned."
+    },
+
+    {
+      "achievement_id": "fly_every_german_ace",
+      "title": "Pour le Mérite",
+      "description": "Fly in a run using each standard German aircraft at least once.",
+      "icon": null,
+      "trigger_type": "specific_aircraft_used",
+      "condition_value": ["e3std", "albatrosdvstd", "dr1std", "d7std"],
+      "associated_entity": null,
+      "category": "aircraft",
+      "hidden": true,
+      "notes": "Named after Germany's highest military honour, famously awarded to top aces. Hidden until earned."
+    },
+
+    {
+      "achievement_id": "fly_red_baron_livery",
+      "title": "Der Rote Kampfflieger",
+      "description": "Complete a run in the Red Baron livery.",
+      "icon": null,
+      "trigger_type": "special_livery_used",
+      "condition_value": "dr1rb",
+      "associated_entity": "special:dr1rb",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "Der Rote Kampfflieger means 'The Red Battle Flyer' — Richthofen's autobiography title."
+    },
+
+    {
+      "achievement_id": "score_50",
+      "title": "Patrol Complete",
+      "description": "Reach a score of 50 in a single run.",
+      "icon": null,
+      "trigger_type": "score_milestone",
+      "condition_value": 50,
+      "associated_entity": null,
+      "category": "score",
+      "hidden": false,
+      "notes": "Approximately mid-way through stage 2 of Belgium."
+    },
+
+    {
+      "achievement_id": "score_100",
+      "title": "Century Ace",
+      "description": "Reach a score of 100 in a single run.",
+      "icon": null,
+      "trigger_type": "score_milestone",
+      "condition_value": 100,
+      "associated_entity": null,
+      "category": "score",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "score_150",
+      "title": "Into the Ace Pursuit",
+      "description": "Reach a score of 150 in a single run.",
+      "icon": null,
+      "trigger_type": "score_milestone",
+      "condition_value": 150,
+      "associated_entity": null,
+      "category": "score",
+      "hidden": false,
+      "notes": "Score 150 is the start of Ace Pursuit (the final stage of Belgium)."
+    },
+
+    {
+      "achievement_id": "score_250",
+      "title": "Seasoned Veteran",
+      "description": "Reach a score of 250 in a single run.",
+      "icon": null,
+      "trigger_type": "score_milestone",
+      "condition_value": 250,
+      "associated_entity": null,
+      "category": "score",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "score_500",
+      "title": "Flying Ace",
+      "description": "Reach a score of 500 in a single run.",
+      "icon": null,
+      "trigger_type": "score_milestone",
+      "condition_value": 500,
+      "associated_entity": null,
+      "category": "score",
+      "hidden": false,
+      "notes": "Historically, an 'ace' designation required 5 kills. 500 in this game represents sustained dominance."
+    },
+
+    {
+      "achievement_id": "score_1000",
+      "title": "Legend of the Skies",
+      "description": "Reach a score of 1000 in a single run.",
+      "icon": null,
+      "trigger_type": "score_milestone",
+      "condition_value": 1000,
+      "associated_entity": null,
+      "category": "score",
+      "hidden": true,
+      "notes": "Elite milestone. Hidden until earned."
+    },
+
+    {
+      "achievement_id": "beat_personal_best",
+      "title": "New Personal Record",
+      "description": "Beat your own personal best score.",
+      "icon": null,
+      "trigger_type": "score_beaten_personal_best",
+      "condition_value": null,
+      "associated_entity": null,
+      "category": "score",
+      "hidden": false,
+      "notes": "Triggers any time end-of-run score exceeds the player's previous best. Repeatable but only awards the achievement once."
+    },
+
+    {
+      "achievement_id": "kills_25",
+      "title": "Sharp Shooter",
+      "description": "Score 25 kills across all runs.",
+      "icon": null,
+      "trigger_type": "kills_lifetime",
+      "condition_value": 25,
+      "associated_entity": null,
+      "category": "combat",
+      "hidden": false,
+      "notes": "Lifetime kill count across all aircraft and campaigns. Source: sum of kills in hangar_stats."
+    },
+
+    {
+      "achievement_id": "kills_100",
+      "title": "Balloon Buster",
+      "description": "Score 100 kills across all runs.",
+      "icon": null,
+      "trigger_type": "kills_lifetime",
+      "condition_value": 100,
+      "associated_entity": null,
+      "category": "combat",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "kills_500",
+      "title": "Ace of Aces",
+      "description": "Score 500 kills across all runs.",
+      "icon": null,
+      "trigger_type": "kills_lifetime",
+      "condition_value": 500,
+      "associated_entity": null,
+      "category": "combat",
+      "hidden": true,
+      "notes": "Richthofen scored 80 official kills. 500 here is the game's elite lifetime combat milestone."
+    },
+
+    {
+      "achievement_id": "flights_10",
+      "title": "Ten Patrols",
+      "description": "Complete 10 flights across any aircraft.",
+      "icon": null,
+      "trigger_type": "flights_lifetime",
+      "condition_value": 10,
+      "associated_entity": null,
+      "category": "progression",
+      "hidden": false,
+      "notes": "Lifetime flight count. Source: sum of flights in hangar_stats."
+    },
+
+    {
+      "achievement_id": "flights_50",
+      "title": "Veteran Pilot",
+      "description": "Complete 50 flights across any aircraft.",
+      "icon": null,
+      "trigger_type": "flights_lifetime",
+      "condition_value": 50,
+      "associated_entity": null,
+      "category": "progression",
+      "hidden": false,
+      "notes": null
+    },
+
+    {
+      "achievement_id": "reach_ace_pursuit",
+      "title": "Reached the Pursuit",
+      "description": "Reach the Ace Pursuit stage in Belgium.",
+      "icon": null,
+      "trigger_type": "stage_reached",
+      "condition_value": { "campaign_id": "belgium", "stage_id": "ace_pursuit" },
+      "associated_entity": "stage:belgium:ace_pursuit",
+      "category": "progression",
+      "hidden": false,
+      "notes": "Score 145 must be reached in a single run."
+    },
+
+    {
+      "achievement_id": "camel_score_200",
+      "title": "Camel Country",
+      "description": "Score 200 points in a single run with the Sopwith Camel.",
+      "icon": null,
+      "trigger_type": "specific_aircraft_score",
+      "condition_value": { "plane_type": "camelstd", "score": 200 },
+      "associated_entity": "aircraft:camelstd",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "The Camel was notoriously difficult to fly — a high score with it is a genuine accomplishment."
+    },
+
+    {
+      "achievement_id": "dr1_score_200",
+      "title": "Baron's Standard",
+      "description": "Score 200 points in a single run with the Fokker Dr.I.",
+      "icon": null,
+      "trigger_type": "specific_aircraft_score",
+      "condition_value": { "plane_type": "dr1std", "score": 200 },
+      "associated_entity": "aircraft:dr1std",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "Richthofen flew the Dr.I. Reaching his level requires sustained precision."
+    },
+
+    {
+      "achievement_id": "dh9_score_150",
+      "title": "Long-Range Mission",
+      "description": "Score 150 points in a single run with the Airco DH.9.",
+      "icon": null,
+      "trigger_type": "specific_aircraft_score",
+      "condition_value": { "plane_type": "dh9", "score": 150 },
+      "associated_entity": "aircraft:dh9",
+      "category": "aircraft",
+      "hidden": false,
+      "notes": "The DH.9 is the hardest British aircraft to fly due to its heavy profile. A lower score threshold reflects this."
+    }
+  ]
+}

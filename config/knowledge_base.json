@@ -1,0 +1,605 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "description": "All historical and narrative text content for Wings Over No Man's Land. Extracted from index.html r2 and structured for editing by Luca (historical accuracy) and Vito (narrative voice) without touching game code. Review status workflow: draft → luca_approved → vito_approved → final. Entries marked final should not be edited without both Luca and Vito sign-off.",
+    "last_updated": "2026-04-09",
+    "updated_by": "Enzo Caruso",
+    "review_status_values": ["draft", "luca_approved", "vito_approved", "final"]
+  },
+
+  "campaign_briefings": {
+    "belgium": {
+      "id": "campaign_briefing_belgium",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:belgium",
+      "fields": {
+        "name": "German Invasion of Belgium and France",
+        "short_name": "Belgium, August 1914",
+        "intro_title": "Belgium, August 1914",
+        "intro_subtitle": "The war has just begun. Welcome to Flanders, pilot."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Intro subtitle displayed on game start screen for 4.2 seconds. Keep it terse and atmospheric — it overlays gameplay."
+    },
+    "marne": {
+      "id": "campaign_briefing_marne",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:marne",
+      "fields": {
+        "name": "First Battle of the Marne",
+        "short_name": "Marne",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Campaign not yet implemented. Placeholder entry. Luca to provide historical briefing when campaign enters development."
+    },
+    "ypres": {
+      "id": "campaign_briefing_ypres",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:ypres",
+      "fields": {
+        "name": "First Battle of Ypres",
+        "short_name": "Ypres",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Campaign not yet implemented. Placeholder entry."
+    },
+    "gallipoli": {
+      "id": "campaign_briefing_gallipoli",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:gallipoli",
+      "fields": {
+        "name": "Gallipoli Campaign",
+        "short_name": "Gallipoli",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Mediterranean Front. Campaign not yet implemented."
+    },
+    "gorlice": {
+      "id": "campaign_briefing_gorlice",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:gorlice",
+      "fields": {
+        "name": "Gorlice-Tarnow Offensive",
+        "short_name": "Gorlice-Tarnow",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Eastern Front. Campaign not yet implemented."
+    },
+    "verdun": {
+      "id": "campaign_briefing_verdun",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:verdun",
+      "fields": {
+        "name": "Battle of Verdun",
+        "short_name": "Verdun",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Campaign not yet implemented."
+    },
+    "somme": {
+      "id": "campaign_briefing_somme",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:somme",
+      "fields": {
+        "name": "Battle of the Somme",
+        "short_name": "Somme",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Campaign not yet implemented."
+    },
+    "aisne": {
+      "id": "campaign_briefing_aisne",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:aisne",
+      "fields": {
+        "name": "Nivelle Offensive / Second Battle of the Aisne",
+        "short_name": "Aisne",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Campaign not yet implemented."
+    },
+    "passchendaele": {
+      "id": "campaign_briefing_passchendaele",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:passchendaele",
+      "fields": {
+        "name": "Third Battle of Ypres",
+        "short_name": "Passchendaele",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Campaign not yet implemented."
+    },
+    "spring": {
+      "id": "campaign_briefing_spring",
+      "type": "campaign_briefing",
+      "associated_entity": "campaign:spring",
+      "fields": {
+        "name": "German Spring Offensive",
+        "short_name": "Spring Offensive",
+        "intro_title": null,
+        "intro_subtitle": null
+      },
+      "author": null,
+      "review_status": "draft",
+      "notes": "Campaign not yet implemented. Final campaign in the 10-campaign arc."
+    }
+  },
+
+  "stage_names": {
+    "belgium_opening_patrol": {
+      "id": "stage_name_belgium_opening_patrol",
+      "type": "stage_name",
+      "associated_entity": "stage:belgium:opening_patrol",
+      "fields": {
+        "display_name": "Opening Patrol"
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "First stage. Score range 0-35. No obstacles. Tone should suggest routine patrol, not combat."
+    },
+    "belgium_flak_screen": {
+      "id": "stage_name_belgium_flak_screen",
+      "type": "stage_name",
+      "associated_entity": "stage:belgium:flak_screen",
+      "fields": {
+        "display_name": "Flak Screen"
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Second stage. Score range 35-75. Flak obstacles introduced."
+    },
+    "belgium_observation_line": {
+      "id": "stage_name_belgium_observation_line",
+      "type": "stage_name",
+      "associated_entity": "stage:belgium:observation_line",
+      "fields": {
+        "display_name": "Observation Line"
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Third stage. Score range 75-105. Balloon-only stage. No enemy fighters."
+    },
+    "belgium_contested_line": {
+      "id": "stage_name_belgium_contested_line",
+      "type": "stage_name",
+      "associated_entity": "stage:belgium:contested_line",
+      "fields": {
+        "display_name": "Contested Line"
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Fourth stage. Score range 105-145. Combined enemies and flak."
+    },
+    "belgium_ace_pursuit": {
+      "id": "stage_name_belgium_ace_pursuit",
+      "type": "stage_name",
+      "associated_entity": "stage:belgium:ace_pursuit",
+      "fields": {
+        "display_name": "Ace Pursuit"
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Final endless stage. Score 145+. Enemy tier is one above player. High-stakes scoring zone."
+    }
+  },
+
+  "aircraft_descriptions": {
+    "e3std": {
+      "id": "aircraft_desc_e3std",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:e3std",
+      "fields": {
+        "label": "Fokker E.III",
+        "role": "Scout monoplane",
+        "years": "1915-1916",
+        "hangar_note": "One of Germany's first effective synchronized-gun fighters. Light, fast for its day, and a true early-war interrupter scout."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 1 Germany starter. Hangar_note is the description shown in the Hangar screen service record."
+    },
+    "albatrosdvstd": {
+      "id": "aircraft_desc_albatrosdvstd",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:albatrosdvstd",
+      "fields": {
+        "label": "Albatros D.V",
+        "role": "Fighter biplane",
+        "years": "1917-1918",
+        "hangar_note": "A sleek late-1917 German scout with elegant lines and strong speed, though less forgiving than the best late-war fighters."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 2 Germany. Unlocks after Belgium campaign."
+    },
+    "dr1std": {
+      "id": "aircraft_desc_dr1std",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:dr1std",
+      "fields": {
+        "label": "Fokker Dr.I",
+        "role": "Triplane fighter",
+        "years": "1917-1918",
+        "hangar_note": "Famous for its climb and agility, the Dr.I became an icon of the air war. It traded speed for maneuverability and close-quarters dogfighting."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 3 Germany. Unlocks after Ypres campaign."
+    },
+    "d7std": {
+      "id": "aircraft_desc_d7std",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:d7std",
+      "fields": {
+        "label": "Fokker D.VII",
+        "role": "Late-war fighter",
+        "years": "1918",
+        "hangar_note": "A superb late-war German fighter with strong climb, solid handling, and high-altitude performance. Many pilots considered it one of the war's best."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 4 Germany. Unlocks after Verdun campaign."
+    },
+    "dh1": {
+      "id": "aircraft_desc_dh1",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:dh1",
+      "fields": {
+        "label": "Airco DH.1",
+        "role": "Pusher scout",
+        "years": "1915",
+        "hangar_note": "An early British pusher design built before the tractor fighter fully took over. Distinctive, experimental, and very much from the war's opening phase."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 1 Britain starter."
+    },
+    "dh2": {
+      "id": "aircraft_desc_dh2",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:dh2",
+      "fields": {
+        "label": "Airco DH.2",
+        "role": "Single-seat fighter",
+        "years": "1915-1916",
+        "hangar_note": "A nimble British pusher fighter that helped answer the early German monoplane threat. Light and agile, with good visibility for its pilot."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 2 Britain. Unlocks after Belgium campaign."
+    },
+    "triplanestd": {
+      "id": "aircraft_desc_triplanestd",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:triplanestd",
+      "fields": {
+        "label": "Sopwith Triplane",
+        "role": "Triplane fighter",
+        "years": "1916-1917",
+        "hangar_note": "A light, elegant British triplane with impressive climb and nimble handling. It helped set the stage for later triplane dogfighting icons."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 3 Britain. Unlocks after Ypres campaign."
+    },
+    "pupstd": {
+      "id": "aircraft_desc_pupstd",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:pupstd",
+      "fields": {
+        "label": "Sopwith Pup",
+        "role": "Scout biplane",
+        "years": "1916-1917",
+        "hangar_note": "Beloved by pilots for its pleasant handling and maneuverability. The Pup was smaller than later fighters, but highly effective in skilled hands."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 4 Britain. Unlocks after Gallipoli campaign."
+    },
+    "camelstd": {
+      "id": "aircraft_desc_camelstd",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:camelstd",
+      "fields": {
+        "label": "Sopwith Camel",
+        "role": "Late-war fighter",
+        "years": "1917-1918",
+        "hangar_note": "One of Britain's most famous fighters. Compact, powerful, and demanding to fly, the Camel became a deadly front-line dogfighter in skilled hands."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 5 Britain. Unlocks after Verdun campaign."
+    },
+    "dh9": {
+      "id": "aircraft_desc_dh9",
+      "type": "aircraft_description",
+      "associated_entity": "aircraft:dh9",
+      "fields": {
+        "label": "Airco DH.9",
+        "role": "Light bomber",
+        "years": "1917-1918",
+        "hangar_note": "A late-war British day bomber with long range and a more purposeful strike profile. Bigger and steadier than the earlier scouts in the tree."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Tier 6 Britain. Unlocks after Somme campaign."
+    }
+  },
+
+  "special_livery_notes": {
+    "dr1rb": {
+      "id": "livery_note_dr1rb",
+      "type": "hangar_note",
+      "associated_entity": "special:dr1rb",
+      "fields": {
+        "label": "Red Baron",
+        "note": "The most famous German ace livery. Rich red coloring made the triplane instantly recognizable in the air."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Based on Manfred von Richthofen's famous all-red Dr.I. Luca: verify the 'rich red' characterisation is consistent with historical record."
+    },
+    "dr1wevo": {
+      "id": "livery_note_dr1wevo",
+      "type": "hangar_note",
+      "associated_entity": "special:dr1wevo",
+      "fields": {
+        "label": "Werner Voss",
+        "note": "A special Dr.I livery inspired by one of Germany's great fighter aces and the triplane's early legend."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Werner Voss flew a Dr.I with distinctive facial markings. Luca: the note is vague — consider whether to name him explicitly."
+    },
+    "dr1jj": {
+      "id": "livery_note_dr1jj",
+      "type": "hangar_note",
+      "associated_entity": "special:dr1jj",
+      "fields": {
+        "label": "Josef Jacobs",
+        "note": "A late-war ace-themed triplane skin built around bold personal colors and squadron identity."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Josef Jacobs was the highest-scoring surviving German ace. Consider adding kill count context if Vito approves."
+    },
+    "d7rb": {
+      "id": "livery_note_d7rb",
+      "type": "hangar_note",
+      "associated_entity": "special:d7rb",
+      "fields": {
+        "label": "D.VII Ace Red",
+        "note": "A premium D.VII finish for players who want a more heroic late-war fighter profile."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": "Currently uses generic copy. Vito: opportunity to add more flavour here."
+    },
+    "e3green": {
+      "id": "livery_note_e3green",
+      "type": "hangar_note",
+      "associated_entity": "special:e3green",
+      "fields": {
+        "label": "Field Green",
+        "note": "An alternate early-war monoplane finish suited to rough front-line reconnaissance and patrol duty."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": null
+    },
+    "albatrosblack": {
+      "id": "livery_note_albatrosblack",
+      "type": "hangar_note",
+      "associated_entity": "special:albatrosblack",
+      "fields": {
+        "label": "Black Wing",
+        "note": "A darker custom Albatros finish with a more ominous front-line silhouette."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": null
+    },
+    "albatroscaro": {
+      "id": "livery_note_albatroscaro",
+      "type": "hangar_note",
+      "associated_entity": "special:albatroscaro",
+      "fields": {
+        "label": "Diamond Banner",
+        "note": "A bold Albatros skin with a heraldic mid-fuselage pattern and rich unit-color flavor."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": null
+    },
+    "albatrosrednose": {
+      "id": "livery_note_albatrosrednose",
+      "type": "hangar_note",
+      "associated_entity": "special:albatrosrednose",
+      "fields": {
+        "label": "Red Nose",
+        "note": "A bright personalized Albatros livery built around a red nose and more flamboyant late-war styling."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": null
+    },
+    "albatrosskull": {
+      "id": "livery_note_albatrosskull",
+      "type": "hangar_note",
+      "associated_entity": "special:albatrosskull",
+      "fields": {
+        "label": "Skull Flight",
+        "note": "A premium Albatros look with stark insignia and a theatrical squadron identity."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": null
+    },
+    "pupdun": {
+      "id": "livery_note_pupdun",
+      "type": "hangar_note",
+      "associated_entity": "special:pupdun",
+      "fields": {
+        "label": "Dun Tones",
+        "note": "A stylized Sopwith Pup livery with subdued tones that feel more weathered and field-ready."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": null
+    },
+    "pupso": {
+      "id": "livery_note_pupso",
+      "type": "hangar_note",
+      "associated_entity": "special:pupso",
+      "fields": {
+        "label": "Silver Owl",
+        "note": "A cleaner, brighter custom Pup finish designed more as a reward aircraft than a standard patrol machine."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": null
+    },
+    "pupby": {
+      "id": "livery_note_pupby",
+      "type": "hangar_note",
+      "associated_entity": "special:pupby",
+      "fields": {
+        "label": "Golden Flight",
+        "note": "A bold premium Pup look for event rewards or supporter unlocks."
+      },
+      "author": "Luca",
+      "review_status": "draft",
+      "notes": null
+    }
+  },
+
+  "ui_strings": {
+    "game_title": {
+      "id": "ui_game_title",
+      "type": "ui_string",
+      "associated_entity": null,
+      "fields": {
+        "value": "Wings Over No Man's Land"
+      },
+      "author": "Vito",
+      "review_status": "final",
+      "notes": "Canonical game title. Do not alter."
+    },
+    "gameplay_hint": {
+      "id": "ui_gameplay_hint",
+      "type": "ui_string",
+      "associated_entity": null,
+      "fields": {
+        "value": "Tap or press SPACE to fly\nX = BURST, C = RAPID"
+      },
+      "author": "Vito",
+      "review_status": "draft",
+      "notes": "Shown at bottom of screen during gameplay. Mobile players see Tap; desktop players see SPACE. May need splitting into mobile/desktop variants."
+    },
+    "main_menu_hint": {
+      "id": "ui_main_menu_hint",
+      "type": "ui_string",
+      "associated_entity": null,
+      "fields": {
+        "value": "Tap a side, view campaigns, open settings, or open the hangar"
+      },
+      "author": "Vito",
+      "review_status": "draft",
+      "notes": "Shown at bottom of splash/main menu screen."
+    },
+    "tester_notes_hint": {
+      "id": "ui_tester_notes_hint",
+      "type": "ui_string",
+      "associated_entity": null,
+      "fields": {
+        "value": "Review the latest changes, then continue to the main menu"
+      },
+      "author": "Vito",
+      "review_status": "draft",
+      "notes": "Shown on the testerNotes screen. Will be removed or repurposed post-beta."
+    },
+    "xp_gained_hint": {
+      "id": "ui_xp_gained_hint",
+      "type": "ui_string",
+      "associated_entity": null,
+      "fields": {
+        "value": "XP gained - burst ready"
+      },
+      "author": "Vito",
+      "review_status": "draft",
+      "notes": "Shown in hint area when player accumulates enough kills for an XP point."
+    },
+    "burst_engaged_hint": {
+      "id": "ui_burst_engaged_hint",
+      "type": "ui_string",
+      "associated_entity": null,
+      "fields": {
+        "value": "Double burst engaged"
+      },
+      "author": "Vito",
+      "review_status": "draft",
+      "notes": "Shown in hint area when Double Burst mode activates."
+    },
+    "rapid_fire_engaged_hint": {
+      "id": "ui_rapid_fire_engaged_hint",
+      "type": "ui_string",
+      "associated_entity": null,
+      "fields": {
+        "value": "Rapid fire engaged"
+      },
+      "author": "Vito",
+      "review_status": "draft",
+      "notes": "Shown in hint area when Rapid Fire mode activates."
+    },
+    "no_aces_recorded": {
+      "id": "ui_no_aces_recorded",
+      "type": "ui_string",
+      "associated_entity": null,
+      "fields": {
+        "value": "No aces recorded yet"
+      },
+      "author": "Vito",
+      "review_status": "draft",
+      "notes": "Shown in leaderboard display area before any scores exist."
+    }
+  },
+
+  "campaign_map_labels": {
+    "_note": "Labels and subtitles for each node on the campaign map. These appear when a node is selected on the map screen.",
+    "belgium":       { "label": "Belgium",          "subtitle": "German invasion of Belgium and France",  "front": "Western Front"       },
+    "marne":         { "label": "Marne",             "subtitle": "First Battle of the Marne",             "front": "Western Front"       },
+    "ypres":         { "label": "Ypres",             "subtitle": "First Battle of Ypres",                 "front": "Western Front"       },
+    "gallipoli":     { "label": "Gallipoli",         "subtitle": "Gallipoli Campaign",                    "front": "Mediterranean Front" },
+    "gorlice":       { "label": "Gorlice-Tarnow",    "subtitle": "Gorlice-Tarnow Offensive",              "front": "Eastern Front"       },
+    "verdun":        { "label": "Verdun",             "subtitle": "Battle of Verdun",                      "front": "Western Front"       },
+    "somme":         { "label": "Somme",             "subtitle": "Battle of the Somme",                   "front": "Western Front"       },
+    "aisne":         { "label": "Aisne",             "subtitle": "Nivelle Offensive / Second Battle of the Aisne", "front": "Western Front" },
+    "passchendaele": { "label": "Passchendaele",     "subtitle": "Third Battle of Ypres",                 "front": "Western Front"       },
+    "spring":        { "label": "Spring Offensive",  "subtitle": "German Spring Offensive",               "front": "Western Front"       }
+  }
+}

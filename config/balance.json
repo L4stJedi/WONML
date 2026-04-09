@@ -1,0 +1,330 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "description": "All tunable gameplay balance values for Wings Over No Man's Land. Extract from index.html r2. Edit this file, not the HTML. Nico: load this at startup via fetch('config/balance.json') and merge values into CAMPAIGNS stages and global constants before game initialises. If the fetch fails, fall back to the hardcoded defaults already present in the HTML.",
+    "last_updated": "2026-04-09",
+    "updated_by": "Enzo Caruso"
+  },
+
+  "global": {
+    "_note": "Top-level game constants. Correspond to JS const declarations near line 1599 of index.html.",
+    "xpPerAceStep": {
+      "value": 5,
+      "description": "Number of enemy kills required to earn 1 XP point.",
+      "js_const": "XP_PER_ACE_STEP"
+    },
+    "baseFireInterval": {
+      "value": 320,
+      "description": "Milliseconds between player shots in normal fire mode.",
+      "js_const": "BASE_FIRE_INTERVAL"
+    },
+    "rapidFireInterval": {
+      "value": 185,
+      "description": "Milliseconds between player shots when Rapid Fire is active.",
+      "js_const": "RAPID_FIRE_INTERVAL"
+    },
+    "doubleBurstXpCost": {
+      "value": 1,
+      "description": "XP cost to activate Double Burst mode.",
+      "js_const": "DOUBLE_BURST_XP_COST"
+    },
+    "doubleBurstDuration": {
+      "value": 6500,
+      "description": "Duration of Double Burst mode in milliseconds.",
+      "js_const": "DOUBLE_BURST_DURATION"
+    },
+    "rapidFireXpCost": {
+      "value": 1,
+      "description": "XP cost to activate Rapid Fire mode.",
+      "js_const": "RAPID_FIRE_XP_COST"
+    },
+    "rapidFireDuration": {
+      "value": 6500,
+      "description": "Duration of Rapid Fire mode in milliseconds.",
+      "js_const": "RAPID_FIRE_DURATION"
+    },
+    "planeWidth": {
+      "value": 52,
+      "description": "Player plane hitbox width in canvas pixels.",
+      "js_const": "PLANE_WIDTH"
+    },
+    "planeHeight": {
+      "value": 28,
+      "description": "Player plane hitbox height in canvas pixels.",
+      "js_const": "PLANE_HEIGHT"
+    },
+    "planeX": {
+      "value": 90,
+      "description": "Horizontal position of player plane from left edge of canvas.",
+      "js_const": "PLANE_X"
+    },
+    "groundHeight": {
+      "value": 90,
+      "description": "Height of the ground zone at the bottom of the canvas.",
+      "js_const": "GROUND_HEIGHT"
+    }
+  },
+
+  "damage": {
+    "_note": "Damage state flight penalties. Applied multiplicatively on top of base flight profile. Source: getDamageFlightState() around line 2274.",
+    "level1": {
+      "jumpMultiplier": 0.9,
+      "speedMultiplier": 0.97,
+      "description": "One hit taken — slight handling degradation."
+    },
+    "level2plus": {
+      "jumpMultiplier": 0.76,
+      "speedMultiplier": 0.9,
+      "description": "Two or more hits taken — significant handling degradation."
+    },
+    "hitRecoveryJumpPenalty": {
+      "value": 0.94,
+      "description": "Additional jump multiplier penalty during the hitRecovery stun window."
+    },
+    "hitRecoverySpeedPenalty": {
+      "value": 0.96,
+      "description": "Additional speed multiplier penalty during the hitRecovery stun window."
+    }
+  },
+
+  "planes": {
+    "_note": "Per-aircraft flight profile overrides. These values are applied on top of DEFAULT_PLANE_FLIGHT_PROFILE (see default object below). Nico: merge each plane entry over the default at load time. Fields: gravityMultiplier, jumpMultiplier, speedMultiplier, maxFallSpeed, hitboxFactor, enemyHitboxFactor, durabilityBias.",
+    "default": {
+      "gravityMultiplier": 0.9,
+      "jumpMultiplier": 1.0,
+      "speedMultiplier": 1.0,
+      "maxFallSpeed": 7.8,
+      "hitboxFactor": 0.56,
+      "enemyHitboxFactor": 0.29,
+      "durabilityBias": "standard"
+    },
+    "e3std": {
+      "gravityMultiplier": 0.9,
+      "jumpMultiplier": 0.98,
+      "speedMultiplier": 0.95,
+      "maxFallSpeed": 7.3,
+      "hitboxFactor": 0.55,
+      "enemyHitboxFactor": 0.28,
+      "durabilityBias": "standard",
+      "_note": "Fokker E.III — early-war monoplane. Slightly sluggish."
+    },
+    "albatrosdvstd": {
+      "gravityMultiplier": 0.93,
+      "jumpMultiplier": 1.02,
+      "speedMultiplier": 0.99,
+      "maxFallSpeed": 7.7,
+      "hitboxFactor": 0.56,
+      "enemyHitboxFactor": 0.28,
+      "durabilityBias": "standard",
+      "_note": "Albatros D.V — mid-weight, slightly better climb than E.III."
+    },
+    "dr1std": {
+      "gravityMultiplier": 0.84,
+      "jumpMultiplier": 1.16,
+      "speedMultiplier": 1.0,
+      "maxFallSpeed": 6.9,
+      "hitboxFactor": 0.53,
+      "enemyHitboxFactor": 0.27,
+      "durabilityBias": "nimble",
+      "_note": "Fokker Dr.I — superb climb and jump, small hitbox."
+    },
+    "d7std": {
+      "gravityMultiplier": 0.98,
+      "jumpMultiplier": 1.05,
+      "speedMultiplier": 1.03,
+      "maxFallSpeed": 8.6,
+      "hitboxFactor": 0.55,
+      "enemyHitboxFactor": 0.28,
+      "durabilityBias": "steady",
+      "_note": "Fokker D.VII — fast, stable, high fall speed."
+    },
+    "d7rb": {
+      "gravityMultiplier": 0.98,
+      "jumpMultiplier": 1.05,
+      "speedMultiplier": 1.03,
+      "maxFallSpeed": 8.6,
+      "hitboxFactor": 0.55,
+      "enemyHitboxFactor": 0.28,
+      "durabilityBias": "steady",
+      "_note": "D.VII Red Baron livery — identical stats to d7std."
+    },
+    "d7vik": {
+      "gravityMultiplier": 0.98,
+      "jumpMultiplier": 1.05,
+      "speedMultiplier": 1.03,
+      "maxFallSpeed": 8.6,
+      "hitboxFactor": 0.55,
+      "enemyHitboxFactor": 0.28,
+      "durabilityBias": "steady",
+      "_note": "D.VII Viktor livery — identical stats to d7std."
+    },
+    "dh1": {
+      "gravityMultiplier": 0.9,
+      "jumpMultiplier": 0.97,
+      "speedMultiplier": 0.95,
+      "maxFallSpeed": 7.4,
+      "hitboxFactor": 0.56,
+      "enemyHitboxFactor": 0.28,
+      "durabilityBias": "standard",
+      "_note": "Airco DH.1 — early British pusher, slow."
+    },
+    "dh2": {
+      "gravityMultiplier": 0.88,
+      "jumpMultiplier": 1.03,
+      "speedMultiplier": 0.99,
+      "maxFallSpeed": 7.1,
+      "hitboxFactor": 0.55,
+      "enemyHitboxFactor": 0.27,
+      "durabilityBias": "nimble",
+      "_note": "Airco DH.2 — nimble, low gravity, small hitbox."
+    },
+    "triplanestd": {
+      "gravityMultiplier": 0.84,
+      "jumpMultiplier": 1.14,
+      "speedMultiplier": 1.01,
+      "maxFallSpeed": 6.9,
+      "hitboxFactor": 0.53,
+      "enemyHitboxFactor": 0.27,
+      "durabilityBias": "nimble",
+      "_note": "Sopwith Triplane — near-identical to Dr.I in feel."
+    },
+    "pupstd": {
+      "gravityMultiplier": 0.86,
+      "jumpMultiplier": 1.1,
+      "speedMultiplier": 1.02,
+      "maxFallSpeed": 7.0,
+      "hitboxFactor": 0.54,
+      "enemyHitboxFactor": 0.27,
+      "durabilityBias": "nimble",
+      "_note": "Sopwith Pup — well-rounded nimble profile."
+    },
+    "camelstd": {
+      "gravityMultiplier": 0.89,
+      "jumpMultiplier": 1.12,
+      "speedMultiplier": 1.05,
+      "maxFallSpeed": 7.6,
+      "hitboxFactor": 0.54,
+      "enemyHitboxFactor": 0.27,
+      "durabilityBias": "aggressive",
+      "_note": "Sopwith Camel — fast and punchy, aggressive bias."
+    },
+    "dh9": {
+      "gravityMultiplier": 0.97,
+      "jumpMultiplier": 0.9,
+      "speedMultiplier": 0.94,
+      "maxFallSpeed": 8.1,
+      "hitboxFactor": 0.58,
+      "enemyHitboxFactor": 0.31,
+      "durabilityBias": "heavy",
+      "_note": "Airco DH.9 — bomber profile, large hitbox, sluggish jump."
+    }
+  },
+
+  "plane_size": {
+    "_note": "Fuselage lengths in meters. Drives computed pixel widths via formula: gameplayWidth = round(meters * 11.7), thumbWidth = round(meters * 9.2), hangarWidth = round(meters * 15.5). Source: PLANE_SIZE_DATA + getPlaneSizeMetrics().",
+    "e3std":          { "lengthMeters": 7.2  },
+    "albatrosdvstd":  { "lengthMeters": 7.33 },
+    "dr1std":         { "lengthMeters": 5.77 },
+    "d7std":          { "lengthMeters": 6.95 },
+    "d7rb":           { "lengthMeters": 6.95 },
+    "d7vik":          { "lengthMeters": 6.95 },
+    "dh1":            { "lengthMeters": 8.84 },
+    "dh2":            { "lengthMeters": 7.68 },
+    "triplanestd":    { "lengthMeters": 5.73 },
+    "dh9":            { "lengthMeters": 9.22 },
+    "pupstd":         { "lengthMeters": 5.88 },
+    "camelstd":       { "lengthMeters": 5.72 }
+  },
+
+  "stages": {
+    "_note": "Per-stage tuning values for Belgium campaign. Key format: {campaign_id}_{stage_id}. Nico: on load, locate each stage in CAMPAIGNS by matching campaign.id + stage.id and merge these values into the stage object.",
+    "belgium_opening_patrol": {
+      "speed": 1.82,
+      "spawnInterval": 1880,
+      "gravity": 0.28,
+      "jump": -6.5,
+      "enemyHp": 1,
+      "enemyPoints": 3,
+      "enemyMissPenalty": 1,
+      "enemySpawnBase": 3000,
+      "enemySpawnFloor": 1880,
+      "enemySpawnScoreRamp": 3,
+      "enemyStartDelay": 4300,
+      "enemyApproachFactor": 0.86,
+      "_note": "Tutorial-pace opening stage, no obstacles."
+    },
+    "belgium_flak_screen": {
+      "speed": 2.02,
+      "spawnInterval": 1880,
+      "gravity": 0.31,
+      "jump": -6.8,
+      "enemyHp": 1,
+      "enemyPoints": 3,
+      "enemyMissPenalty": 1,
+      "enemySpawnBase": 2520,
+      "enemySpawnFloor": 1580,
+      "enemySpawnScoreRamp": 4,
+      "enemyStartDelay": 3400,
+      "enemyApproachFactor": 0.92,
+      "obstacleRampDuration": 18,
+      "obstacleRampStartMultiplier": 2,
+      "_note": "First flak introduction. Enemies start spawning faster."
+    },
+    "belgium_observation_line": {
+      "speed": 2.02,
+      "spawnInterval": 2260,
+      "gravity": 0.31,
+      "jump": -6.8,
+      "obstacleHp": 2,
+      "obstaclePoints": 3,
+      "obstacleStartDelay": 1600,
+      "_note": "Balloon-only stage. No air enemies. Tests targeting under pressure."
+    },
+    "belgium_contested_line": {
+      "speed": 2.18,
+      "spawnInterval": 1880,
+      "gravity": 0.33,
+      "jump": -7.0,
+      "enemyHp": 1,
+      "enemyPoints": 3,
+      "enemyMissPenalty": 1,
+      "enemySpawnBase": 2360,
+      "enemySpawnFloor": 1460,
+      "enemySpawnScoreRamp": 5,
+      "enemyStartDelay": 2200,
+      "enemyApproachFactor": 0.98,
+      "obstacleRampDuration": 18,
+      "obstacleRampStartMultiplier": 2,
+      "_note": "Combined threat: enemies + flak. Faster ramp than flak_screen."
+    },
+    "belgium_ace_pursuit": {
+      "speed": 2.32,
+      "spawnInterval": 1880,
+      "gravity": 0.34,
+      "jump": -7.2,
+      "enemyTierOffset": 1,
+      "enemyHp": 3,
+      "enemyPoints": 6,
+      "enemyMissPenalty": 2,
+      "enemySpawnBase": 3380,
+      "enemySpawnFloor": 2480,
+      "enemySpawnScoreRamp": 3,
+      "enemyStartDelay": 2200,
+      "enemyApproachFactor": 1,
+      "obstacleRampDuration": 18,
+      "obstacleRampStartMultiplier": 2,
+      "_note": "Final endless stage. Enemies are one tier higher than player, 3 HP. High-value scoring zone."
+    }
+  },
+
+  "score_gates": {
+    "_note": "Score thresholds that control stage transitions within Belgium campaign. These mirror the scoreStart/scoreEnd fields in each stage object. Listed separately here so Dante can see the full progression arc without hunting through stage objects.",
+    "belgium": {
+      "opening_patrol":    { "scoreStart": 0,   "scoreEnd": 35  },
+      "flak_screen":       { "scoreStart": 35,  "scoreEnd": 75  },
+      "observation_line":  { "scoreStart": 75,  "scoreEnd": 105 },
+      "contested_line":    { "scoreStart": 105, "scoreEnd": 145 },
+      "ace_pursuit":       { "scoreStart": 145, "scoreEnd": null, "_note": "null = Infinity, campaign runs until death" }
+    }
+  }
+}

@@ -1,0 +1,733 @@
+{
+  "_meta": {
+    "schema_version": 1,
+    "description": "Complete asset registry for Wings Over No Man's Land. Every asset file used or expected by the game is catalogued here. Status field values: active (file exists and is used), pending (file expected but not yet delivered), deprecated (file exists but no longer used by current code), placeholder (a stub file is present but final art is not delivered). Maintainers: Sal and Benny update status and dimensions when assets are delivered. Nico references path and id fields.",
+    "last_updated": "2026-04-09",
+    "updated_by": "Enzo Caruso"
+  },
+
+  "branding": [
+    {
+      "id": "branding_logo",
+      "type": "ui_image",
+      "path": "assets/branding/Logo.png",
+      "description": "Main game logo, displayed on splash screen.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["splash"]
+    },
+    {
+      "id": "branding_icon",
+      "type": "ui_image",
+      "path": "assets/branding/WONMLIcon.png",
+      "description": "Browser favicon (32x32 or similar).",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["browser_tab"]
+    },
+    {
+      "id": "branding_icon_180",
+      "type": "ui_image",
+      "path": "assets/branding/WONMLIcon-180.png",
+      "description": "Apple touch icon for iOS home screen (180x180).",
+      "dimensions_px": { "w": 180, "h": 180 },
+      "status": "active",
+      "used_in": ["ios_homescreen"]
+    },
+    {
+      "id": "branding_sound_on",
+      "type": "ui_image",
+      "path": "assets/branding/SoundOn.png",
+      "description": "Mute button icon — sound enabled state.",
+      "dimensions_px": { "w": 30, "h": 30 },
+      "status": "active",
+      "used_in": ["hud"]
+    },
+    {
+      "id": "branding_sound_off",
+      "type": "ui_image",
+      "path": "assets/branding/SoundOff.png",
+      "description": "Mute button icon — sound muted state.",
+      "dimensions_px": { "w": 30, "h": 30 },
+      "status": "active",
+      "used_in": ["hud"]
+    }
+  ],
+
+  "backgrounds_menu": [
+    {
+      "id": "bg_main_menu",
+      "type": "background",
+      "path": "assets/backgrounds/menu/MainMenu.png",
+      "description": "Main menu background image.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["splash"]
+    },
+    {
+      "id": "bg_british_roundel",
+      "type": "ui_image",
+      "path": "assets/backgrounds/menu/BritishRoundel.png",
+      "description": "British faction roundel. Used in lives display and faction selection.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["splash", "game_hud", "lives_display"]
+    },
+    {
+      "id": "bg_german_cross",
+      "type": "ui_image",
+      "path": "assets/backgrounds/menu/GermanCross.png",
+      "description": "German faction cross insignia. Used in lives display and faction selection.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["splash", "game_hud", "lives_display"]
+    },
+    {
+      "id": "bg_american_roundel",
+      "type": "ui_image",
+      "path": "assets/backgrounds/menu/AmericanRoundel.png",
+      "description": "American faction roundel. Loaded but faction not yet active in gameplay.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["splash"]
+    },
+    {
+      "id": "bg_french_roundel",
+      "type": "ui_image",
+      "path": "assets/backgrounds/menu/FrenchRoundel.png",
+      "description": "French faction roundel. Loaded but faction not yet active in gameplay.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["splash"]
+    },
+    {
+      "id": "bg_italian_roundel",
+      "type": "ui_image",
+      "path": "assets/backgrounds/menu/ItalianRoundel.png",
+      "description": "Italian faction roundel. Loaded but faction not yet active in gameplay.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["splash"]
+    },
+    {
+      "id": "bg_russian_roundel",
+      "type": "ui_image",
+      "path": "assets/backgrounds/menu/RussianRoundel.png",
+      "description": "Russian faction roundel. Loaded but faction not yet active in gameplay.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["splash"]
+    },
+    {
+      "id": "bg_campaign_map",
+      "type": "background",
+      "path": "assets/backgrounds/map/CampaignMap.png",
+      "description": "Full campaign selection map of the Western Front and surrounding theatres.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["campaign_map"]
+    }
+  ],
+
+  "backgrounds_campaigns": [
+    {
+      "id": "bg_belgium_sky",
+      "type": "parallax_layer",
+      "path": "assets/backgrounds/campaigns/Belgium/SkyLayer.png",
+      "description": "Belgium campaign sky layer (uppermost parallax layer).",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["campaign_belgium"],
+      "parallax_role": "sky"
+    },
+    {
+      "id": "bg_belgium_far1",
+      "type": "parallax_layer",
+      "path": "assets/backgrounds/campaigns/Belgium/Belgium1_seamless.png",
+      "description": "Belgium campaign far background — variant 1 (seamlessly tiling).",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["campaign_belgium"],
+      "parallax_role": "far"
+    },
+    {
+      "id": "bg_belgium_far2",
+      "type": "parallax_layer",
+      "path": "assets/backgrounds/campaigns/Belgium/Belgium2_seamless.png",
+      "description": "Belgium campaign far background — variant 2.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["campaign_belgium"],
+      "parallax_role": "far_variant"
+    },
+    {
+      "id": "bg_belgium_far3",
+      "type": "parallax_layer",
+      "path": "assets/backgrounds/campaigns/Belgium/Belgium3_seamless.png",
+      "description": "Belgium campaign far background — variant 3.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["campaign_belgium"],
+      "parallax_role": "far_variant"
+    }
+  ],
+
+  "planes_germany": [
+    {
+      "id": "plane_e3std",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerEIII_std.png",
+      "description": "Fokker E.III standard livery. Player and enemy sprite.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "e3std",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_e3green",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerEIII_green.png",
+      "description": "Fokker E.III field green alternate livery. Hangar display only.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "e3std",
+      "special_id": "e3green",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_albatrosdvstd",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/AlbatrosDV_std.png",
+      "description": "Albatros D.V standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "albatrosdvstd",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_albatros_black",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/AlbatrosDV_blck.png",
+      "description": "Albatros D.V black wing special livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "albatrosdvstd",
+      "special_id": "albatrosblack",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_albatros_caro",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/AlbatrosDV_caro.png",
+      "description": "Albatros D.V diamond banner special livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "albatrosdvstd",
+      "special_id": "albatroscaro",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_albatros_rednose",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/AlbatrosDV_rd_ns.png",
+      "description": "Albatros D.V red nose special livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "albatrosdvstd",
+      "special_id": "albatrosrednose",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_albatros_skull",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/AlbatrosDV_skull.png",
+      "description": "Albatros D.V skull flight special livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "albatrosdvstd",
+      "special_id": "albatrosskull",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_dr1std",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerDR1_std.png",
+      "description": "Fokker Dr.I standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "dr1std",
+      "render_scale": 0.059,
+      "render_rotation_rad": 0.08726,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_dr1rb",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerDR1_RB.png",
+      "description": "Fokker Dr.I Red Baron ace livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "dr1std",
+      "special_id": "dr1rb",
+      "render_scale": 0.059,
+      "render_rotation_rad": 0.08726,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_dr1wevo",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerDR1_WeVo.png",
+      "description": "Fokker Dr.I Werner Voss ace livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "dr1std",
+      "special_id": "dr1wevo",
+      "render_scale": 0.059,
+      "render_rotation_rad": 0.08726,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_dr1jj",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerDR1_JJ.png",
+      "description": "Fokker Dr.I Josef Jacobs ace livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "dr1std",
+      "special_id": "dr1jj",
+      "render_scale": 0.059,
+      "render_rotation_rad": 0.08726,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_d7std",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerD7std.png",
+      "description": "Fokker D.VII standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "d7std",
+      "render_scale": 0.058,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_d7rb",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerD7_RB.png",
+      "description": "Fokker D.VII ace red livery. Also used as enemy 'german-bomber' type.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "d7std",
+      "special_id": "d7rb",
+      "render_scale": 0.058,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar"]
+    },
+    {
+      "id": "plane_d7vik",
+      "type": "plane_sprite",
+      "path": "assets/planes/germany/FokkerDR7_vik.png",
+      "description": "Fokker D.VII Viktor special livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "germany",
+      "plane_type": "d7std",
+      "special_id": "d7vik",
+      "render_scale": 0.058,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar"]
+    }
+  ],
+
+  "planes_britain": [
+    {
+      "id": "plane_dh1",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/AircoDH1.png",
+      "description": "Airco DH.1 standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "dh1",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_dh2",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/AircoDH2.png",
+      "description": "Airco DH.2 standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "dh2",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_pupstd",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/SopwithPup_std.png",
+      "description": "Sopwith Pup standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "pupstd",
+      "render_scale": 0.057,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_pup_dun",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/SopwithPup_Dun.png",
+      "description": "Sopwith Pup dun tones special livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "pupstd",
+      "special_id": "pupdun",
+      "render_scale": 0.057,
+      "render_rotation_rad": 0,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_pup_so",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/SopwithPup_SO.png",
+      "description": "Sopwith Pup silver owl special livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "pupstd",
+      "special_id": "pupso",
+      "render_scale": 0.057,
+      "render_rotation_rad": 0,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_pup_by",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/SopwithPup_by.png",
+      "description": "Sopwith Pup golden flight special livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "pupstd",
+      "special_id": "pupby",
+      "render_scale": 0.057,
+      "render_rotation_rad": 0,
+      "used_in": ["hangar"]
+    },
+    {
+      "id": "plane_triplanestd",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/SopwithTriplane_std.png",
+      "description": "Sopwith Triplane standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "triplanestd",
+      "render_scale": 0.057,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_camelstd",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/SopwithCamel_std.png",
+      "description": "Sopwith Camel standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "camelstd",
+      "render_scale": 0.057,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    },
+    {
+      "id": "plane_dh9",
+      "type": "plane_sprite",
+      "path": "assets/planes/britain/AircoDH9.png",
+      "description": "Airco DH.9 standard livery.",
+      "dimensions_px": null,
+      "status": "active",
+      "faction": "britain",
+      "plane_type": "dh9",
+      "render_scale": 0.056,
+      "render_rotation_rad": 0,
+      "used_in": ["game", "hangar", "plane_select"]
+    }
+  ],
+
+  "planes_pending": [
+    {
+      "id": "plane_france_placeholder",
+      "type": "plane_sprite",
+      "path": "assets/planes/france/",
+      "description": "France faction aircraft — folder created, no sprites delivered yet.",
+      "dimensions_px": null,
+      "status": "pending",
+      "faction": "france",
+      "plane_type": null,
+      "used_in": []
+    },
+    {
+      "id": "plane_america_placeholder",
+      "type": "plane_sprite",
+      "path": "assets/planes/america/",
+      "description": "America faction aircraft — folder created, no sprites delivered yet.",
+      "dimensions_px": null,
+      "status": "pending",
+      "faction": "america",
+      "plane_type": null,
+      "used_in": []
+    },
+    {
+      "id": "plane_italy_placeholder",
+      "type": "plane_sprite",
+      "path": "assets/planes/italy/",
+      "description": "Italy faction aircraft — folder created, no sprites delivered yet.",
+      "dimensions_px": null,
+      "status": "pending",
+      "faction": "italy",
+      "plane_type": null,
+      "used_in": []
+    },
+    {
+      "id": "plane_russia_placeholder",
+      "type": "plane_sprite",
+      "path": "assets/planes/russia/",
+      "description": "Russia faction aircraft — folder created, no sprites delivered yet.",
+      "dimensions_px": null,
+      "status": "pending",
+      "faction": "russia",
+      "plane_type": null,
+      "used_in": []
+    }
+  ],
+
+  "obstacles": [
+    {
+      "id": "obstacle_balloon_british",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/balloons/britain/BallonAllies.png",
+      "description": "British/Allied observation balloon. Used in balloon stage when player is German.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["campaign_belgium_observation_line"]
+    },
+    {
+      "id": "obstacle_balloon_german",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/balloons/germany/BallonGermany.png",
+      "description": "German observation balloon. Used in balloon stage when player is British.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["campaign_belgium_observation_line"]
+    },
+    {
+      "id": "obstacle_balloon_old",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/ObsBaloon.png",
+      "description": "Original balloon sprite from early development. Superseded by faction-specific balloons.",
+      "dimensions_px": null,
+      "status": "deprecated",
+      "used_in": []
+    },
+    {
+      "id": "obstacle_zeppelin",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/Zeppelin.png",
+      "description": "Zeppelin obstacle. Loaded in code but not yet assigned to a stage.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": []
+    },
+    {
+      "id": "obstacle_cloud_01",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud01.png",
+      "description": "Cloud obstacle sprite 01 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "obstacle_cloud_02",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud02.png",
+      "description": "Cloud obstacle sprite 02 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "obstacle_cloud_03",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud03.png",
+      "description": "Cloud obstacle sprite 03 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "obstacle_cloud_04",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud04.png",
+      "description": "Cloud obstacle sprite 04 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "obstacle_cloud_05",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud05.png",
+      "description": "Cloud obstacle sprite 05 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "obstacle_cloud_06",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud06.png",
+      "description": "Cloud obstacle sprite 06 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "obstacle_cloud_07",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud07.png",
+      "description": "Cloud obstacle sprite 07 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "obstacle_cloud_08",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud08.png",
+      "description": "Cloud obstacle sprite 08 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "obstacle_cloud_09",
+      "type": "obstacle_sprite",
+      "path": "assets/obstacles/clouds/Cloud09.png",
+      "description": "Cloud obstacle sprite 09 of 09.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": ["game"]
+    }
+  ],
+
+  "animations": [
+    {
+      "id": "anim_flak_burst",
+      "type": "animation_video",
+      "path": "assets/animations/WW_Flak_Burst_Animation_Request.mp4",
+      "description": "Flak burst explosion animation. Played as cloned video element at obstacle position.",
+      "dimensions_px": null,
+      "status": "active",
+      "format": "mp4",
+      "used_in": ["campaign_belgium_flak_screen", "campaign_belgium_contested_line", "campaign_belgium_ace_pursuit"]
+    },
+    {
+      "id": "anim_airplane_smoke",
+      "type": "animation_video",
+      "path": "assets/animations/AirplaneSmoke.mp4",
+      "description": "Player aircraft damage smoke trail. Looping video overlay on player plane when damaged.",
+      "dimensions_px": null,
+      "status": "active",
+      "format": "mp4",
+      "used_in": ["game"]
+    }
+  ],
+
+  "audio": [
+    {
+      "id": "audio_bgm_run",
+      "type": "audio_bgm",
+      "path": "assets/audio/bgm_run.mp3",
+      "description": "In-game background music track. Loops during gameplay.",
+      "duration_seconds": null,
+      "status": "active",
+      "used_in": ["game"]
+    },
+    {
+      "id": "audio_sky_patrol",
+      "type": "audio_bgm",
+      "path": "assets/audio/Sky Patrol.mp3",
+      "description": "Alternate BGM track. Present in assets folder but not currently wired to any game state.",
+      "duration_seconds": null,
+      "status": "pending",
+      "used_in": []
+    }
+  ],
+
+  "source_files": [
+    {
+      "id": "source_fokker_e3_xcf",
+      "type": "source_art",
+      "path": "assets/source/germany/fokker.xcf",
+      "description": "GIMP source file for Fokker E.III artwork.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": []
+    },
+    {
+      "id": "source_dr1_xcf",
+      "type": "source_art",
+      "path": "assets/source/germany/FokkerDR3.xcf",
+      "description": "GIMP source file for Fokker Dr.I artwork.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": []
+    },
+    {
+      "id": "source_balloon_xcf",
+      "type": "source_art",
+      "path": "assets/source/obstacles/ObsBaloon.xcf",
+      "description": "GIMP source file for original balloon obstacle.",
+      "dimensions_px": null,
+      "status": "active",
+      "used_in": []
+    }
+  ]
+}

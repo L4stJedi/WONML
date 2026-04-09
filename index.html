@@ -501,8 +501,48 @@
     <audio id="bgmRun" src="assets/audio/bgm_run.mp3" loop></audio>
   </div>
 
-  <!-- Supabase client -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- Firebase client (module block — exposes db + helpers to window for non-module code below) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCwXWv0bu8XIzK80TGV8jG9TCguwm5Hvrc",
+      authDomain: "wonml-3449c.firebaseapp.com",
+      projectId: "wonml-3449c",
+      storageBucket: "wonml-3449c.firebasestorage.app",
+      messagingSenderId: "917784870082",
+      appId: "1:917784870082:web:afe40f693e1ab6c600cf5b",
+      measurementId: "G-Y4DZDMFH2P"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Expose leaderboard helpers to window so the non-module game script can call them.
+    window._firebaseReady = true;
+
+    window.fbReadLeaderboard = async function() {
+      const q = query(collection(db, "scores"), orderBy("score", "desc"), limit(10));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map(doc => {
+        const d = doc.data();
+        return { name: d.player_name || "Unknown", score: Number(d.score) || 0 };
+      });
+    };
+
+    window.fbWriteScore = async function(player_name, score, campaign_id, faction, aircraft_id) {
+      await addDoc(collection(db, "scores"), {
+        player_name:    String(player_name),
+        score:          Number(score),
+        campaign_id:    String(campaign_id),
+        faction:        String(faction),
+        aircraft_id:    String(aircraft_id),
+        timestamp:      serverTimestamp(),
+        schema_version: 1
+      });
+    };
+  </script>
 
   <script>
     // === DOM & canvas ===
@@ -576,6 +616,8 @@
       lastPilot: `${STORAGE_REVISION}_last_pilot`,
       burstHand: `${STORAGE_REVISION}_burst_hand`,
       earlyAccess: `${STORAGE_REVISION}_early_access`,
+      completedCampaigns: `${STORAGE_REVISION}_completed_campaigns`,
+      unlockedPlanes: `${STORAGE_REVISION}_unlocked_planes`,
       legacyBest: "ww1_fokker_best",
       legacyBestPilot: "ww1_fokker_best_pilot",
       legacyLeaderboard: "ww1_leaderboard",
@@ -690,11 +732,7 @@
       focusAccessInput();
     }
 
-    // === Supabase setup ===
-    const { createClient } = supabase;
-    const supabaseUrl = "https://jcwmwblvpakstbkifpki.supabase.co";
-    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Impjd213Ymx2cGFrc3Ria2lmcGtpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM2NzQzODcsImV4cCI6MjA4OTI1MDM4N30.aROdC_urHemSqKX2Oz0ejBLn64hRQsoT3ZBDX72re30";
-    const sb = createClient(supabaseUrl, supabaseKey);
+    // === Firebase setup (initialised in module block above — helpers on window) ===
 
     // Screens: testerNotes, splash, campaignMap, settings, hangar, planeSelectGerman, planeSelectBritish, game
     let screen = "splash";
@@ -967,13 +1005,28 @@
     const BRITISH_STANDARD_PLANES = [
       { tier: "Tier 1", label: "Airco DH.1", planeType: "dh1" },
       { tier: "Tier 2", label: "Airco DH.2", planeType: "dh2" },
-      { tier: "Tier 3", label: "Sopwith Triplane", planeType: "triplanestd" },
-      { tier: "Tier 4", label: "Sopwith Pup", planeType: "pupstd" },
+      { tier: "Tier 3", label: "Sopwith Pup", planeType: "pupstd" },
+      { tier: "Tier 4", label: "Sopwith Triplane", planeType: "triplanestd" },
       { tier: "Tier 5", label: "Sopwith Camel", planeType: "camelstd" },
       { tier: "Tier 6", label: "Airco DH.9", planeType: "dh9" }
     ];
 
     const BRITISH_ENEMY_FIGHTER_PLANES = ["dh1", "dh2", "triplanestd", "camelstd"];
+
+    // Maps each plane tier (beyond Tier 1) to the campaign id that must be completed to unlock it.
+    // Tier 1 aircraft for each faction are always available as starters.
+    const PLANE_UNLOCK_GATES = {
+      // Germany
+      albatrosdvstd: "belgium",   // Tier 2 — unlocks after Belgium campaign
+      dr1std:        "ypres",     // Tier 3 — unlocks after Ypres campaign
+      d7std:         "verdun",    // Tier 4 — unlocks after Verdun campaign
+      // Britain
+      dh2:           "belgium",   // Tier 2 — unlocks after Belgium campaign
+      triplanestd:   "ypres",     // Tier 3 — unlocks after Ypres campaign
+      pupstd:        "gallipoli", // Tier 4 — unlocks after Gallipoli campaign
+      camelstd:      "verdun",    // Tier 5 — unlocks after Verdun campaign
+      dh9:           "somme"      // Tier 6 — unlocks after Somme campaign
+    };
 
     const HANGAR_DATA = {
       germany: [
@@ -1611,6 +1664,8 @@
     let rapidFireUntil = 0;
     let activeCampaignIntro = null;
     let campaignIntroUntil = 0;
+    let completedCampaigns = [];  // array of campaign ids that the player has completed
+    let unlockedPlanes = [];      // array of planeType strings unlocked via campaign rewards
 
     function getCurrentCampaign() {
       return CAMPAIGNS[currentCampaignIndex] || CAMPAIGNS[0];
@@ -1738,6 +1793,54 @@
       }
     }
 
+    function saveCompletedCampaigns() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.completedCampaigns, JSON.stringify(completedCampaigns));
+      } catch (e) {
+        console.log("Cannot save completed campaigns locally:", e);
+      }
+    }
+
+    function loadCompletedCampaigns() {
+      const raw = localStorage.getItem(STORAGE_KEYS.completedCampaigns);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          completedCampaigns = parsed;
+        }
+      } catch (e) {
+        console.log("Cannot parse completed campaigns locally:", e);
+      }
+    }
+
+    function saveUnlockedPlanes() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.unlockedPlanes, JSON.stringify(unlockedPlanes));
+      } catch (e) {
+        console.log("Cannot save unlocked planes locally:", e);
+      }
+    }
+
+    function loadUnlockedPlanes() {
+      const raw = localStorage.getItem(STORAGE_KEYS.unlockedPlanes);
+      if (!raw) return;
+      try {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          unlockedPlanes = parsed;
+        }
+      } catch (e) {
+        console.log("Cannot parse unlocked planes locally:", e);
+      }
+    }
+
+    function isPlaneUnlocked(planeType) {
+      // Tier 1 starters are always available
+      if (!PLANE_UNLOCK_GATES[planeType]) return true;
+      return unlockedPlanes.includes(planeType);
+    }
+
     // === Music state ===
     let bgmStarted = false;
     let bgmMuted = false;
@@ -1834,7 +1937,7 @@
       rapidBtn.addEventListener("touchstart", triggerRapid, { passive: false });
     }
 
-    // === Load leaderboard from Supabase (global) ===
+    // === Load leaderboard from Firebase Firestore (global) ===
     async function initLeaderboard() {
       // 1) Local cache
       const raw = getStoredValue(STORAGE_KEYS.leaderboard, STORAGE_KEYS.legacyLeaderboard);
@@ -1847,22 +1950,14 @@
         }
       }
 
-      // 2) Remote from Supabase
+      // 2) Remote from Firestore
       try {
-        const { data, error } = await sb
-          .from("scores")
-          .select("name, score")
-          .order("score", { ascending: false })
-          .limit(10);
-
-        if (!error && Array.isArray(data)) {
-          leaderboard = data.map(row => ({
-            name: row.name || "Unknown",
-            score: Number(row.score) || 0
-          }));
-          saveLeaderboard();
-        } else if (error) {
-          console.log("Supabase read error:", error.message);
+        if (typeof window.fbReadLeaderboard === "function") {
+          const data = await window.fbReadLeaderboard();
+          if (Array.isArray(data) && data.length > 0) {
+            leaderboard = data;
+            saveLeaderboard();
+          }
         }
       } catch (err) {
         console.log("Online leaderboard not available, using local only.", err);
@@ -1883,6 +1978,9 @@
     // call once on load
     loadPilotBestScores();
     loadHangarStats();
+    loadCompletedCampaigns();
+    loadUnlockedPlanes();
+    checkUnlocks();
     initLeaderboard();
 
     let currentPilotName = "";
@@ -2127,14 +2225,16 @@
       }
       updateBestDisplays();
 
-      // 2) Insert into Supabase (one row per run)
+      // 2) Insert into Firestore (one document per run)
       try {
-        const { error } = await sb
-          .from("scores")
-          .insert({ name, score: newScore });
-
-        if (error) {
-          console.log("Supabase write error:", error.message);
+        if (typeof window.fbWriteScore === "function") {
+          await window.fbWriteScore(
+            name,
+            newScore,
+            getCurrentCampaign()?.id || "unknown",
+            currentFaction === "britain" ? "british" : "german",
+            planeType || "unknown"
+          );
         }
       } catch (err) {
         console.log("Cannot submit score online (ignored):", err);
@@ -2235,11 +2335,33 @@
       if (newIndex !== currentStageIndex) {
         currentStageIndex = newIndex;
         levelNameEl.textContent = getCurrentStage().name;
+
+        // When the player enters the final stage for the first time, mark campaign complete
+        if (newIndex === campaign.stages.length - 1) {
+          markCampaignComplete(campaign.id);
+        }
       }
     }
 
     function checkUnlocks() {
-      return;
+      let changed = false;
+      for (const [planeType, requiredCampaignId] of Object.entries(PLANE_UNLOCK_GATES)) {
+        if (!unlockedPlanes.includes(planeType) && completedCampaigns.includes(requiredCampaignId)) {
+          unlockedPlanes.push(planeType);
+          changed = true;
+        }
+      }
+      if (changed) {
+        saveUnlockedPlanes();
+      }
+    }
+
+    function markCampaignComplete(campaignId) {
+      if (!campaignId) return;
+      if (completedCampaigns.includes(campaignId)) return; // already recorded
+      completedCampaigns.push(campaignId);
+      saveCompletedCampaigns();
+      checkUnlocks();
     }
 
     function getObstacleSpawnInterval(level) {
@@ -3727,7 +3849,12 @@
     }
 
     function isCampaignUnlocked(node) {
-      return node.order < FIRST_LOCKED_CAMPAIGN_ORDER;
+      // Order-1 campaigns are always available as the starting point
+      if (node.order < FIRST_LOCKED_CAMPAIGN_ORDER) return true;
+      // Each subsequent campaign unlocks when the campaign immediately before it (order - 1) is completed
+      const prerequisiteNode = CAMPAIGN_MAP_NODES.find(n => n.order === node.order - 1);
+      if (!prerequisiteNode) return false;
+      return completedCampaigns.includes(prerequisiteNode.id);
     }
 
     function isCampaignImplemented(node) {
@@ -4520,7 +4647,7 @@
 
       const entries = GERMAN_STANDARD_PLANES.map(entry => ({
         ...entry,
-        unlocked: true
+        unlocked: isPlaneUnlocked(entry.planeType)
       }));
 
       entries.forEach((entry, i) => {
@@ -4622,17 +4749,18 @@
 
       const entries = BRITISH_STANDARD_PLANES.map(entry => ({
         ...entry,
-        sprite: getPlaneSprite(entry.planeType)
+        sprite: getPlaneSprite(entry.planeType),
+        unlocked: isPlaneUnlocked(entry.planeType)
       }));
 
       entries.forEach((entry, i) => {
         const y = startY + i * rowH;
 
         ctx.save();
-        ctx.fillStyle = "rgba(255,255,255,0.97)";
+        ctx.fillStyle = entry.unlocked ? "rgba(255,255,255,0.97)" : "rgba(230,230,230,0.95)";
         fillRoundedRect(rowX, y, rowW, rowH - 14, 12);
 
-        ctx.strokeStyle = "rgba(33,33,33,0.3)";
+        ctx.strokeStyle = entry.unlocked ? "rgba(33,33,33,0.3)" : "rgba(100,100,100,0.3)";
         ctx.lineWidth = 1;
         ctx.strokeRect(rowX + 0.5, y + 0.5, rowW - 1, rowH - 15);
 
@@ -4656,8 +4784,8 @@
         ctx.fillText(`${entry.tier} - ${entry.label}`, rowX + 172, y + 25);
 
         ctx.font = "12px " + UI_FONT;
-        ctx.fillStyle = "#2e7d32";
-        ctx.fillText("Ready", rowX + 172, y + 43);
+        ctx.fillStyle = entry.unlocked ? "#2e7d32" : "#b0bec5";
+        ctx.fillText(entry.unlocked ? "Ready" : "Locked", rowX + 172, y + 43);
 
         ctx.restore();
 
@@ -4667,6 +4795,7 @@
           w: rowW,
           h: rowH - 14,
           planeType: entry.planeType,
+          unlocked: entry.unlocked,
           tier: entry.tier
         });
       });
@@ -5008,7 +5137,11 @@
 
         if (clickedRow) {
           if (!clickedRow.unlocked) {
-            hintEl.textContent = "Tier 2 locked.\nReach Stage 4 with 40+ points to unlock.";
+            const gate = PLANE_UNLOCK_GATES[clickedRow.planeType];
+            const gateNode = gate ? CAMPAIGN_MAP_NODES.find(n => n.id === gate) : null;
+            hintEl.textContent = gateNode
+              ? `${clickedRow.tier} locked. Complete the ${gateNode.label} campaign to unlock.`
+              : `${clickedRow.tier} locked.`;
             return;
           }
           ensurePilotName();
@@ -5051,6 +5184,14 @@
         }
 
         if (clickedRow) {
+          if (!clickedRow.unlocked) {
+            const gate = PLANE_UNLOCK_GATES[clickedRow.planeType];
+            const gateNode = gate ? CAMPAIGN_MAP_NODES.find(n => n.id === gate) : null;
+            hintEl.textContent = gateNode
+              ? `${clickedRow.tier} locked. Complete the ${gateNode.label} campaign to unlock.`
+              : `${clickedRow.tier} locked.`;
+            return;
+          }
           ensurePilotName();
           planeType = clickedRow.planeType;
           screen = "game";
