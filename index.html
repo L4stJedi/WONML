@@ -988,11 +988,25 @@
     const belgiumFarBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium1_seamless.png");
     const belgiumFarBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium2_seamless.png");
     const belgiumFarBlend3 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium3_seamless.png");
+    // Belgium atmosphere layer (ultra-far, 4th depth layer) — placeholder until Sal's artwork arrives.
+    // Spec: 480×640px PNG. Sky gradient (#EDE8DC top → #C8DAEA mid → #C2B99A horizon).
+    // Faint warm haze band 40–60px tall just above ground baseline. Scroll coefficient 0.02x.
+    const belgiumAtmosLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium_Atmos_placeholder.png");
+    // Belgium per-stage layer placeholders (mid + fore) — replace with Sal's artwork per stage.
+    // Far layers (Stage 1–5): reuse existing seamless blends until per-stage variants are delivered.
+    // Mid layers: 960×180px PNG per stage. Fore layers: 960×140px PNG per stage.
+    const belgiumMidPlaceholder  = null; // TODO: replace with loadSplashAsset per stage
+    const belgiumForePlaceholder = null; // TODO: replace with loadSplashAsset per stage
+    // Shared Belgium layer set — used by all 5 stages until per-stage assets are ready.
+    // Remove onlyFar; full 4-layer system active. Mid/fore render as invisible (null) until artwork arrives.
     const BELGIUM_CAMPAIGN_LAYERS = {
-      sky: belgiumSkyLayer,
-      far: belgiumFarBlend1,
+      sky:         belgiumSkyLayer,
+      atmos:       belgiumAtmosLayer,           // ultra-far atmosphere layer (scroll ~0.02x)
+      far:         belgiumFarBlend1,
       farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
-      onlyFar: true
+      mid:         belgiumMidPlaceholder,        // placeholder — Sal to deliver Belgium_Mid_S1–S5.png
+      fore:        belgiumForePlaceholder         // placeholder — Sal to deliver Belgium_Fore_S1–S5.png
+      // onlyFar removed — full depth system active
     };
 
     const GERMAN_STANDARD_PLANES = [
@@ -1841,6 +1855,492 @@
       return unlockedPlanes.includes(planeType);
     }
 
+    // =========================================================================
+    // === WEB AUDIO API — SFX SYSTEM (Nico Corleone, Sky Aces Studio) ========
+    // =========================================================================
+    //
+    // Architecture: AudioContext → MasterGain → [EngineGain, GunGain, HitGain,
+    //               ExplosionGain, UIGain, AmbientGain]
+    //
+    // iOS Safari requires gesture-gated AudioContext creation.
+    // initAudioContext() is called inside handleInput() on first user interaction.
+    //
+    // Asset loader: loadSFX(id, url) fetches + decodes into sfxBuffers map.
+    // Format priority: OGG (smaller, better quality) → MP3 fallback.
+    // Missing assets are gracefully skipped — placeholder synth sounds run instead.
+    //
+    // Engine loop: startEngineLoop(planeType) → setEngineState(vy) → stopEngineLoop()
+    // One-shot SFX: playSFX(id, gainNode, pitchVariance)
+    // =========================================================================
+
+    // --- Audio Context + Graph ---
+    let audioCtx         = null;
+    let masterGain       = null;
+    let engineGainNode   = null;
+    let gunGainNode      = null;
+    let hitGainNode      = null;
+    let explosionGainNode = null;
+    let uiGainNode       = null;
+    let ambientGainNode  = null;
+    let audioReady       = false;
+
+    // --- Engine loop state ---
+    let engineSource        = null;
+    let engineFadeTimeout   = null;
+    let enginePlaceholderOsc = null;  // synth fallback oscillator
+    let enginePlaceholderGain = null;
+
+    // --- Asset store ---
+    const sfxBuffers = new Map();
+    const sfxLoadingPromises = new Map();
+
+    // Detect preferred audio format (OGG first, MP3 fallback)
+    const _sfxFormatProbe = document.createElement("audio");
+    const SFX_USE_OGG = _sfxFormatProbe.canPlayType("audio/ogg; codecs=vorbis") !== "";
+    const SFX_EXT = SFX_USE_OGG ? ".ogg" : ".mp3";
+
+    // Master volume — persisted via localStorage
+    const STORAGE_KEY_MASTER_VOL = `${STORAGE_REVISION}_master_vol`;
+    let masterVolume = parseFloat(localStorage.getItem(STORAGE_KEY_MASTER_VOL) || "1.0");
+    if (isNaN(masterVolume) || masterVolume < 0 || masterVolume > 1) masterVolume = 1.0;
+
+    function initAudioContext() {
+      if (audioCtx) {
+        // iOS Safari: resume if suspended on re-interaction
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {});
+        }
+        return;
+      }
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        // Master gain (controls all SFX volume)
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = masterVolume;
+        masterGain.connect(audioCtx.destination);
+
+        // Category gain nodes — all connect to masterGain
+        engineGainNode    = audioCtx.createGain(); engineGainNode.gain.value    = 0.85; engineGainNode.connect(masterGain);
+        gunGainNode       = audioCtx.createGain(); gunGainNode.gain.value       = 0.80; gunGainNode.connect(masterGain);
+        hitGainNode       = audioCtx.createGain(); hitGainNode.gain.value       = 0.90; hitGainNode.connect(masterGain);
+        explosionGainNode = audioCtx.createGain(); explosionGainNode.gain.value = 0.90; explosionGainNode.connect(masterGain);
+        uiGainNode        = audioCtx.createGain(); uiGainNode.gain.value        = 0.85; uiGainNode.connect(masterGain);
+        ambientGainNode   = audioCtx.createGain(); ambientGainNode.gain.value   = 0.70; ambientGainNode.connect(masterGain);
+
+        audioReady = true;
+
+        // Resume if needed (handles pre-existing suspended context on some browsers)
+        if (audioCtx.state === "suspended") {
+          audioCtx.resume().catch(() => {});
+        }
+
+        // Start loading SFX assets now that context exists
+        _loadAllSFX();
+
+      } catch (e) {
+        console.warn("[Audio] Web Audio API not available:", e);
+      }
+    }
+
+    // --- Asset Loader ---
+
+    function loadSFX(id, baseUrl) {
+      if (!audioCtx) return Promise.resolve(null);
+      if (sfxBuffers.has(id)) return Promise.resolve(sfxBuffers.get(id));
+      if (sfxLoadingPromises.has(id)) return sfxLoadingPromises.get(id);
+
+      // Build URL: try preferred format, fall back to .mp3
+      const url = baseUrl.replace(/\.(ogg|mp3|wav)$/i, "") + SFX_EXT;
+
+      const promise = fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+          return res.arrayBuffer();
+        })
+        .then(ab => audioCtx.decodeAudioData(ab))
+        .then(buf => {
+          sfxBuffers.set(id, buf);
+          sfxLoadingPromises.delete(id);
+          return buf;
+        })
+        .catch(err => {
+          // Graceful failure: asset not yet delivered — log a warning, don't crash
+          console.warn(`[Audio] SFX asset not ready (${id}): ${url} — placeholder will run instead.`);
+          sfxLoadingPromises.delete(id);
+          return null;
+        });
+
+      sfxLoadingPromises.set(id, promise);
+      return promise;
+    }
+
+    // Also accept .wav paths directly (for future Caruso WAV deliverables)
+    function loadSFXWav(id, url) {
+      if (!audioCtx) return Promise.resolve(null);
+      if (sfxBuffers.has(id)) return Promise.resolve(sfxBuffers.get(id));
+      if (sfxLoadingPromises.has(id)) return sfxLoadingPromises.get(id);
+
+      const promise = fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+          return res.arrayBuffer();
+        })
+        .then(ab => audioCtx.decodeAudioData(ab))
+        .then(buf => {
+          sfxBuffers.set(id, buf);
+          sfxLoadingPromises.delete(id);
+          return buf;
+        })
+        .catch(err => {
+          console.warn(`[Audio] SFX WAV not ready (${id}): ${url} — placeholder will run instead.`);
+          sfxLoadingPromises.delete(id);
+          return null;
+        });
+
+      sfxLoadingPromises.set(id, promise);
+      return promise;
+    }
+
+    // SFX asset manifest — Caruso must deliver files at these exact paths.
+    // Format: WAV master at assets/audio/sfx/<name>.wav
+    // Web-delivery: OGG at assets/audio/sfx/<name>.ogg (primary) +
+    //               MP3 at assets/audio/sfx/<name>.mp3 (fallback)
+    // See delivery note for full naming spec.
+    function _loadAllSFX() {
+      const SFX_BASE = "assets/audio/sfx/";
+      const assets = [
+        "sfx_engine_rotary_idle_v1",
+        "sfx_gun_vickers_burst_short_v1",
+        "sfx_hit_player_light_v1",
+        "sfx_explosion_enemy_death_v1",
+        "sfx_ui_gameover_v1",
+        "sfx_ui_campaign_complete_v1",
+      ];
+      assets.forEach(id => loadSFX(id, SFX_BASE + id + ".ogg"));
+    }
+
+    // --- One-shot SFX trigger ---
+
+    function playSFX(id, gainNode, pitchVariance) {
+      if (!audioCtx || !audioReady) return;
+      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+
+      const buf = sfxBuffers.get(id);
+      if (!buf) {
+        // Real asset not loaded — play placeholder synth for this category
+        _playPlaceholderForId(id, gainNode, pitchVariance);
+        return;
+      }
+
+      const src = audioCtx.createBufferSource();
+      src.buffer = buf;
+
+      // Optional pitch variance (±pitchVariance) for variation
+      if (pitchVariance && pitchVariance > 0) {
+        src.playbackRate.value = 1.0 + (Math.random() * 2 - 1) * pitchVariance;
+      }
+
+      src.connect(gainNode || masterGain);
+      src.start();
+    }
+
+    // --- Placeholder synthetic sounds ---
+    // These run end-to-end so the trigger system is testable before Caruso delivers.
+
+    function _makeNoiseBuffer(durationSeconds) {
+      if (!audioCtx) return null;
+      const sr = audioCtx.sampleRate;
+      const len = Math.ceil(sr * durationSeconds);
+      const buf = audioCtx.createBuffer(1, len, sr);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+      return buf;
+    }
+
+    function _playPlaceholderForId(id, gainNode, pitchVariance) {
+      if (!audioCtx) return;
+
+      if (id === "sfx_gun_vickers_burst_short_v1") {
+        // Short white noise burst — 0.15s
+        _playSynthGunBurst(gainNode);
+      } else if (id === "sfx_hit_player_light_v1") {
+        // Mid-frequency thud — 0.2s
+        _playSynthHitThud(gainNode);
+      } else if (id === "sfx_explosion_enemy_death_v1") {
+        // Downward pitch sweep — 0.3s
+        _playSynthExplosion(gainNode);
+      } else if (id === "sfx_ui_gameover_v1") {
+        // Low drone fade — 0.8s
+        _playSynthGameOver(gainNode);
+      } else if (id === "sfx_ui_campaign_complete_v1") {
+        // Rising chord — ~0.9s
+        _playSynthCampaignComplete(gainNode);
+      }
+    }
+
+    function _playSynthGunBurst(gainNode) {
+      const now = audioCtx.currentTime;
+      const noiseLen = 0.15;
+      const noiseBuf = _makeNoiseBuffer(noiseLen);
+      if (!noiseBuf) return;
+      const src = audioCtx.createBufferSource();
+      src.buffer = noiseBuf;
+      const filt = audioCtx.createBiquadFilter();
+      filt.type = "bandpass";
+      filt.frequency.value = 1800;
+      filt.Q.value = 0.8;
+      const env = audioCtx.createGain();
+      env.gain.setValueAtTime(0.6, now);
+      env.gain.linearRampToValueAtTime(0, now + noiseLen);
+      src.connect(filt);
+      filt.connect(env);
+      env.connect(gainNode || masterGain);
+      src.start(now);
+      src.stop(now + noiseLen + 0.01);
+    }
+
+    function _playSynthHitThud(gainNode) {
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(300, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 0.2);
+      const env = audioCtx.createGain();
+      env.gain.setValueAtTime(0.7, now);
+      env.gain.linearRampToValueAtTime(0, now + 0.2);
+      osc.connect(env);
+      env.connect(gainNode || masterGain);
+      osc.start(now);
+      osc.stop(now + 0.21);
+    }
+
+    function _playSynthExplosion(gainNode) {
+      const now = audioCtx.currentTime;
+      // Noise layer
+      const dur = 0.3;
+      const noiseBuf = _makeNoiseBuffer(dur);
+      if (noiseBuf) {
+        const src = audioCtx.createBufferSource();
+        src.buffer = noiseBuf;
+        const filt = audioCtx.createBiquadFilter();
+        filt.type = "lowpass";
+        filt.frequency.setValueAtTime(800, now);
+        filt.frequency.linearRampToValueAtTime(100, now + dur);
+        const env = audioCtx.createGain();
+        env.gain.setValueAtTime(0.55, now);
+        env.gain.linearRampToValueAtTime(0, now + dur);
+        src.connect(filt);
+        filt.connect(env);
+        env.connect(gainNode || masterGain);
+        src.start(now);
+        src.stop(now + dur + 0.01);
+      }
+      // Pitch sweep layer
+      const osc = audioCtx.createOscillator();
+      osc.type = "sawtooth";
+      osc.frequency.setValueAtTime(220, now);
+      osc.frequency.exponentialRampToValueAtTime(40, now + 0.3);
+      const env2 = audioCtx.createGain();
+      env2.gain.setValueAtTime(0.5, now);
+      env2.gain.linearRampToValueAtTime(0, now + 0.3);
+      osc.connect(env2);
+      env2.connect(gainNode || masterGain);
+      osc.start(now);
+      osc.stop(now + 0.31);
+    }
+
+    function _playSynthGameOver(gainNode) {
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(110, now);
+      osc.frequency.linearRampToValueAtTime(65, now + 0.8);
+      const env = audioCtx.createGain();
+      env.gain.setValueAtTime(0.55, now);
+      env.gain.linearRampToValueAtTime(0, now + 0.8);
+      osc.connect(env);
+      env.connect(gainNode || masterGain);
+      osc.start(now);
+      osc.stop(now + 0.82);
+    }
+
+    function _playSynthCampaignComplete(gainNode) {
+      const now = audioCtx.currentTime;
+      [330, 440, 550, 660].forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        const env = audioCtx.createGain();
+        const startTime = now + i * 0.18;
+        env.gain.setValueAtTime(0, startTime);
+        env.gain.linearRampToValueAtTime(0.35, startTime + 0.06);
+        env.gain.linearRampToValueAtTime(0, startTime + 0.4);
+        osc.connect(env);
+        env.connect(gainNode || masterGain);
+        osc.start(startTime);
+        osc.stop(startTime + 0.42);
+      });
+    }
+
+    // --- Engine Loop ---
+
+    // Synthetic placeholder: oscillator at ~80 Hz with slight detune variation
+    // Runs when real engine assets are not yet available.
+    function _startEnginePlaceholderOsc() {
+      if (!audioCtx || enginePlaceholderOsc) return;
+      try {
+        const now = audioCtx.currentTime;
+        enginePlaceholderGain = audioCtx.createGain();
+        enginePlaceholderGain.gain.setValueAtTime(0, now);
+        enginePlaceholderGain.gain.linearRampToValueAtTime(0.35, now + 0.4);
+        enginePlaceholderGain.connect(engineGainNode);
+
+        enginePlaceholderOsc = audioCtx.createOscillator();
+        enginePlaceholderOsc.type = "sawtooth";
+        enginePlaceholderOsc.frequency.value = 82;
+        // Slight detune wobble for organic feel
+        enginePlaceholderOsc.detune.setValueAtTime(0, now);
+        enginePlaceholderOsc.detune.linearRampToValueAtTime(12, now + 0.8);
+        enginePlaceholderOsc.detune.linearRampToValueAtTime(-8, now + 1.6);
+        enginePlaceholderOsc.detune.linearRampToValueAtTime(6, now + 2.4);
+        enginePlaceholderOsc.connect(enginePlaceholderGain);
+        enginePlaceholderOsc.start();
+      } catch (e) {
+        console.warn("[Audio] Engine placeholder oscillator failed:", e);
+      }
+    }
+
+    function _stopEnginePlaceholderOsc(fadeDuration) {
+      if (!enginePlaceholderOsc) return;
+      try {
+        const now = audioCtx ? audioCtx.currentTime : 0;
+        const fadeEnd = now + (fadeDuration || 0.3);
+        if (enginePlaceholderGain) {
+          enginePlaceholderGain.gain.cancelScheduledValues(now);
+          enginePlaceholderGain.gain.setValueAtTime(enginePlaceholderGain.gain.value, now);
+          enginePlaceholderGain.gain.linearRampToValueAtTime(0, fadeEnd);
+        }
+        const oscToStop = enginePlaceholderOsc;
+        enginePlaceholderOsc = null;
+        enginePlaceholderGain = null;
+        setTimeout(() => { try { oscToStop.stop(); } catch(e) {} }, (fadeDuration || 0.3) * 1000 + 50);
+      } catch (e) {
+        enginePlaceholderOsc = null;
+        enginePlaceholderGain = null;
+      }
+    }
+
+    function startEngineLoop(pType) {
+      if (!audioCtx || !audioReady) return;
+      if (audioCtx.state === "suspended") audioCtx.resume().catch(() => {});
+
+      // Stop any previous engine
+      stopEngineLoop();
+
+      // Determine which engine sound ID to use based on plane type
+      // Inline engine: Albatros D.V, Fokker D.VII, DH.9
+      // Rotary engine: everything else
+      const inlinePlanes = ["albatrosdvstd", "d7std", "d7rb", "d7vik", "dh9"];
+      const engineId = inlinePlanes.includes(pType)
+        ? "sfx_engine_inline_idle_v1"
+        : "sfx_engine_rotary_idle_v1";
+
+      const buf = sfxBuffers.get(engineId);
+
+      if (buf) {
+        // Real asset available
+        if (engineFadeTimeout) { clearTimeout(engineFadeTimeout); engineFadeTimeout = null; }
+        engineSource = audioCtx.createBufferSource();
+        engineSource.buffer = buf;
+        engineSource.loop = true;
+        engineSource.playbackRate.value = 1.0;
+        engineSource.connect(engineGainNode);
+        engineSource.start();
+        engineGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+        engineGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+        engineGainNode.gain.linearRampToValueAtTime(0.85, audioCtx.currentTime + 0.4);
+      } else {
+        // Placeholder synth oscillator
+        _startEnginePlaceholderOsc();
+      }
+    }
+
+    // Maps plane.vy → playbackRate per Caruso's Deliverable 2 table:
+    //   vy > +2  → 1.15  (strong climb)
+    //   vy > 0   → 1.05–1.10 (gentle climb)
+    //   vy ≈ 0   → 1.00  (level)
+    //   vy < 0   → 0.93–0.97 (gentle descent)
+    //   vy < -3  → 0.88  (steep dive / full glide)
+    // 200ms linearRamp smoothing on every update.
+    function setEngineState(vy) {
+      if (!audioCtx || !audioReady) return;
+      const now = audioCtx.currentTime;
+      const rampEnd = now + 0.2;
+
+      // Compute target playbackRate
+      let targetRate;
+      if (vy > 2)       targetRate = 1.15;
+      else if (vy > 0)  targetRate = 1.0 + (vy / 2) * 0.10;
+      else if (vy > -3) targetRate = 1.0 + (vy / 3) * 0.12;
+      else              targetRate = 0.88;
+
+      // Compute target engine gain (volume follows throttle)
+      let targetGain;
+      if (vy > 0)       targetGain = 1.0;
+      else if (vy > -3) targetGain = 0.85;
+      else              targetGain = 0.70;
+
+      if (engineSource) {
+        engineSource.playbackRate.linearRampToValueAtTime(targetRate, rampEnd);
+        engineGainNode.gain.linearRampToValueAtTime(targetGain, rampEnd);
+      }
+      // Placeholder oscillator frequency mirrors the rate
+      if (enginePlaceholderOsc) {
+        const basePitch = 82;
+        enginePlaceholderOsc.frequency.linearRampToValueAtTime(basePitch * targetRate, rampEnd);
+        if (enginePlaceholderGain) {
+          enginePlaceholderGain.gain.linearRampToValueAtTime(targetGain * 0.35, rampEnd);
+        }
+      }
+    }
+
+    function stopEngineLoop() {
+      if (engineSource) {
+        try {
+          const now = audioCtx ? audioCtx.currentTime : 0;
+          engineGainNode.gain.cancelScheduledValues(now);
+          engineGainNode.gain.setValueAtTime(engineGainNode.gain.value, now);
+          engineGainNode.gain.linearRampToValueAtTime(0, now + 0.5);
+          const srcToStop = engineSource;
+          engineSource = null;
+          engineFadeTimeout = setTimeout(() => {
+            try { srcToStop.stop(); } catch(e) {}
+            engineFadeTimeout = null;
+          }, 550);
+        } catch(e) {
+          engineSource = null;
+        }
+      }
+      _stopEnginePlaceholderOsc(0.5);
+    }
+
+    // --- Master Volume API ---
+
+    function setMasterVolume(vol) {
+      masterVolume = Math.max(0, Math.min(1, vol));
+      localStorage.setItem(STORAGE_KEY_MASTER_VOL, String(masterVolume));
+      if (masterGain) {
+        masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+        masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime);
+        masterGain.gain.linearRampToValueAtTime(masterVolume, audioCtx.currentTime + 0.05);
+      }
+    }
+
+    // =========================================================================
+    // === END WEB AUDIO API SFX SYSTEM ========================================
+    // =========================================================================
+
     // === Music state ===
     let bgmStarted = false;
     let bgmMuted = false;
@@ -1871,6 +2371,9 @@
     }
 
     function startBgmIfNeeded() {
+      // Init Web Audio context on first gesture (iOS Safari requires this)
+      initAudioContext();
+
       if (!bgmRun || bgmStarted) return;
       bgmStarted = true;
       bgmRun.volume = 0.5;
@@ -1998,7 +2501,7 @@
     let lastSpawnTime = 0;
     let scoreSubmitted = false; // prevent multiple submits for same run
 
-    const parallax = { far: 0, mid: 0, fore: 0 };
+    const parallax = { atmos: 0, far: 0, mid: 0, fore: 0 };
 
     let planeType = "e3std";
 
@@ -2288,10 +2791,14 @@
       gameOver = false;
       gameRunning = false;
       levelNameEl.textContent = getCurrentStage().name;
-      parallax.far = 0;
-      parallax.mid = 0;
-      parallax.fore = 0;
+      parallax.atmos = 0;
+      parallax.far   = 0;
+      parallax.mid   = 0;
+      parallax.fore  = 0;
       updatePowerButtons();
+
+      // Audio: start engine loop on game start
+      startEngineLoop(planeType);
     }
 
     function startGameLoop() {
@@ -2326,6 +2833,8 @@
       const { jumpMultiplier } = getDamageFlightState();
       const planeProfile = getPlaneFlightProfile(planeType);
       plane.vy = level.jump * planeProfile.jumpMultiplier * jumpMultiplier;
+      // Audio: update engine pitch on flap impulse
+      setEngineState(plane.vy);
     }
 
     function updateLevelByScore() {
@@ -2671,6 +3180,9 @@
       plane.vy = Math.min(plane.vy, planeProfile.maxFallSpeed);
       plane.y += plane.vy * speedFactor;
 
+      // Audio: update engine pitch/volume from plane vertical velocity each frame
+      setEngineState(plane.vy);
+
       spawnObstacle(timestamp);
       spawnEnemy(timestamp);
 
@@ -2722,9 +3234,16 @@
       enemies = enemies.filter(enemy => enemy.x + enemy.width > -40);
 
       const base = levelSpeed * speedFactor;
-      parallax.far -= base * 0.3;
-      parallax.mid -= base * 0.6;
-      parallax.fore -= base * 1.0;
+      // Scroll accumulation rates. Each value feeds into drawCustomCampaignLayers
+      // multipliers to produce the final visible scroll coefficients:
+      //   atmos: 0.10 × 0.20 = ~0.020x  (ultra-far — barely moves, max sky depth)
+      //   far:   0.30 × 0.267 = ~0.080x  (distant horizon silhouettes)
+      //   mid:   0.60 × 0.367 = ~0.220x  (farmland / mid-distance structures)
+      //   fore:  1.00 × 0.650 = ~0.650x  (near terrain rushing past)
+      parallax.atmos -= base * 0.10;
+      parallax.far   -= base * 0.3;
+      parallax.mid   -= base * 0.6;
+      parallax.fore  -= base * 1.0;
 
       if (plane.y < 0) {
         plane.y = 0;
@@ -2903,21 +3422,53 @@
     function drawCustomCampaignLayers(customLayers, groundTop) {
       if (!customLayers) return false;
 
+      // ---- ATMOSPHERE layer (ultra-far, ~0.02x) ----
+      // Full-canvas cover image drawn at very low alpha so it blends behind the sky gradient.
+      // Acts as a nearly-static horizon haze — makes everything in front feel at a great distance.
+      // Draw multipliers: parallax.atmos * 0.20 → 0.10 × 0.20 = 0.020x effective scroll.
+      const drewAtmos = drawCampaignParallaxAsset(
+        customLayers.atmos,
+        parallax.atmos * 0.20,
+        1.0,           // 1× canvas width — atmosphere is a full-width cover, no tile stretch needed
+        H,             // pin to canvas bottom
+        0.55           // semi-transparent: lets sky gradient show through, creates atmospheric haze
+      );
+
+      // ---- FAR layer (distant horizon, ~0.08x) ----
+      // Reduced global alpha (0.87) simulates aerial perspective — distant things appear lighter
+      // and slightly washed out, as if seen through a column of haze-filled air.
+      // Draw multiplier updated: 0.267 (was 0.2) → 0.30 × 0.267 = ~0.080x effective scroll.
       const drewFar = drawBlendedCampaignParallaxAssets(
         customLayers.farVariants || [customLayers.far],
-        parallax.far * 0.2,
+        parallax.far * 0.267,
         1.9,
         groundTop + 24,
-        0.9
+        0.87           // aerial haze: slightly transparent, simulates distance wash-out (was 0.9)
       );
-      const drewMid = customLayers.onlyFar
-        ? false
-        : drawCampaignParallaxAsset(customLayers.mid, parallax.mid * 0.32, 2.05, groundTop + 58, 0.95);
-      const drewFore = customLayers.onlyFar
-        ? false
-        : drawCampaignParallaxAsset(customLayers.fore, parallax.fore * 0.5, 2.2, H + 210, 1);
 
-      return drewFar || drewMid || drewFore;
+      // ---- MID layer (mid-distance, ~0.22x) ----
+      // Full opacity — this is the "real" layer, reference plane for the player's eye.
+      // Draw multiplier updated: 0.367 (was 0.32) → 0.60 × 0.367 = ~0.220x effective scroll.
+      const drewMid = drawCampaignParallaxAsset(
+        customLayers.mid,
+        parallax.mid * 0.367,
+        2.05,
+        groundTop + 58,
+        0.98           // near-full opacity — crisp, fully saturated mid-ground (was 0.95)
+      );
+
+      // ---- FORE layer (near terrain, ~0.65x) ----
+      // Full opacity, maximum contrast — closest to camera, sharpest perceived detail.
+      // Draw multiplier updated: 0.65 (was 0.5) → 1.00 × 0.65 = 0.650x effective scroll.
+      const drewFore = drawCampaignParallaxAsset(
+        customLayers.fore,
+        parallax.fore * 0.65,
+        2.2,
+        H + 210,
+        1.0            // full opacity — foreground is sharpest, highest contrast (unchanged)
+      );
+
+      return drewAtmos || drewFar || drewMid || drewFore;
     }
 
     // === New multi-level parallax ground ===
