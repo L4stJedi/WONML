@@ -1037,25 +1037,25 @@
     const belgiumFarBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium1_seamless.png");
     const belgiumFarBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium2_seamless.png");
     const belgiumFarBlend3 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium3_seamless.png");
+    const belgiumFarLayer  = loadSplashAsset("assets/backgrounds/campaigns/Belgium/FarLayer.png");
+    const belgiumMidBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid1.png");
+    const belgiumMidBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid2.png");
+    const belgiumMidBlend3 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid3.png");
+    const belgiumMidLayer  = loadSplashAsset("assets/backgrounds/campaigns/Belgium/MidLayer.png");
+    const belgiumForeLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/ForegroundLayer.png");
     // Belgium atmosphere layer (ultra-far, 4th depth layer) — placeholder until Sal's artwork arrives.
     // Spec: 480×640px PNG. Sky gradient (#EDE8DC top → #C8DAEA mid → #C2B99A horizon).
     // Faint warm haze band 40–60px tall just above ground baseline. Scroll coefficient 0.02x.
     const belgiumAtmosLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium_Atmos_placeholder.png");
-    // Belgium per-stage layer placeholders (mid + fore) — replace with Sal's artwork per stage.
-    // Far layers (Stage 1–5): reuse existing seamless blends until per-stage variants are delivered.
-    // Mid layers: 960×180px PNG per stage. Fore layers: 960×140px PNG per stage.
-    const belgiumMidPlaceholder  = null; // TODO: replace with loadSplashAsset per stage
-    const belgiumForePlaceholder = null; // TODO: replace with loadSplashAsset per stage
-    // Shared Belgium layer set — used by all 5 stages until per-stage assets are ready.
-    // Remove onlyFar; full 4-layer system active. Mid/fore render as invisible (null) until artwork arrives.
+    // Belgium full 4-layer parallax system — all assets delivered by Sal.
     const BELGIUM_CAMPAIGN_LAYERS = {
       sky:         belgiumSkyLayer,
-      atmos:       belgiumAtmosLayer,           // ultra-far atmosphere layer (scroll ~0.02x)
+      atmos:       belgiumAtmosLayer,
       far:         belgiumFarBlend1,
-      farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
-      mid:         belgiumMidPlaceholder,        // placeholder — Sal to deliver Belgium_Mid_S1–S5.png
-      fore:        belgiumForePlaceholder         // placeholder — Sal to deliver Belgium_Fore_S1–S5.png
-      // onlyFar removed — full depth system active
+      farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3, belgiumFarLayer],
+      mid:         belgiumMidLayer,
+      midVariants: [belgiumMidBlend1, belgiumMidBlend2, belgiumMidBlend3, belgiumMidLayer],
+      fore:        belgiumForeLayer
     };
 
     const GERMAN_STANDARD_PLANES = [
@@ -3585,13 +3585,13 @@
 
       // ---- MID layer (mid-distance, ~0.22x) ----
       // Full opacity — this is the "real" layer, reference plane for the player's eye.
-      // Draw multiplier updated: 0.367 (was 0.32) → 0.60 × 0.367 = ~0.220x effective scroll.
-      const drewMid = drawCampaignParallaxAsset(
-        customLayers.mid,
+      // Uses midVariants blend when available (same pattern as far layer).
+      const drewMid = drawBlendedCampaignParallaxAssets(
+        customLayers.midVariants || [customLayers.mid],
         parallax.mid * 0.367,
         2.05,
         groundTop + 58,
-        0.98           // near-full opacity — crisp, fully saturated mid-ground (was 0.95)
+        0.98
       );
 
       // ---- FORE layer (near terrain, ~0.65x) ----
