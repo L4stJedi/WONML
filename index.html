@@ -2013,23 +2013,27 @@
       if (sfxBuffers.has(id)) return Promise.resolve(sfxBuffers.get(id));
       if (sfxLoadingPromises.has(id)) return sfxLoadingPromises.get(id);
 
-      // Build URL: try preferred format, fall back to .mp3
-      const url = baseUrl.replace(/\.(ogg|mp3|wav)$/i, "") + SFX_EXT;
+      const base = baseUrl.replace(/\.(ogg|mp3|wav)$/i, "");
 
-      const promise = fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-          return res.arrayBuffer();
-        })
-        .then(ab => audioCtx.decodeAudioData(ab))
+      function tryFetch(url) {
+        return fetch(url)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.arrayBuffer();
+          })
+          .then(ab => audioCtx.decodeAudioData(ab));
+      }
+
+      // Try OGG first, then MP3 — ensures real files load on all browsers
+      const promise = tryFetch(base + ".ogg")
+        .catch(() => tryFetch(base + ".mp3"))
         .then(buf => {
           sfxBuffers.set(id, buf);
           sfxLoadingPromises.delete(id);
           return buf;
         })
         .catch(err => {
-          // Graceful failure: asset not yet delivered — log a warning, don't crash
-          console.warn(`[Audio] SFX asset not ready (${id}): ${url} — placeholder will run instead.`);
+          console.warn(`[Audio] SFX not found (${id}) — placeholder will run.`);
           sfxLoadingPromises.delete(id);
           return null;
         });
