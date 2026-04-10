@@ -2381,17 +2381,19 @@
       const rampEnd = now + 0.2;
 
       // Compute target playbackRate
+      // vy < 0 = ascending (canvas coords: negative Y = up) → more revs, slightly higher pitch
+      // vy > 0 = descending → idling, deeper/slower pitch
       let targetRate;
-      if (vy > 2)       targetRate = 1.15;
-      else if (vy > 0)  targetRate = 1.0 + (vy / 2) * 0.10;
-      else if (vy > -3) targetRate = 1.0 + (vy / 3) * 0.12;
-      else              targetRate = 0.88;
+      if (vy < -2)      targetRate = 1.08;                    // strong climb → higher revs
+      else if (vy < 0)  targetRate = 1.0 + (-vy / 2) * 0.06; // gentle climb → subtle rise
+      else if (vy < 3)  targetRate = 1.0 - (vy / 3) * 0.12;  // gentle descent → lower
+      else              targetRate = 0.88;                     // steep dive → deep idle
 
-      // Compute target engine gain (volume follows throttle)
+      // Compute target engine gain (climbing = working harder = louder)
       let targetGain;
-      if (vy > 0)       targetGain = 1.0;
-      else if (vy > -3) targetGain = 0.85;
-      else              targetGain = 0.70;
+      if (vy < 0)       targetGain = 1.0;   // climbing = full throttle
+      else if (vy < 3)  targetGain = 0.85;  // gentle descent
+      else              targetGain = 0.70;  // steep dive = idle
 
       if (engineSource) {
         engineSource.playbackRate.linearRampToValueAtTime(targetRate, rampEnd);
@@ -4735,6 +4737,7 @@
     }
 
     function restartCurrentRun() {
+      gameOver = false;
       screen = "game";
       updateOverlayVisibility();
       hintEl.textContent = GAMEPLAY_HINT;
