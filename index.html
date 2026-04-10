@@ -793,6 +793,11 @@
     // Faction toggle button rects — set each draw, read in tap handler
     let mapFactionBritishRect = null;
     let mapFactionGermanRect = null;
+    let campaignMapConfirming = false;
+    let confirmFlyRect = null;
+    let confirmCancelRect = null;
+    let confirmPickBritRect = null;
+    let confirmPickGerRect = null;
 
     function fillRoundedRect(x, y, w, h, r) {
       ctx.beginPath();
@@ -4574,6 +4579,7 @@
     }
 
     function openCampaignMap() {
+      campaignMapConfirming = false;
       selectedCampaignMapId = getCurrentCampaign()?.id || getCampaignMapNode(selectedCampaignMapId)?.id || "belgium";
       screen = "campaignMap";
       resetCampaignMapPan();
@@ -5557,6 +5563,68 @@
 
       ctx.textAlign = "center";
       hintEl.textContent = "Drag the map and tap a campaign marker";
+
+      // ---- Faction confirmation modal ----
+      confirmFlyRect = null; confirmCancelRect = null;
+      confirmPickBritRect = null; confirmPickGerRect = null;
+      if (campaignMapConfirming) {
+        const mW = 260, mH = 148;
+        const mX = (W - mW) / 2, mY = (H - mH) / 2 - 20;
+        // backdrop
+        ctx.fillStyle = "rgba(20,16,10,0.72)";
+        ctx.fillRect(0, 0, W, H);
+        // panel
+        ctx.fillStyle = "#F6EEDC";
+        fillRoundedRect(mX, mY, mW, mH, 16);
+        ctx.strokeStyle = "#604D3A";
+        ctx.lineWidth = 1.5;
+        strokeRoundedRect(mX, mY, mW, mH, 16);
+        // title
+        ctx.fillStyle = "#2A2016";
+        ctx.font = "bold 13px " + UI_FONT;
+        ctx.textAlign = "center";
+        ctx.fillText("Choose your side", mX + mW / 2, mY + 22);
+        // faction pick buttons
+        const pbW = 90, pbH = 44, pbY = mY + 34, pbGap = 14;
+        const pbBritX = mX + mW / 2 - pbW - pbGap / 2;
+        const pbGerX  = mX + mW / 2 + pbGap / 2;
+        confirmPickBritRect = { x: pbBritX, y: pbY, w: pbW, h: pbH };
+        confirmPickGerRect  = { x: pbGerX,  y: pbY, w: pbW, h: pbH };
+        // British pick
+        ctx.fillStyle = mapFaction === "british" ? "#2A4C7A" : "rgba(42,76,122,0.25)";
+        fillRoundedRect(pbBritX, pbY, pbW, pbH, 10);
+        if (mapFaction === "british") {
+          ctx.strokeStyle = "#D4A832"; ctx.lineWidth = 2;
+          strokeRoundedRect(pbBritX - 1, pbY - 1, pbW + 2, pbH + 2, 11);
+        }
+        drawRFCRoundel(pbBritX + pbW / 2, pbY + pbH / 2, 13);
+        // German pick
+        ctx.fillStyle = mapFaction === "german" ? "#1C1A18" : "rgba(28,26,24,0.25)";
+        fillRoundedRect(pbGerX, pbY, pbW, pbH, 10);
+        if (mapFaction === "german") {
+          ctx.strokeStyle = "#D4A832"; ctx.lineWidth = 2;
+          strokeRoundedRect(pbGerX - 1, pbY - 1, pbW + 2, pbH + 2, 11);
+        }
+        drawIronCross(pbGerX + pbW / 2, pbY + pbH / 2, 13, 4);
+        // Fly confirm button
+        const flyBtnY = mY + mH - 46;
+        confirmFlyRect   = { x: mX + 14,        y: flyBtnY, w: 140, h: 34 };
+        confirmCancelRect = { x: mX + mW - 154 + 140 + 14, y: flyBtnY, w: 78, h: 34 };
+        confirmFlyRect   = { x: mX + 14,       y: flyBtnY, w: 148, h: 34 };
+        confirmCancelRect = { x: mX + 14 + 148 + 8, y: flyBtnY, w: 78, h: 34 };
+        ctx.fillStyle = "#D4A832";
+        fillRoundedRect(confirmFlyRect.x, confirmFlyRect.y, confirmFlyRect.w, confirmFlyRect.h, 10);
+        ctx.fillStyle = "#2A2016";
+        ctx.font = "bold 13px " + UI_FONT;
+        ctx.fillText("Fly →", confirmFlyRect.x + confirmFlyRect.w / 2, confirmFlyRect.y + 22);
+        ctx.fillStyle = "rgba(42,32,22,0.18)";
+        fillRoundedRect(confirmCancelRect.x, confirmCancelRect.y, confirmCancelRect.w, confirmCancelRect.h, 10);
+        ctx.strokeStyle = "#9C7A5A"; ctx.lineWidth = 1;
+        strokeRoundedRect(confirmCancelRect.x, confirmCancelRect.y, confirmCancelRect.w, confirmCancelRect.h, 10);
+        ctx.fillStyle = "#604D3A";
+        ctx.font = "13px " + UI_FONT;
+        ctx.fillText("Cancel", confirmCancelRect.x + confirmCancelRect.w / 2, confirmCancelRect.y + 22);
+      }
     }
 
     // ---------- SPLASH SCREEN ----------
@@ -6022,8 +6090,23 @@
         } else if (inside(mapFactionGermanRect)) {
           mapFaction = "german";
           drawCampaignMap();
+        } else if (campaignMapConfirming) {
+          if (inside(confirmFlyRect)) {
+            campaignMapConfirming = false;
+            startSelectedCampaign();
+          } else if (inside(confirmPickBritRect)) {
+            mapFaction = "british";
+            drawCampaignMap();
+          } else if (inside(confirmPickGerRect)) {
+            mapFaction = "german";
+            drawCampaignMap();
+          } else if (inside(confirmCancelRect)) {
+            campaignMapConfirming = false;
+            drawCampaignMap();
+          }
         } else if (inside(campaignMapStartRect)) {
-          startSelectedCampaign();
+          campaignMapConfirming = true;
+          drawCampaignMap();
         } else {
           const clickedMarker = campaignMarkerRects.find(rect => inside(rect));
           if (clickedMarker) {
