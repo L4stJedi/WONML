@@ -16,9 +16,15 @@
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --sat: env(safe-area-inset-top);
+      --sab: env(safe-area-inset-bottom);
+    }
+
     html, body {
       width: 100%;
-      height: 100%;
+      height: 100dvh;
+      min-height: 100dvh;
       overflow: hidden;
     }
 
@@ -35,10 +41,10 @@
     }
 
     body.compact-layout {
-      align-items: flex-start;
+      align-items: center;
       padding-top: env(safe-area-inset-top);
       padding-bottom: env(safe-area-inset-bottom);
-      background: linear-gradient(180deg, #2a4972 0%, #1e2a3a 100%);
+      background: #1e2a3a;
     }
 
     .game-wrapper {
@@ -590,13 +596,20 @@
     function syncGameWrapperScale() {
       if (!gameWrapperEl) return;
 
-      const compactLayout = window.innerWidth < 430 || window.innerHeight < 760;
-      const wrapperPad = compactLayout ? 8 : 32;
-      const availableWidth = Math.max(280, window.innerWidth - (compactLayout ? 4 : 12));
-      const availableHeight = Math.max(320, window.innerHeight - (compactLayout ? 4 : 12));
-      const wrapperWidth = W + wrapperPad;
+      // Use visualViewport when available — gives accurate dimensions on iPhone
+      // even when the on-screen keyboard or Safari's toolbar shifts the layout.
+      const vvw = window.visualViewport ? window.visualViewport.width  : window.innerWidth;
+      const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+      const compactLayout = vvw < 430 || vvh < 760;
+      const wrapperPad = compactLayout ? 0 : 32;
+      const safeTop    = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sat") || "0") || 0;
+      const safeBot    = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sab") || "0") || 0;
+      const availableWidth  = Math.max(280, vvw);
+      const availableHeight = Math.max(320, vvh - safeTop - safeBot - (compactLayout ? 0 : 12));
+      const wrapperWidth  = W + wrapperPad;
       const wrapperHeight = H + wrapperPad;
-      const scale = Math.min(1, availableWidth / wrapperWidth, availableHeight / wrapperHeight);
+      const scale = Math.min(availableWidth / wrapperWidth, availableHeight / wrapperHeight);
 
       document.body.classList.toggle("compact-layout", compactLayout);
       gameWrapperEl.style.transform = `scale(${scale})`;
