@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>WONML</title>
 
   <!-- iPhone full-screen web app settings -->
@@ -616,6 +619,7 @@
     }
 
     const UI_FONT = "Segoe UI, Tahoma, Geneva, Verdana, sans-serif";
+    const ASSET_V = "?v=" + Date.now(); // unique each page load — prevents caching
     const GAME_TITLE = "Wings Over No Man's Land";
     const GAMEPLAY_HINT = "Tap or press SPACE to fly\nX = BURST, C = RAPID";
     const MAIN_MENU_HINT = "Tap a side, view campaigns, open settings, or open the hangar";
@@ -780,6 +784,11 @@
     let currentHangarSection = "service";
     let selectedHangarPlaneType = "e3std";
 
+    // Hangar list scroll state
+    let hangarListScrollOffset = 0;  // index of first visible entry in the list
+    let hangarListScrollUpRect = null;
+    let hangarListScrollDownRect = null;
+
     // Hangar description scroll state
     let hangarDescScrollY = 0;
     let hangarDescScrollMax = 0;
@@ -847,7 +856,7 @@
         if (screen === "splash") drawSplash();
       };
       asset.img.onerror = () => console.error(`Could not load ${src}`);
-      asset.img.src = src;
+      asset.img.src = src + ASSET_V;
       return asset;
     }
 
@@ -858,7 +867,7 @@
         if (screen === "hangar") drawHangar();
       };
       asset.img.onerror = () => console.error(`Could not load ${src}`);
-      asset.img.src = src;
+      asset.img.src = src + ASSET_V;
       return asset;
     }
 
@@ -867,73 +876,73 @@
     let d7StdLoaded = false;
     d7StdImg.onload = () => { d7StdLoaded = true; };
     d7StdImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerD7std.png");
-    d7StdImg.src = "assets/planes/germany/FokkerD7std.png";
+    d7StdImg.src = "assets/planes/germany/FokkerD7std.png" + ASSET_V;
 
     const e3StdImg = new Image();
     let e3StdLoaded = false;
     e3StdImg.onload = () => { e3StdLoaded = true; };
     e3StdImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerEIII_std.png");
-    e3StdImg.src = "assets/planes/germany/FokkerEIII_std.png";
+    e3StdImg.src = "assets/planes/germany/FokkerEIII_std.png" + ASSET_V;
 
     const albatrosStdImg = new Image();
     let albatrosStdLoaded = false;
     albatrosStdImg.onload = () => { albatrosStdLoaded = true; };
     albatrosStdImg.onerror = () => console.error("Could not load assets/planes/germany/AlbatrosDV_std.png");
-    albatrosStdImg.src = "assets/planes/germany/AlbatrosDV_std.png";
+    albatrosStdImg.src = "assets/planes/germany/AlbatrosDV_std.png" + ASSET_V;
 
     const dr1StdImg = new Image();
     let dr1StdLoaded = false;
     dr1StdImg.onload = () => { dr1StdLoaded = true; };
     dr1StdImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerDR1_std.png");
-    dr1StdImg.src = "assets/planes/germany/FokkerDR1_std.png";
+    dr1StdImg.src = "assets/planes/germany/FokkerDR1_std.png" + ASSET_V;
 
     const d7RbImg = new Image();
     let d7RbLoaded = false;
     d7RbImg.onload = () => { d7RbLoaded = true; };
     d7RbImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerD7_RB.png");
-    d7RbImg.src = "assets/planes/germany/FokkerD7_RB.png";
+    d7RbImg.src = "assets/planes/germany/FokkerD7_RB.png" + ASSET_V;
 
     const d7VikImg = new Image();
     let d7VikLoaded = false;
     d7VikImg.onload = () => { d7VikLoaded = true; };
     d7VikImg.onerror = () => console.error("Could not load assets/planes/germany/FokkerDR7_vik.png");
-    d7VikImg.src = "assets/planes/germany/FokkerDR7_vik.png";
+    d7VikImg.src = "assets/planes/germany/FokkerDR7_vik.png" + ASSET_V;
 
     const dh1Img = new Image();
     let dh1Loaded = false;
     dh1Img.onload = () => { dh1Loaded = true; };
     dh1Img.onerror = () => console.error("Could not load assets/planes/britain/AircoDH1.png");
-    dh1Img.src = "assets/planes/britain/AircoDH1.png";
+    dh1Img.src = "assets/planes/britain/AircoDH1.png" + ASSET_V;
 
     const dh2Img = new Image();
     let dh2Loaded = false;
     dh2Img.onload = () => { dh2Loaded = true; };
     dh2Img.onerror = () => console.error("Could not load assets/planes/britain/AircoDH2.png");
-    dh2Img.src = "assets/planes/britain/AircoDH2.png";
+    dh2Img.src = "assets/planes/britain/AircoDH2.png" + ASSET_V;
 
     const dh9Img = new Image();
     let dh9Loaded = false;
     dh9Img.onload = () => { dh9Loaded = true; };
     dh9Img.onerror = () => console.error("Could not load assets/planes/britain/AircoDH9.png");
-    dh9Img.src = "assets/planes/britain/AircoDH9.png";
+    dh9Img.src = "assets/planes/britain/AircoDH9.png" + ASSET_V;
 
     const pupStdImg = new Image();
     let pupStdLoaded = false;
     pupStdImg.onload = () => { pupStdLoaded = true; };
     pupStdImg.onerror = () => console.error("Could not load assets/planes/britain/SopwithPup_std.png");
-    pupStdImg.src = "assets/planes/britain/SopwithPup_std.png";
+    pupStdImg.src = "assets/planes/britain/SopwithPup_std.png" + ASSET_V;
 
     const triStdImg = new Image();
     let triStdLoaded = false;
     triStdImg.onload = () => { triStdLoaded = true; };
     triStdImg.onerror = () => console.error("Could not load assets/planes/britain/SopwithTriplane_std.png");
-    triStdImg.src = "assets/planes/britain/SopwithTriplane_std.png";
+    triStdImg.src = "assets/planes/britain/SopwithTriplane_std.png" + ASSET_V;
 
     const camelStdImg = new Image();
     let camelStdLoaded = false;
     camelStdImg.onload = () => { camelStdLoaded = true; };
     camelStdImg.onerror = () => console.error("Could not load assets/planes/britain/SopwithCamel_std.png");
-    camelStdImg.src = "assets/planes/britain/SopwithCamel_std.png";
+    camelStdImg.src = "assets/planes/britain/SopwithCamel_std.png" + ASSET_V;
 
     const hangarDr1Rb = loadUiAsset("assets/planes/germany/FokkerDR1_RB.png");
     const hangarDr1WeVo = loadUiAsset("assets/planes/germany/FokkerDR1_WeVo.png");
@@ -944,6 +953,14 @@
     const hangarAlbatrosCaro = loadUiAsset("assets/planes/germany/AlbatrosDV_caro.png");
     const hangarAlbatrosRedNose = loadUiAsset("assets/planes/germany/AlbatrosDV_rd_ns.png");
     const hangarAlbatrosSkull = loadUiAsset("assets/planes/germany/AlbatrosDV_skull.png");
+    const hangarDr1Eu    = loadUiAsset("assets/planes/germany/FokkerDR1_EU.png");
+    const hangarDr1HaKi  = loadUiAsset("assets/planes/germany/FokkerDR1_HaKi.png");
+    const hangarDr1Hex   = loadUiAsset("assets/planes/germany/FokkerDR1_hex.png");
+    const hangarDr1Hk    = loadUiAsset("assets/planes/germany/FokkerDR1_HK.png");
+    const hangarDr1Hp    = loadUiAsset("assets/planes/germany/FokkerDR1_HP.png");
+    const hangarDr1JoRi  = loadUiAsset("assets/planes/germany/FokkerDR1_JoRi.png");
+    const hangarDr1Pb    = loadUiAsset("assets/planes/germany/FokkerDR1_PB.png");
+    const hangarE3GrBlue = loadUiAsset("assets/planes/germany/FokkerEIII_grblue.png");
 
     const hangarPupDun = loadUiAsset("assets/planes/britain/SopwithPup_Dun.png");
     const hangarPupSo = loadUiAsset("assets/planes/britain/SopwithPup_SO.png");
@@ -953,13 +970,13 @@
     let balloonBritishLoaded = false;
     balloonBritishImg.onload = () => { balloonBritishLoaded = true; };
     balloonBritishImg.onerror = () => console.error("Could not load assets/obstacles/balloons/britain/BallonAllies.png");
-    balloonBritishImg.src = "assets/obstacles/balloons/britain/BallonAllies.png";
+    balloonBritishImg.src = "assets/obstacles/balloons/britain/BallonAllies.png" + ASSET_V;
 
     const balloonGermanImg = new Image();
     let balloonGermanLoaded = false;
     balloonGermanImg.onload = () => { balloonGermanLoaded = true; };
     balloonGermanImg.onerror = () => console.error("Could not load assets/obstacles/balloons/germany/BallonGermany.png");
-    balloonGermanImg.src = "assets/obstacles/balloons/germany/BallonGermany.png";
+    balloonGermanImg.src = "assets/obstacles/balloons/germany/BallonGermany.png" + ASSET_V;
 
     const cloudAssets = Array.from({ length: 9 }, (_, index) =>
       loadUiAsset(`assets/obstacles/clouds/Cloud${String(index + 1).padStart(2, "0")}.png`)
@@ -969,7 +986,7 @@
     let zeppelinLoaded = false;
     zeppelinImg.onload = () => { zeppelinLoaded = true; };
     zeppelinImg.onerror = () => console.error("Could not load assets/obstacles/Zeppelin.png");
-    zeppelinImg.src = "assets/obstacles/Zeppelin.png";
+    zeppelinImg.src = "assets/obstacles/Zeppelin.png" + ASSET_V;
 
     const flakBurstVideoSrc = "assets/animations/WW_Flak_Burst_Animation_Request.mp4";
     const flakVideoProbe = document.createElement("video");
@@ -1032,7 +1049,7 @@
     let splashLogoLoaded = false;
     splashLogo.onload = () => { splashLogoLoaded = true; drawSplash(); };
     splashLogo.onerror = () => console.error("Could not load assets/branding/Logo.png");
-    splashLogo.src = "assets/branding/Logo.png";
+    splashLogo.src = "assets/branding/Logo.png" + ASSET_V;
 
     const menuBackground = loadSplashAsset("assets/backgrounds/menu/MainMenu.png");
     const britishRoundel = loadSplashAsset("assets/backgrounds/menu/BritishRoundel.png");
@@ -1285,6 +1302,78 @@
           basePlaneType: "albatrosdvstd",
           asset: hangarAlbatrosSkull,
           note: "The skull marking appeared on several German machines through the middle years of the war, worn by individual pilots and occasional flights across more than one Jasta. Whether the intent was to intimidate is a matter of debate. The RFC, operating on a policy of politely declining to be intimidated by anything, shot at skull-marked Albatri the same as any other."
+        },
+        {
+          id: "dr1eu",
+          label: "Udet — Lo",
+          role: "Ace pilot",
+          years: "1917-1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1Eu,
+          note: "Udet painted 'Lo' on both sides of the fuselage — for Eleanore Zink, whom he called Lo. Sixty-two confirmed victories, second only to Richthofen among German pilots to survive the war. After the armistice he became a stunt flier, barnstormer, and film actor. The war had given him the one thing he was absolutely made for, and he spent the next twenty years trying to find something to replace it."
+        },
+        {
+          id: "dr1haki",
+          label: "Kirschstein — Stripes",
+          role: "Ace pilot",
+          years: "1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1HaKi,
+          note: "Hans Kirschstein flew with Jasta 6 and later Jasta Boelcke, accumulating twenty-seven victories in less than a year of serious fighting. His Dr.I with its diagonal stripes was recognisable enough that RFC pilots reported it by description rather than type. He was killed in the summer of 1918 — not in combat, but in a landing accident during conversion training. The war had not got him. The ground did."
+        },
+        {
+          id: "dr1hex",
+          label: "Lozenge — Factory Scheme",
+          role: "Standard livery",
+          years: "1917-1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1Hex,
+          note: "The printed lozenge fabric was issued by the factory from 1917 onwards — four or five-colour patterns in irregular polygons designed to break up the outline against sky. Whether it worked is arguable. The RFC reported Dr.Is by shape, not colour, and the triplane silhouette was unmistakable regardless of what was painted on it. The factory kept issuing the fabric anyway."
+        },
+        {
+          id: "dr1hk",
+          label: "Zigzag Flight",
+          role: "Personal livery",
+          years: "1917-1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1Hk,
+          note: "The white zigzag pattern over green appears across several Jasta records and no single pilot claimed it exclusively. It was the kind of marking a ground crew might repaint slightly differently each time — consistent enough to be recognised in a fight, idiosyncratic enough to suggest the pilot had opinions. Whoever was flying it had enough victories to keep flying it, which in 1917 was its own kind of statement."
+        },
+        {
+          id: "dr1hp",
+          label: "Cockade — Grey",
+          role: "Personal livery",
+          years: "1917-1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1Hp,
+          note: "A grey Dr.I was unusual — most pilots wanted colour on their machines, either for unit identification or personal expression. The circular cockade on the fuselage, in red and yellow against the grey, sat closer to Spanish or Austro-Hungarian marking traditions than the standard Jasta style. Whether that was intentional, a ground crew improvisation, or simply what the paint store had available, the records do not say."
+        },
+        {
+          id: "dr1jori",
+          label: "Tricolour — Green Red",
+          role: "Personal livery",
+          years: "1917-1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1JoRi,
+          note: "The tricolour scheme — green upper surfaces, yellow centre, red nose and tail — sits at the more theatrical end of Jasta personal markings. Pilots who painted their machines this visibly were either very confident or very deliberate about being seen. In a dogfight at range, a machine this distinctive was a risk. At close quarters, it meant the man flying it had already decided that wasn't the problem."
+        },
+        {
+          id: "dr1pb",
+          label: "Bäumer — White Green",
+          role: "Ace pilot",
+          years: "1917-1918",
+          basePlaneType: "dr1std",
+          asset: hangarDr1Pb,
+          note: "Paul Bäumer flew with Jasta 2 Boelcke and accumulated forty-three victories, a total that placed him among the leading German aces of the war. He had begun as an observer and taught himself to fly by somewhat irregular means. RFC encounter reports on machines matching his markings used language that suggested the pilots filing them had found the experience instructive and had no particular wish to repeat it."
+        },
+        {
+          id: "e3grblue",
+          label: "E.III — Green Blue",
+          role: "Special livery",
+          years: "1915-1916",
+          basePlaneType: "e3std",
+          asset: hangarE3GrBlue,
+          note: "The striped finish — blue bands over the standard green — appears in Feldflieger-Abteilung records from the middle period of the Eindecker's dominance. Whether it was a unit marking, a pilot preference, or simply a paint scheme applied when the standard finish ran out, the accounts are not clear. What is clear is that by the time machines were wearing livery this distinctive, the pilots flying them had enough standing to ask for it."
         }
       ],
       britain: [
@@ -2021,7 +2110,7 @@
         engineGainNode    = audioCtx.createGain(); engineGainNode.gain.value    = 0.55 * sfxVolume;   engineGainNode.connect(masterGain);
         gunGainNode       = audioCtx.createGain(); gunGainNode.gain.value       = 0.65 * sfxVolume;   gunGainNode.connect(masterGain);
         hitGainNode       = audioCtx.createGain(); hitGainNode.gain.value       = 0.60 * sfxVolume;   hitGainNode.connect(masterGain);
-        explosionGainNode = audioCtx.createGain(); explosionGainNode.gain.value = 0.70 * sfxVolume;   explosionGainNode.connect(masterGain);
+        explosionGainNode = audioCtx.createGain(); explosionGainNode.gain.value = 1.2 * sfxVolume;    explosionGainNode.connect(masterGain);
         uiGainNode        = audioCtx.createGain(); uiGainNode.gain.value        = 0.55 * sfxVolume;   uiGainNode.connect(masterGain);
         ambientGainNode   = audioCtx.createGain(); ambientGainNode.gain.value   = 0.20 * musicVolume; ambientGainNode.connect(masterGain);
         if (bgmRun) bgmRun.volume = 0.5 * musicVolume;
@@ -2484,7 +2573,7 @@
       engineGainNode.gain.linearRampToValueAtTime(0.55 * sfxVolume, t);
       gunGainNode.gain.linearRampToValueAtTime(0.65 * sfxVolume, t);
       hitGainNode.gain.linearRampToValueAtTime(0.60 * sfxVolume, t);
-      explosionGainNode.gain.linearRampToValueAtTime(0.70 * sfxVolume, t);
+      explosionGainNode.gain.linearRampToValueAtTime(1.2 * sfxVolume, t);
       uiGainNode.gain.linearRampToValueAtTime(0.55 * sfxVolume, t);
     }
 
@@ -3356,6 +3445,9 @@
 
       for (const o of obstacles) {
         o.x -= levelSpeed * speedFactor;
+        if (o.type === "flak" && o.age === 0) {
+          playSFX("sfx_explosion_flak_burst", explosionGainNode, 0.08);
+        }
         o.age += dt;
 
         let amp = 0;
@@ -4872,8 +4964,13 @@
 
       const entries = getActiveHangarEntries();
       hangarPlaneChoices = [];
+      hangarListScrollUpRect = null;
+      hangarListScrollDownRect = null;
       const visibleCount = Math.max(1, Math.floor((detailH - 12) / rowH));
-      const visibleEntries = entries.slice(0, visibleCount);
+      hangarListScrollOffset = Math.max(0, Math.min(hangarListScrollOffset, entries.length - visibleCount));
+      const canScrollUp = hangarListScrollOffset > 0;
+      const canScrollDown = hangarListScrollOffset + visibleCount < entries.length;
+      const visibleEntries = entries.slice(hangarListScrollOffset, hangarListScrollOffset + visibleCount);
       visibleEntries.forEach((entry, index) => {
         const y = listY + 10 + index * rowH;
         const entryKey = currentHangarSection === "special" ? entry.id : entry.planeType;
@@ -4907,6 +5004,29 @@
 
         hangarPlaneChoices.push({ x: listX + 8, y, w: listW - 16, h: rowH - 10, key: entryKey });
       });
+
+      // Scroll arrows — shown when list has more entries than fit
+      if (canScrollUp || canScrollDown) {
+        const arrowW = 32, arrowH = 22, arrowX = listX + listW / 2 - arrowW / 2;
+        if (canScrollUp) {
+          hangarListScrollUpRect = { x: arrowX, y: listY + 2, w: arrowW, h: arrowH };
+          ctx.fillStyle = "rgba(60,44,28,0.72)";
+          fillRoundedRect(arrowX, listY + 2, arrowW, arrowH, 8);
+          ctx.fillStyle = "#f5e9c8";
+          ctx.font = "14px " + UI_FONT;
+          ctx.textAlign = "center";
+          ctx.fillText("▲", listX + listW / 2, listY + 17);
+        }
+        if (canScrollDown) {
+          hangarListScrollDownRect = { x: arrowX, y: listY + detailH - arrowH - 2, w: arrowW, h: arrowH };
+          ctx.fillStyle = "rgba(60,44,28,0.72)";
+          fillRoundedRect(arrowX, listY + detailH - arrowH - 2, arrowW, arrowH, 8);
+          ctx.fillStyle = "#f5e9c8";
+          ctx.font = "14px " + UI_FONT;
+          ctx.textAlign = "center";
+          ctx.fillText("▼", listX + listW / 2, listY + detailH - arrowH + 13);
+        }
+      }
 
       if (visibleEntries.length === 0) {
         ctx.fillStyle = "#6a5942";
@@ -5330,11 +5450,14 @@
       ctx.fillText("Back", campaignMapBackRect.x + campaignMapBackRect.w / 2, 38);
 
       // ---- Header: Faction toggle buttons ----
-      // Two 52×26px faction buttons on second row, below the title.
       const btnW = 52, btnH = 26, btnGap = 6;
       const btnBritX = W / 2 - btnW - btnGap / 2;
       const btnGerX  = W / 2 + btnGap / 2;
-      const btnY = 54;
+      const btnY = 56;
+
+      // Header bar behind buttons so they sit above the map clearly
+      ctx.fillStyle = "rgba(20, 16, 10, 0.45)";
+      fillRoundedRect(btnBritX - 8, btnY - 6, btnW * 2 + btnGap + 16, btnH + 12, 14);
 
       mapFactionBritishRect = { x: btnBritX, y: btnY, w: btnW, h: btnH };
       mapFactionGermanRect  = { x: btnGerX,  y: btnY, w: btnW, h: btnH };
@@ -5375,7 +5498,7 @@
       ctx.restore();
 
       // ---- Map viewport ----
-      const viewport = { x: 16, y: 72, w: W - 32, h: H - 210 };
+      const viewport = { x: 16, y: 98, w: W - 32, h: H - 236 };
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(viewport.x + 18, viewport.y);
@@ -6418,6 +6541,7 @@
           currentHangarSection = "service";
           hangarDescScrollY = 0;
           hangarDescScrollMax = 0;
+          hangarListScrollOffset = 0;
           ensureHangarSelection();
           drawHangar();
           return;
@@ -6428,7 +6552,19 @@
           currentHangarSection = clickedSection.section;
           hangarDescScrollY = 0;
           hangarDescScrollMax = 0;
+          hangarListScrollOffset = 0;
           ensureHangarSelection();
+          drawHangar();
+          return;
+        }
+
+        if (hangarListScrollUpRect && inside(hangarListScrollUpRect)) {
+          hangarListScrollOffset = Math.max(0, hangarListScrollOffset - 1);
+          drawHangar();
+          return;
+        }
+        if (hangarListScrollDownRect && inside(hangarListScrollDownRect)) {
+          hangarListScrollOffset++;
           drawHangar();
           return;
         }
