@@ -5073,23 +5073,6 @@
       _drawVolRow("Game Sounds", sfxVolume,    panelY + 282, settingsSFXVolDecRect,   settingsSFXVolIncRect);
       _drawVolRow("Master",      masterVolume, panelY + 352, settingsVolDecRect,      settingsVolIncRect);
 
-      // Remaining future-feature rows
-      const futureRows = [
-        { y: panelY + 310, title: "Pilot Profile", note: "Portraits, medals, rank, and career identity are planned here." },
-        { y: panelY + 382, title: "More Options Ahead", note: "This menu will grow as WONML gets closer to release quality." }
-      ];
-
-      futureRows.forEach((row) => {
-        ctx.fillStyle = "rgba(255, 250, 241, 0.9)";
-        fillRoundedRect(futureX, row.y, futureW, 54, 14);
-        ctx.fillStyle = "#2a1f15";
-        ctx.textAlign = "left";
-        ctx.font = "15px " + UI_FONT;
-        ctx.fillText(row.title, futureX + 16, row.y + 22);
-        ctx.fillStyle = "#786650";
-        ctx.font = "11px " + UI_FONT;
-        drawTruncatedText(row.note, futureX + 16, row.y + 40, futureW - 32);
-      });
 
       ctx.textAlign = "center";
       hintEl.textContent = "Adjust your setup before the next patrol";
