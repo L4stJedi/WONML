@@ -1060,14 +1060,16 @@
     // Spec: 480×640px PNG. Sky gradient (#EDE8DC top → #C8DAEA mid → #C2B99A horizon).
     // Faint warm haze band 40–60px tall just above ground baseline. Scroll coefficient 0.02x.
     const belgiumAtmosLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium_Atmos_placeholder.png");
-    // Belgium full 4-layer parallax system — all assets delivered by Sal.
+    // Belgium full 4-layer parallax system.
+    // NOTE: BelgiumMid1/2/3.png are 1792×2400 portrait images — wrong format for the strip
+    // parallax system. Returned to Sal for rework as wide landscape strips.
+    // Mid layer uses MidLayer.png (3392×1248) only until corrected variants are delivered.
     const BELGIUM_CAMPAIGN_LAYERS = {
       sky:         belgiumSkyLayer,
       atmos:       belgiumAtmosLayer,
       far:         belgiumFarBlend1,
       farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3, belgiumFarLayer],
       mid:         belgiumMidLayer,
-      midVariants: [belgiumMidBlend1, belgiumMidBlend2, belgiumMidBlend3, belgiumMidLayer],
       fore:        belgiumForeLayer
     };
 
