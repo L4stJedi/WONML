@@ -1050,28 +1050,44 @@
     const belgiumFarBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium1_seamless.png");
     const belgiumFarBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium2_seamless.png");
     const belgiumFarBlend3 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium3_seamless.png");
-    const belgiumFarLayer  = loadSplashAsset("assets/backgrounds/campaigns/Belgium/FarLayer.png");
-    const belgiumMidBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid1.png");
-    const belgiumMidBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid2.png");
-    const belgiumMidBlend3 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid3.png");
-    const belgiumMidLayer  = loadSplashAsset("assets/backgrounds/campaigns/Belgium/MidLayer.png");
-    const belgiumForeLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/ForegroundLayer.png");
+    const belgiumFarS1     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumFar_S1.png");
+    const belgiumFarS5     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumFar_S5.png");
+    const belgiumMidS1     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S1.png");
+    const belgiumMidS3     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S3.png");
+    const belgiumMidS5     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S5.png");
+    const belgiumForeS1    = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumFore_S1.png");
     // Belgium atmosphere layer (ultra-far, 4th depth layer) — placeholder until Sal's artwork arrives.
     // Spec: 480×640px PNG. Sky gradient (#EDE8DC top → #C8DAEA mid → #C2B99A horizon).
     // Faint warm haze band 40–60px tall just above ground baseline. Scroll coefficient 0.02x.
     const belgiumAtmosLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium_Atmos_placeholder.png");
-    // Belgium full 4-layer parallax system.
-    // NOTE: BelgiumMid1/2/3.png are 1792×2400 portrait images — wrong format for the strip
-    // parallax system. Returned to Sal for rework as wide landscape strips.
-    // Mid layer uses MidLayer.png (3392×1248) only until corrected variants are delivered.
-    const BELGIUM_CAMPAIGN_LAYERS = {
+    // Belgium per-stage layer configs — progressive destruction narrative S1→S5.
+    // Stages 1-2: peaceful farmland. Stage 3: fire/first damage. Stages 4-5: devastated.
+    const BELGIUM_LAYERS_S1 = {
       sky:         belgiumSkyLayer,
       atmos:       belgiumAtmosLayer,
-      far:         belgiumFarBlend1,
-      farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3, belgiumFarLayer],
-      mid:         belgiumMidLayer,
-      fore:        belgiumForeLayer
+      farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
+      far:         belgiumFarS1,
+      mid:         belgiumMidS1,
+      fore:        belgiumForeS1
     };
+    const BELGIUM_LAYERS_S3 = {
+      sky:         belgiumSkyLayer,
+      atmos:       belgiumAtmosLayer,
+      farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
+      far:         belgiumFarS1,
+      mid:         belgiumMidS3,
+      fore:        belgiumForeS1
+    };
+    const BELGIUM_LAYERS_S5 = {
+      sky:         belgiumSkyLayer,
+      atmos:       belgiumAtmosLayer,
+      farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
+      far:         belgiumFarS5,
+      mid:         belgiumMidS5,
+      fore:        belgiumForeS1
+    };
+    // Keep alias for anything still referencing the old single config
+    const BELGIUM_CAMPAIGN_LAYERS = BELGIUM_LAYERS_S1;
 
     const GERMAN_STANDARD_PLANES = [
       { tier: "Tier 1", label: "Fokker E.III", planeType: "e3std" },
@@ -1569,7 +1585,7 @@
               midColor: "#7e653e",
               foreColor: "#4a3b26",
               theme: "rural",
-              customLayers: BELGIUM_CAMPAIGN_LAYERS
+              customLayers: BELGIUM_LAYERS_S1
             }
           },
           {
@@ -1601,7 +1617,7 @@
               midColor: "#8d6e63",
               foreColor: "#5d4037",
               theme: "farmland",
-              customLayers: BELGIUM_CAMPAIGN_LAYERS
+              customLayers: BELGIUM_LAYERS_S1
             }
           },
           {
@@ -1625,7 +1641,7 @@
               midColor: "#6d4c41",
               foreColor: "#3e2723",
               theme: "industrial",
-              customLayers: BELGIUM_CAMPAIGN_LAYERS
+              customLayers: BELGIUM_LAYERS_S3
             }
           },
           {
@@ -1657,7 +1673,7 @@
               midColor: "#4e342e",
               foreColor: "#263238",
               theme: "battlefield",
-              customLayers: BELGIUM_CAMPAIGN_LAYERS
+              customLayers: BELGIUM_LAYERS_S5
             }
           },
           {
@@ -1689,7 +1705,7 @@
               midColor: "#4e342e",
               foreColor: "#263238",
               theme: "battlefield",
-              customLayers: BELGIUM_CAMPAIGN_LAYERS
+              customLayers: BELGIUM_LAYERS_S5
             }
           }
         ]
