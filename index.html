@@ -2380,20 +2380,10 @@
       const now = audioCtx.currentTime;
       const rampEnd = now + 0.2;
 
-      // Compute target playbackRate
-      // vy < 0 = ascending (canvas coords: negative Y = up) → more revs, slightly higher pitch
-      // vy > 0 = descending → idling, deeper/slower pitch
-      let targetRate;
-      if (vy < -2)      targetRate = 1.08;                    // strong climb → higher revs
-      else if (vy < 0)  targetRate = 1.0 + (-vy / 2) * 0.06; // gentle climb → subtle rise
-      else if (vy < 3)  targetRate = 1.0 - (vy / 3) * 0.12;  // gentle descent → lower
-      else              targetRate = 0.88;                     // steep dive → deep idle
-
-      // Compute target engine gain (climbing = working harder = louder)
-      let targetGain;
-      if (vy < 0)       targetGain = 1.0;   // climbing = full throttle
-      else if (vy < 3)  targetGain = 0.85;  // gentle descent
-      else              targetGain = 0.70;  // steep dive = idle
+      // Hard-coded to 1.0 per Charlie's feedback (2026-04-10)
+      // Neutralizes frantic pitch-shifting on every flap/tap.
+      let targetRate = 1.0;
+      let targetGain = 1.0;
 
       if (engineSource) {
         engineSource.playbackRate.linearRampToValueAtTime(targetRate, rampEnd);
@@ -5263,9 +5253,9 @@
       ctx.fillText("Back", campaignMapBackRect.x + campaignMapBackRect.w / 2, 38);
 
       // ---- Header: Faction toggle buttons ----
-      // Two 52×30px buttons at x: W−122, y: 20, with a 6px gap between them.
+      // Two 52×30px buttons. Shifted left to clear the mute button (right:20px, 44px wide = W−64).
       const btnW = 52, btnH = 30, btnGap = 6;
-      const btnBritX = W - 122;
+      const btnBritX = W - 190;
       const btnGerX = btnBritX + btnW + btnGap;
       const btnY = 20;
 
