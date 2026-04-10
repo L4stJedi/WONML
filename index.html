@@ -784,6 +784,14 @@
     let campaignMapPointerMoved = false;
     let campaignMapPointerStart = null;
     let campaignMapLastPoint = null;
+    // mapFaction controls which faction's completion state is displayed on the campaign map.
+    // Separate from currentFaction (the in-game faction). "british" | "german"
+    let mapFaction = "british";
+    // German campaign completions — parallel to completedCampaigns (british). Empty scaffold for now.
+    let completedCampaignsGerman = new Set();
+    // Faction toggle button rects — set each draw, read in tap handler
+    let mapFactionBritishRect = null;
+    let mapFactionGermanRect = null;
 
     function fillRoundedRect(x, y, w, h, r) {
       ctx.beginPath();
@@ -798,6 +806,21 @@
       ctx.quadraticCurveTo(x, y, x + r, y);
       ctx.closePath();
       ctx.fill();
+    }
+
+    function strokeRoundedRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+      ctx.stroke();
     }
 
     function loadSplashAsset(src) {
@@ -1002,6 +1025,10 @@
     const italianRoundel = loadSplashAsset("assets/backgrounds/menu/ItalianRoundel.png");
     const russianRoundel = loadSplashAsset("assets/backgrounds/menu/RussianRoundel.png");
     const campaignMapAsset = loadSplashAsset("assets/backgrounds/map/CampaignMap.png");
+    // Campaign map production background (parchment illustration by Sal — not yet delivered).
+    // Falls back to flat #F6EEDC fill in drawCampaignMap() when not loaded.
+    // Swap in the real image: this one-line change is the only thing needed once the asset arrives.
+    const campaignMapBG = loadSplashAsset("assets/backgrounds/map/CampaignMapBG.png");
     const belgiumSkyLayer = loadSplashAsset("assets/backgrounds/campaigns/Belgium/SkyLayer.png");
     const belgiumFarBlend1 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium1_seamless.png");
     const belgiumFarBlend2 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium2_seamless.png");
@@ -5137,14 +5164,63 @@
       hintEl.textContent = TESTER_NOTES_HINT;
     }
 
+    // Draw a miniature RFC roundel centred at (cx, cy) with outer radius r.
+    // Used for both node markers and the faction toggle button icon.
+    // Ring proportions (per art brief at 11px node radius):
+    //   blue fills to r, white ring 3px wide (r-3), red centre 5px radius.
+    //   Scaled proportionally when r differs.
+    function drawRFCRoundel(cx, cy, r) {
+      const whiteR = Math.max(2, r - 3);
+      const redR   = Math.max(1, Math.round(r * (5 / 11)));
+      // Outer blue ring
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = "#2A4C7A";
+      ctx.fill();
+      // White ring
+      ctx.beginPath();
+      ctx.arc(cx, cy, whiteR, 0, Math.PI * 2);
+      ctx.fillStyle = "#EDE8DC";
+      ctx.fill();
+      // Red centre
+      ctx.beginPath();
+      ctx.arc(cx, cy, redR, 0, Math.PI * 2);
+      ctx.fillStyle = "#B82020";
+      ctx.fill();
+    }
+
+    // Draw a miniature Iron Cross centred at (cx, cy) inside a circle of radius r.
+    // Used for both node markers and the faction toggle button icon.
+    function drawIronCross(cx, cy, r, armWidth) {
+      // White/cream background circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = "#EDE8DC";
+      ctx.fill();
+      // Cross arms
+      ctx.fillStyle = "#1C1A18";
+      // Vertical arm
+      ctx.fillRect(cx - armWidth / 2, cy - r + 1, armWidth, r * 2 - 2);
+      // Horizontal arm
+      ctx.fillRect(cx - r + 1, cy - armWidth / 2, r * 2 - 2, armWidth);
+    }
+
     function drawCampaignMap() {
       if (screen !== "campaignMap") return;
       updateOverlayVisibility();
 
+      // ---- Canvas background: parchment fill ----
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "#efe2c2";
-      ctx.fillRect(0, 0, W, H);
+      // Use the production BG image when loaded; fall back to flat parchment fill.
+      // To swap in the real image: ensure campaignMapBG loads from the correct path — no other change needed.
+      if (campaignMapBG.loaded) {
+        ctx.drawImage(campaignMapBG.img, 0, 0, W, H);
+      } else {
+        ctx.fillStyle = "#F6EEDC";
+        ctx.fillRect(0, 0, W, H);
+      }
 
+      // Subtle vignette overlay for depth
       const topShade = ctx.createLinearGradient(0, 0, 0, H);
       topShade.addColorStop(0, "rgba(30, 24, 16, 0.16)");
       topShade.addColorStop(0.6, "rgba(255,255,255,0)");
@@ -5152,6 +5228,7 @@
       ctx.fillStyle = topShade;
       ctx.fillRect(0, 0, W, H);
 
+      // ---- Header: title ----
       ctx.textAlign = "center";
       ctx.fillStyle = "#fff1c8";
       ctx.strokeStyle = "rgba(34, 20, 10, 0.82)";
@@ -5160,6 +5237,7 @@
       ctx.strokeText("Campaign Map", W / 2, 44);
       ctx.fillText("Campaign Map", W / 2, 44);
 
+      // ---- Header: Back button ----
       campaignMapBackRect = { x: 18, y: 18, w: 78, h: 30 };
       ctx.fillStyle = "rgba(26, 22, 17, 0.72)";
       fillRoundedRect(campaignMapBackRect.x, campaignMapBackRect.y, campaignMapBackRect.w, campaignMapBackRect.h, 12);
@@ -5167,6 +5245,52 @@
       ctx.font = "13px " + UI_FONT;
       ctx.fillText("Back", campaignMapBackRect.x + campaignMapBackRect.w / 2, 38);
 
+      // ---- Header: Faction toggle buttons ----
+      // Two 52×30px buttons at x: W−122, y: 20, with a 6px gap between them.
+      const btnW = 52, btnH = 30, btnGap = 6;
+      const btnBritX = W - 122;
+      const btnGerX = btnBritX + btnW + btnGap;
+      const btnY = 20;
+
+      mapFactionBritishRect = { x: btnBritX, y: btnY, w: btnW, h: btnH };
+      mapFactionGermanRect  = { x: btnGerX,  y: btnY, w: btnW, h: btnH };
+
+      // British button
+      ctx.save();
+      const britActive = mapFaction === "british";
+      ctx.fillStyle = britActive ? "#2A4C7A" : "rgba(42, 76, 122, 0.38)";
+      fillRoundedRect(btnBritX, btnY, btnW, btnH, 10);
+      ctx.strokeStyle = "#1E1A14";
+      ctx.lineWidth = 1.5;
+      strokeRoundedRect(btnBritX, btnY, btnW, btnH, 10);
+      if (britActive) {
+        // Brass Gold active border
+        ctx.strokeStyle = "#D4A832";
+        ctx.lineWidth = 1.5;
+        strokeRoundedRect(btnBritX - 1, btnY - 1, btnW + 2, btnH + 2, 11);
+      }
+      // Miniature RFC roundel icon centred in button
+      drawRFCRoundel(btnBritX + btnW / 2, btnY + btnH / 2, 9);
+      ctx.restore();
+
+      // German button
+      ctx.save();
+      const gerActive = mapFaction === "german";
+      ctx.fillStyle = gerActive ? "#1C1A18" : "rgba(28, 26, 24, 0.38)";
+      fillRoundedRect(btnGerX, btnY, btnW, btnH, 10);
+      ctx.strokeStyle = "#1E1A14";
+      ctx.lineWidth = 1.5;
+      strokeRoundedRect(btnGerX, btnY, btnW, btnH, 10);
+      if (gerActive) {
+        ctx.strokeStyle = "#D4A832";
+        ctx.lineWidth = 1.5;
+        strokeRoundedRect(btnGerX - 1, btnY - 1, btnW + 2, btnH + 2, 11);
+      }
+      // Miniature Iron Cross icon centred in button (arm width 3px at this scale)
+      drawIronCross(btnGerX + btnW / 2, btnY + btnH / 2, 9, 3);
+      ctx.restore();
+
+      // ---- Map viewport ----
       const viewport = { x: 16, y: 72, w: W - 32, h: H - 210 };
       ctx.save();
       ctx.beginPath();
@@ -5190,72 +5314,215 @@
 
         ctx.drawImage(campaignMapAsset.img, drawX, drawY, metrics.drawW, metrics.drawH);
 
+        // ---- Node markers: 5 visual states ----
+        // State resolution per node:
+        //   locked          — isCampaignUnlocked() returns false
+        //   brit_complete   — completedCampaigns (British) contains the node id
+        //   ger_complete    — completedCampaignsGerman (German) contains the node id
+        //   both_complete   — both of the above
+        //   selected        — node.id === selectedCampaignMapId (applied to unlocked/completed states)
+        //   default         — unlocked, not completed for either faction
         campaignMarkerRects = [];
         CAMPAIGN_MAP_NODES.forEach((node) => {
           const px = drawX + node.mapX * metrics.drawW;
           const py = drawY + node.mapY * metrics.drawH;
           const unlocked = isCampaignUnlocked(node);
-          const implemented = isCampaignImplemented(node);
-          const selected = node.id === selectedCampaignMapId;
-          const radius = selected ? 14 : 11;
+          const britDone  = completedCampaigns.includes(node.id);
+          const gerDone   = completedCampaignsGerman.has(node.id);
+          const bothDone  = britDone && gerDone;
+          const selected  = node.id === selectedCampaignMapId;
+          const radius    = selected ? 14 : 11;   // 28px / 22px diameter as spec'd
 
           ctx.save();
-          ctx.globalAlpha = unlocked ? 1 : 0.84;
-          ctx.fillStyle = unlocked
-            ? (implemented ? "rgba(215, 173, 82, 0.96)" : "rgba(187, 156, 96, 0.9)")
-            : "rgba(74, 70, 62, 0.92)";
-          ctx.strokeStyle = selected ? "rgba(255, 244, 214, 0.98)" : "rgba(52, 34, 16, 0.86)";
-          ctx.lineWidth = selected ? 3.2 : 2;
-          ctx.beginPath();
-          ctx.arc(px, py, radius, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.stroke();
 
-          ctx.fillStyle = unlocked ? "#2e1b08" : "#e6dac1";
-          ctx.font = "bold 11px " + UI_FONT;
-          ctx.textAlign = "center";
-          ctx.fillText(String(node.order), px, py + 4);
+          if (!unlocked) {
+            // ---- STATE: Locked ----
+            ctx.globalAlpha = 0.60;
+            ctx.fillStyle = "#7A7268";
+            ctx.strokeStyle = "rgba(30, 26, 20, 0.60)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            // Order number at 40% opacity
+            ctx.globalAlpha = 0.40;
+            ctx.fillStyle = "#EDE8DC";
+            ctx.font = "bold 11px " + UI_FONT;
+            ctx.textAlign = "center";
+            ctx.fillText(String(node.order), px, py + 4);
+
+          } else if (bothDone) {
+            // ---- STATE: Both factions completed ----
+            // Split circle: left half RFC blue, right half Feldgrau
+            const r = radius;
+            ctx.strokeStyle = "#1E1A14";
+            ctx.lineWidth = 2.5;
+            // Left half — RFC blue
+            ctx.beginPath();
+            ctx.moveTo(px, py - r);
+            ctx.arc(px, py, r, -Math.PI / 2, Math.PI / 2, true);
+            ctx.closePath();
+            ctx.fillStyle = "#2A4C7A";
+            ctx.fill();
+            // Right half — Feldgrau
+            ctx.beginPath();
+            ctx.moveTo(px, py - r);
+            ctx.arc(px, py, r, -Math.PI / 2, Math.PI / 2, false);
+            ctx.closePath();
+            ctx.fillStyle = "#6B7A62";
+            ctx.fill();
+            // Full outline
+            ctx.beginPath();
+            ctx.arc(px, py, r, 0, Math.PI * 2);
+            ctx.stroke();
+            // Left half: thin roundel ring mark (1.5px cream)
+            ctx.strokeStyle = "#EDE8DC";
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.arc(px, py, r - 4, -Math.PI / 2, Math.PI / 2, true);
+            ctx.stroke();
+            // Right half: thin cross mark (1.5px cream)
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = "#EDE8DC";
+            ctx.beginPath();
+            ctx.moveTo(px, py - (r - 4));
+            ctx.lineTo(px, py + (r - 4));
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(px + 2, py);
+            ctx.lineTo(px + (r - 4), py);
+            ctx.stroke();
+            if (selected) {
+              ctx.strokeStyle = "#EDE8DC";
+              ctx.lineWidth = 3.2;
+              ctx.beginPath();
+              ctx.arc(px, py, r + 2, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+
+          } else if (britDone) {
+            // ---- STATE: British (RFC) completed ----
+            drawRFCRoundel(px, py, radius);
+            ctx.strokeStyle = "#1E1A14";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            if (selected) {
+              ctx.strokeStyle = "#EDE8DC";
+              ctx.lineWidth = 3.2;
+              ctx.beginPath();
+              ctx.arc(px, py, radius + 2, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+
+          } else if (gerDone) {
+            // ---- STATE: German (Iron Cross) completed ----
+            drawIronCross(px, py, radius, 6);
+            ctx.strokeStyle = "#1E1A14";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            if (selected) {
+              ctx.strokeStyle = "#EDE8DC";
+              ctx.lineWidth = 3.2;
+              ctx.beginPath();
+              ctx.arc(px, py, radius + 2, 0, Math.PI * 2);
+              ctx.stroke();
+            }
+
+          } else if (selected) {
+            // ---- STATE: Selected (unlocked, not completed) ----
+            ctx.fillStyle = "#D4A832";
+            ctx.strokeStyle = "#EDE8DC";
+            ctx.lineWidth = 3.2;
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "#2A2016";
+            ctx.font = "bold 11px " + UI_FONT;
+            ctx.textAlign = "center";
+            ctx.fillText(String(node.order), px, py + 4);
+
+          } else {
+            // ---- STATE: Default (unlocked, not selected, not completed) ----
+            ctx.fillStyle = "#D4A832";
+            ctx.strokeStyle = "rgba(30, 26, 20, 0.86)";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(px, py, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.fillStyle = "#2A2016";
+            ctx.font = "bold 11px " + UI_FONT;
+            ctx.textAlign = "center";
+            ctx.fillText(String(node.order), px, py + 4);
+          }
+
           ctx.restore();
 
+          // ---- Node label below marker ----
+          // 4px gap below marker bottom, 11px serif, Aged Ink colour
+          ctx.save();
+          ctx.textAlign = "center";
+          ctx.font = (selected ? "bold " : "") + "11px " + UI_FONT;
+          ctx.fillStyle = "#2A2016";
+          ctx.globalAlpha = unlocked ? 1 : 0.55;
+          ctx.fillText(node.label, px, py + radius + 4 + 11);
+          ctx.restore();
+
+          // ---- Hit rect: minimum 44×44px centred on node ----
           campaignMarkerRects.push({
             id: node.id,
-            x: px - 18,
-            y: py - 18,
-            w: 36,
-            h: 36
+            x: px - 22,
+            y: py - 22,
+            w: 44,
+            h: 44
           });
         });
       } else {
-        ctx.fillStyle = "#d9ccb1";
+        // Map asset not loaded — flat parchment placeholder inside viewport
+        ctx.fillStyle = "#F6EEDC";
         fillRoundedRect(viewport.x + 20, viewport.y + 20, viewport.w - 40, viewport.h - 40, 18);
       }
       ctx.restore();
 
+      // Viewport border
       ctx.strokeStyle = "rgba(52, 34, 16, 0.3)";
       ctx.lineWidth = 1.4;
       ctx.strokeRect(viewport.x + 0.5, viewport.y + 0.5, viewport.w - 1, viewport.h - 1);
 
+      // ---- Info panel: parchment background ----
       const infoY = H - 122;
       const infoH = 96;
-      ctx.fillStyle = "rgba(22, 18, 14, 0.66)";
+      ctx.fillStyle = "rgba(246, 238, 220, 0.96)";
       fillRoundedRect(16, infoY, W - 32, infoH, 18);
+      // Subtle ink border
+      ctx.strokeStyle = "rgba(76, 58, 35, 0.22)";
+      ctx.lineWidth = 1;
+      strokeRoundedRect(16, infoY, W - 32, infoH, 18);
 
       const selectedNode = getCampaignMapNode();
       const unlocked = isCampaignUnlocked(selectedNode);
       const implemented = isCampaignImplemented(selectedNode);
 
       ctx.textAlign = "left";
-      ctx.fillStyle = "#fff1c8";
-      ctx.font = "17px " + UI_FONT;
-      // Info panel is W-32 wide; reserve space for the Fly button (≈120px) and 16px padding each side
-      const infoTextW = W - 32 - 130; // leaves room for Fly button
+      // Battle name: Aged Ink #2A2016, 17px bold serif
+      ctx.fillStyle = "#2A2016";
+      ctx.font = "bold 17px " + UI_FONT;
+      const infoTextW = W - 32 - 130; // reserve space for Fly button
       drawTruncatedText(`${selectedNode.order}. ${selectedNode.label}`, 30, infoY + 26, infoTextW);
 
-      ctx.fillStyle = "#f7e2b1";
+      // Subtitle and front: Faded Khaki #604D3A, 12px serif
+      ctx.fillStyle = "#604D3A";
       ctx.font = "12px " + UI_FONT;
       drawTruncatedText(selectedNode.subtitle, 30, infoY + 46, infoTextW);
       drawTruncatedText(selectedNode.front, 30, infoY + 64, infoTextW);
 
+      // Status label: green tint if unlocked, amber if not
       const statusLabel = !unlocked
         ? "Locked - opens in historical order"
         : implemented
@@ -5265,12 +5532,16 @@
       ctx.font = "12px " + UI_FONT;
       drawTruncatedText(statusLabel, 30, infoY + 82, infoTextW);
 
+      // ---- Fly button: Brass Gold #D4A832 ----
       campaignMapStartRect = null;
       if (unlocked && implemented) {
         campaignMapStartRect = { x: W - 138, y: infoY + 24, w: 100, h: 38 };
-        ctx.fillStyle = "rgba(214, 174, 86, 0.96)";
+        ctx.fillStyle = "#D4A832";
         fillRoundedRect(campaignMapStartRect.x, campaignMapStartRect.y, campaignMapStartRect.w, campaignMapStartRect.h, 14);
-        ctx.fillStyle = "#2a1b08";
+        ctx.strokeStyle = "rgba(67, 46, 16, 0.92)";
+        ctx.lineWidth = 1.5;
+        strokeRoundedRect(campaignMapStartRect.x, campaignMapStartRect.y, campaignMapStartRect.w, campaignMapStartRect.h, 14);
+        ctx.fillStyle = "#2A2016";
         ctx.textAlign = "center";
         ctx.font = "bold 14px " + UI_FONT;
         ctx.fillText("Fly", campaignMapStartRect.x + campaignMapStartRect.w / 2, campaignMapStartRect.y + 24);
@@ -5737,6 +6008,12 @@
           screen = "splash";
           hintEl.textContent = MAIN_MENU_HINT;
           drawSplash();
+        } else if (inside(mapFactionBritishRect)) {
+          mapFaction = "british";
+          drawCampaignMap();
+        } else if (inside(mapFactionGermanRect)) {
+          mapFaction = "german";
+          drawCampaignMap();
         } else if (inside(campaignMapStartRect)) {
           startSelectedCampaign();
         } else {
