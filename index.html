@@ -1030,15 +1030,6 @@
     const frenchRoundel = loadSplashAsset("assets/backgrounds/menu/FrenchRoundel.png");
     const italianRoundel = loadSplashAsset("assets/backgrounds/menu/ItalianRoundel.png");
     const russianRoundel = loadSplashAsset("assets/backgrounds/menu/RussianRoundel.png");
-    const nodeBelgiumIcon = (() => {
-      const asset = { img: new Image(), loaded: false };
-      asset.img.onload = () => {
-        asset.loaded = true;
-        if (screen === "campaignMap") drawCampaignMap();
-      };
-      asset.img.src = "assets/ui/map_nodes/node_belgium.png";
-      return asset;
-    })();
     const campaignMapAsset = loadSplashAsset("assets/backgrounds/map/CampaignMap.png");
     // Campaign map production background (parchment illustration by Sal — not yet delivered).
     // Falls back to flat #F6EEDC fill in drawCampaignMap() when not loaded.
@@ -5227,6 +5218,35 @@
       ctx.fillRect(cx - r + 1, cy - armWidth / 2, r * 2 - 2, armWidth);
     }
 
+    // Draw a Flanders poppy centred at (cx, cy) scaled to radius r.
+    // 4 red oval petals (#B82020) with dark outline, black centre circle.
+    // Pure canvas — no image dependency.
+    function drawFlandersPoppy(cx, cy, r) {
+      const petalW  = r * 0.44;
+      const petalH  = r * 0.68;
+      const offset  = r * 0.32;
+      const centreR = r * 0.28;
+      ctx.save();
+      ctx.translate(cx, cy);
+      for (let i = 0; i < 4; i++) {
+        ctx.save();
+        ctx.rotate(i * Math.PI / 2);
+        ctx.beginPath();
+        ctx.ellipse(0, -offset, petalW, petalH, 0, 0, Math.PI * 2);
+        ctx.fillStyle = "#B82020";
+        ctx.fill();
+        ctx.strokeStyle = "#1E1A14";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      }
+      ctx.beginPath();
+      ctx.arc(0, 0, centreR, 0, Math.PI * 2);
+      ctx.fillStyle = "#1E1A14";
+      ctx.fill();
+      ctx.restore();
+    }
+
     function drawCampaignMap() {
       if (screen !== "campaignMap") return;
       updateOverlayVisibility();
@@ -5346,12 +5366,6 @@
         //   selected        — node.id === selectedCampaignMapId (applied to unlocked/completed states)
         //   default         — unlocked, not completed for either faction
         campaignMarkerRects = [];
-        // Helper: draw campaign-specific icon centred on node, then small completion badge
-        function drawCampaignNodeIcon(icon, cx, cy, r) {
-          if (!icon || !icon.loaded) return;
-          const size = r * 1.5;
-          ctx.drawImage(icon.img, cx - size / 2, cy - size / 2, size, size);
-        }
         function drawCompletionBadge(cx, cy, r, type) {
           const bx = cx + r * 0.55, by = cy + r * 0.55, br = r * 0.52;
           ctx.save();
@@ -5379,7 +5393,7 @@
           const bothDone  = britDone && gerDone;
           const selected  = node.id === selectedCampaignMapId;
           const radius    = selected ? 14 : 11;
-          const hasCampaignIcon = node.id === "belgium" && nodeBelgiumIcon.loaded;
+          const hasCampaignIcon = node.id === "belgium";
 
           ctx.save();
 
@@ -5395,7 +5409,7 @@
             ctx.stroke();
             if (hasCampaignIcon) {
               ctx.globalAlpha = 0.35;
-              drawCampaignNodeIcon(nodeBelgiumIcon, px, py, radius);
+              drawFlandersPoppy(px, py, radius);
             } else {
               ctx.globalAlpha = 0.40;
               ctx.fillStyle = "#EDE8DC";
@@ -5458,7 +5472,7 @@
             if (hasCampaignIcon) {
               ctx.fillStyle = "#D4A832"; ctx.strokeStyle = "#1E1A14"; ctx.lineWidth = 2;
               ctx.beginPath(); ctx.arc(px, py, radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-              drawCampaignNodeIcon(nodeBelgiumIcon, px, py, radius);
+              drawFlandersPoppy(px, py, radius);
               drawCompletionBadge(px, py, radius, "brit");
             } else {
               drawRFCRoundel(px, py, radius);
@@ -5475,7 +5489,7 @@
             if (hasCampaignIcon) {
               ctx.fillStyle = "#D4A832"; ctx.strokeStyle = "#1E1A14"; ctx.lineWidth = 2;
               ctx.beginPath(); ctx.arc(px, py, radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-              drawCampaignNodeIcon(nodeBelgiumIcon, px, py, radius);
+              drawFlandersPoppy(px, py, radius);
               drawCompletionBadge(px, py, radius, "ger");
             } else {
               drawIronCross(px, py, radius, 6);
@@ -5492,7 +5506,7 @@
             ctx.fillStyle = "#D4A832"; ctx.strokeStyle = "#EDE8DC"; ctx.lineWidth = 3.2;
             ctx.beginPath(); ctx.arc(px, py, radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
             if (hasCampaignIcon) {
-              drawCampaignNodeIcon(nodeBelgiumIcon, px, py, radius);
+              drawFlandersPoppy(px, py, radius);
             } else {
               ctx.fillStyle = "#2A2016"; ctx.font = "bold 11px " + UI_FONT;
               ctx.textAlign = "center"; ctx.fillText(String(node.order), px, py + 4);
@@ -5503,7 +5517,7 @@
             ctx.fillStyle = "#D4A832"; ctx.strokeStyle = "rgba(30, 26, 20, 0.86)"; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.arc(px, py, radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
             if (hasCampaignIcon) {
-              drawCampaignNodeIcon(nodeBelgiumIcon, px, py, radius);
+              drawFlandersPoppy(px, py, radius);
             } else {
               ctx.fillStyle = "#2A2016"; ctx.font = "bold 11px " + UI_FONT;
               ctx.textAlign = "center"; ctx.fillText(String(node.order), px, py + 4);
