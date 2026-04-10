@@ -755,8 +755,12 @@
     let gameOverMenuRect = null;
     let settingsBackRect = null;
     let settingsFireHandRect = null;
-    let settingsVolDecRect = null;
-    let settingsVolIncRect = null;
+    let settingsVolDecRect      = null;
+    let settingsVolIncRect      = null;
+    let settingsMusicVolDecRect = null;
+    let settingsMusicVolIncRect = null;
+    let settingsSFXVolDecRect   = null;
+    let settingsSFXVolIncRect   = null;
     let testerNotesContinueRect = null;
     let currentHangarFaction = "germany";
     let currentHangarSection = "service";
@@ -1904,6 +1908,17 @@
     let enginePlaceholderOsc = null;  // synth fallback oscillator
     let enginePlaceholderGain = null;
 
+    // --- Ambient loop sources ---
+    let windSource      = null;
+    let artillerySource = null;
+
+    // Artillery volume per campaign (scaled from base ambient gain)
+    const ARTILLERY_VOLUME = {
+      belgium: 0.15, marne: 0.18, ypres: 0.22, gallipoli: 0.12,
+      verdun: 0.28, somme: 0.30, passchendaele: 0.27,
+      caporetto: 0.18, spring: 0.25, hundreddays: 0.22,
+    };
+
     // --- Asset store ---
     const sfxBuffers = new Map();
     const sfxLoadingPromises = new Map();
@@ -1913,10 +1928,16 @@
     const SFX_USE_OGG = _sfxFormatProbe.canPlayType("audio/ogg; codecs=vorbis") !== "";
     const SFX_EXT = SFX_USE_OGG ? ".ogg" : ".mp3";
 
-    // Master volume — persisted via localStorage
+    // Volume settings — persisted via localStorage
     const STORAGE_KEY_MASTER_VOL = `${STORAGE_REVISION}_master_vol`;
+    const STORAGE_KEY_MUSIC_VOL  = `${STORAGE_REVISION}_music_vol`;
+    const STORAGE_KEY_SFX_VOL    = `${STORAGE_REVISION}_sfx_vol`;
     let masterVolume = parseFloat(localStorage.getItem(STORAGE_KEY_MASTER_VOL) || "1.0");
+    let musicVolume  = parseFloat(localStorage.getItem(STORAGE_KEY_MUSIC_VOL)  || "0.6");
+    let sfxVolume    = parseFloat(localStorage.getItem(STORAGE_KEY_SFX_VOL)    || "0.8");
     if (isNaN(masterVolume) || masterVolume < 0 || masterVolume > 1) masterVolume = 1.0;
+    if (isNaN(musicVolume)  || musicVolume  < 0 || musicVolume  > 1) musicVolume  = 0.6;
+    if (isNaN(sfxVolume)    || sfxVolume    < 0 || sfxVolume    > 1) sfxVolume    = 0.8;
 
     function initAudioContext() {
       if (audioCtx) {
@@ -1935,12 +1956,13 @@
         masterGain.connect(audioCtx.destination);
 
         // Category gain nodes — all connect to masterGain
-        engineGainNode    = audioCtx.createGain(); engineGainNode.gain.value    = 0.85; engineGainNode.connect(masterGain);
-        gunGainNode       = audioCtx.createGain(); gunGainNode.gain.value       = 0.80; gunGainNode.connect(masterGain);
-        hitGainNode       = audioCtx.createGain(); hitGainNode.gain.value       = 0.90; hitGainNode.connect(masterGain);
-        explosionGainNode = audioCtx.createGain(); explosionGainNode.gain.value = 0.90; explosionGainNode.connect(masterGain);
-        uiGainNode        = audioCtx.createGain(); uiGainNode.gain.value        = 0.85; uiGainNode.connect(masterGain);
-        ambientGainNode   = audioCtx.createGain(); ambientGainNode.gain.value   = 0.70; ambientGainNode.connect(masterGain);
+        engineGainNode    = audioCtx.createGain(); engineGainNode.gain.value    = 0.55 * sfxVolume;   engineGainNode.connect(masterGain);
+        gunGainNode       = audioCtx.createGain(); gunGainNode.gain.value       = 0.65 * sfxVolume;   gunGainNode.connect(masterGain);
+        hitGainNode       = audioCtx.createGain(); hitGainNode.gain.value       = 0.60 * sfxVolume;   hitGainNode.connect(masterGain);
+        explosionGainNode = audioCtx.createGain(); explosionGainNode.gain.value = 0.70 * sfxVolume;   explosionGainNode.connect(masterGain);
+        uiGainNode        = audioCtx.createGain(); uiGainNode.gain.value        = 0.55 * sfxVolume;   uiGainNode.connect(masterGain);
+        ambientGainNode   = audioCtx.createGain(); ambientGainNode.gain.value   = 0.20 * musicVolume; ambientGainNode.connect(masterGain);
+        if (bgmRun) bgmRun.volume = 0.5 * musicVolume;
 
         audioReady = true;
 
@@ -2024,12 +2046,20 @@
     function _loadAllSFX() {
       const SFX_BASE = "assets/audio/sfx/";
       const assets = [
-        "sfx_engine_rotary_idle_v1",
-        "sfx_gun_vickers_burst_short_v1",
-        "sfx_hit_player_light_v1",
-        "sfx_explosion_enemy_death_v1",
-        "sfx_ui_gameover_v1",
-        "sfx_ui_campaign_complete_v1",
+        "sfx_engine_rotary_loop",
+        "sfx_engine_rotary_damaged",
+        "sfx_gun_vickers_burst_short",
+        "sfx_gun_vickers_burst_long",
+        "sfx_gun_enemy_fire",
+        "sfx_hit_player_light",
+        "sfx_hit_player_heavy",
+        "sfx_explosion_flak_burst",
+        "sfx_explosion_enemy_death",
+        "sfx_explosion_player_death",
+        "sfx_ui_gameover",
+        "sfx_ui_campaign_complete",
+        "sfx_ambient_wind_loop",
+        "sfx_ambient_artillery_distant",
       ];
       assets.forEach(id => loadSFX(id, SFX_BASE + id + ".ogg"));
     }
@@ -2075,19 +2105,19 @@
     function _playPlaceholderForId(id, gainNode, pitchVariance) {
       if (!audioCtx) return;
 
-      if (id === "sfx_gun_vickers_burst_short_v1") {
+      if (id === "sfx_gun_vickers_burst_short") {
         // Short white noise burst — 0.15s
         _playSynthGunBurst(gainNode);
-      } else if (id === "sfx_hit_player_light_v1") {
+      } else if (id === "sfx_hit_player_light") {
         // Mid-frequency thud — 0.2s
         _playSynthHitThud(gainNode);
-      } else if (id === "sfx_explosion_enemy_death_v1") {
+      } else if (id === "sfx_explosion_enemy_death") {
         // Downward pitch sweep — 0.3s
         _playSynthExplosion(gainNode);
-      } else if (id === "sfx_ui_gameover_v1") {
+      } else if (id === "sfx_ui_gameover") {
         // Low drone fade — 0.8s
         _playSynthGameOver(gainNode);
-      } else if (id === "sfx_ui_campaign_complete_v1") {
+      } else if (id === "sfx_ui_campaign_complete") {
         // Rising chord — ~0.9s
         _playSynthCampaignComplete(gainNode);
       }
@@ -2257,8 +2287,8 @@
       // Rotary engine: everything else
       const inlinePlanes = ["albatrosdvstd", "d7std", "d7rb", "d7vik", "dh9"];
       const engineId = inlinePlanes.includes(pType)
-        ? "sfx_engine_inline_idle_v1"
-        : "sfx_engine_rotary_idle_v1";
+        ? "sfx_engine_rotary_loop"
+        : "sfx_engine_rotary_loop";
 
       const buf = sfxBuffers.get(engineId);
 
@@ -2273,10 +2303,36 @@
         engineSource.start();
         engineGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
         engineGainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-        engineGainNode.gain.linearRampToValueAtTime(0.85, audioCtx.currentTime + 0.4);
+        engineGainNode.gain.linearRampToValueAtTime(0.55 * sfxVolume, audioCtx.currentTime + 0.4);
       } else {
         // Placeholder synth oscillator
         _startEnginePlaceholderOsc();
+      }
+
+      // Start ambient loops alongside engine
+      if (!windSource) {
+        const windBuf = sfxBuffers.get("sfx_ambient_wind_loop");
+        if (windBuf) {
+          windSource = audioCtx.createBufferSource();
+          windSource.buffer = windBuf;
+          windSource.loop = true;
+          windSource.connect(ambientGainNode);
+          windSource.start();
+        }
+      }
+      if (!artillerySource) {
+        const artBuf = sfxBuffers.get("sfx_ambient_artillery_distant");
+        if (artBuf) {
+          const artVol = (ARTILLERY_VOLUME[currentCampaign] || 0.15);
+          artillerySource = audioCtx.createBufferSource();
+          artillerySource.buffer = artBuf;
+          artillerySource.loop = true;
+          const artGain = audioCtx.createGain();
+          artGain.gain.value = artVol * musicVolume;
+          artillerySource.connect(artGain);
+          artGain.connect(audioCtx.destination);
+          artillerySource.start();
+        }
       }
     }
 
@@ -2337,6 +2393,10 @@
         }
       }
       _stopEnginePlaceholderOsc(0.5);
+
+      // Stop ambient loops
+      if (windSource) { try { windSource.stop(); } catch(e) {} windSource = null; }
+      if (artillerySource) { try { artillerySource.stop(); } catch(e) {} artillerySource = null; }
     }
 
     // --- Master Volume API ---
@@ -2349,6 +2409,25 @@
         masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime);
         masterGain.gain.linearRampToValueAtTime(masterVolume, audioCtx.currentTime + 0.05);
       }
+    }
+
+    function setMusicVolume(vol) {
+      musicVolume = Math.max(0, Math.min(1, vol));
+      localStorage.setItem(STORAGE_KEY_MUSIC_VOL, String(musicVolume));
+      if (ambientGainNode) ambientGainNode.gain.linearRampToValueAtTime(0.20 * musicVolume, audioCtx.currentTime + 0.05);
+      if (bgmRun) bgmRun.volume = 0.5 * musicVolume;
+    }
+
+    function setSFXVolume(vol) {
+      sfxVolume = Math.max(0, Math.min(1, vol));
+      localStorage.setItem(STORAGE_KEY_SFX_VOL, String(sfxVolume));
+      if (!audioCtx) return;
+      const t = audioCtx.currentTime + 0.05;
+      engineGainNode.gain.linearRampToValueAtTime(0.55 * sfxVolume, t);
+      gunGainNode.gain.linearRampToValueAtTime(0.65 * sfxVolume, t);
+      hitGainNode.gain.linearRampToValueAtTime(0.60 * sfxVolume, t);
+      explosionGainNode.gain.linearRampToValueAtTime(0.70 * sfxVolume, t);
+      uiGainNode.gain.linearRampToValueAtTime(0.55 * sfxVolume, t);
     }
 
     // =========================================================================
@@ -2697,7 +2776,7 @@
       }
       updateXpDisplay();
       // Audio: enemy destroyed SFX
-      playSFX("sfx_explosion_enemy_death_v1", explosionGainNode, 0.10);
+      playSFX("sfx_explosion_enemy_death", explosionGainNode, 0.10);
     }
 
     function ensurePilotName() {
@@ -2893,7 +2972,7 @@
       saveCompletedCampaigns();
       checkUnlocks();
       // Audio: campaign complete sting
-      playSFX("sfx_ui_campaign_complete_v1", uiGainNode, 0);
+      playSFX("sfx_ui_campaign_complete", uiGainNode, 0);
     }
 
     function getObstacleSpawnInterval(level) {
@@ -3149,7 +3228,7 @@
         });
       }
       // Audio: gun fire SFX on every shot that fires
-      playSFX("sfx_gun_vickers_burst_short_v1", gunGainNode, 0.05);
+      playSFX("sfx_gun_vickers_burst_short", gunGainNode, 0.05);
     }
 
     function registerHit(timestamp) {
@@ -3165,7 +3244,7 @@
 
       // Audio: player hit SFX (damage level 1 or 2 — death handled by endGame)
       if (damageLevel < 3) {
-        playSFX("sfx_hit_player_light_v1", hitGainNode, 0.08);
+        playSFX("sfx_hit_player_light", hitGainNode, 0.08);
       }
 
       if (damageLevel >= 3) {
@@ -4929,37 +5008,32 @@
       const futureX = panelX + 22;
       const futureW = panelW - 44;
 
-      // --- Master Volume control (live) ---
-      const volRowY = panelY + 222;
-      ctx.fillStyle = "rgba(219, 193, 142, 0.96)";
-      fillRoundedRect(futureX, volRowY, futureW, 74, 14);
-
-      ctx.textAlign = "left";
-      ctx.fillStyle = "#2f220f";
-      ctx.font = "16px " + UI_FONT;
-      ctx.fillText("Master Volume", futureX + 18, volRowY + 27);
-
-      // Volume bar background
-      const barX = futureX + 18;
-      const barY = volRowY + 40;
-      const barW = futureW - 80;
-      const barH = 10;
-      ctx.fillStyle = "rgba(100, 78, 48, 0.3)";
-      fillRoundedRect(barX, barY, barW, barH, 5);
-
-      // Volume bar fill
-      ctx.fillStyle = "#7a5c2e";
-      fillRoundedRect(barX, barY, Math.max(0, barW * masterVolume), barH, 5);
-
-      // Percentage label
-      ctx.textAlign = "right";
-      ctx.font = "bold 14px " + UI_FONT;
-      ctx.fillStyle = "#2f220f";
-      ctx.fillText(Math.round(masterVolume * 100) + "%", futureX + futureW - 18, volRowY + 51);
-
-      // Dec / Inc tap targets
-      settingsVolDecRect = { x: futureX + 18, y: volRowY, w: 36, h: 74 };
-      settingsVolIncRect = { x: futureX + futureW - 54, y: volRowY, w: 36, h: 74 };
+      // --- Volume controls (Music, Game Sounds, Master) ---
+      function _drawVolRow(label, value, rowY, decRectOut, incRectOut) {
+        ctx.fillStyle = "rgba(219, 193, 142, 0.96)";
+        fillRoundedRect(futureX, rowY, futureW, 64, 14);
+        ctx.textAlign = "left";
+        ctx.fillStyle = "#2f220f";
+        ctx.font = "14px " + UI_FONT;
+        ctx.fillText(label, futureX + 18, rowY + 22);
+        const barX = futureX + 18, barY = rowY + 34, barW = futureW - 80, barH = 9;
+        ctx.fillStyle = "rgba(100, 78, 48, 0.3)";
+        fillRoundedRect(barX, barY, barW, barH, 4);
+        ctx.fillStyle = "#7a5c2e";
+        fillRoundedRect(barX, barY, Math.max(0, barW * value), barH, 4);
+        ctx.textAlign = "right";
+        ctx.font = "bold 13px " + UI_FONT;
+        ctx.fillStyle = "#2f220f";
+        ctx.fillText(Math.round(value * 100) + "%", futureX + futureW - 18, rowY + 45);
+        decRectOut.x = futureX + 18;      decRectOut.y = rowY; decRectOut.w = 36; decRectOut.h = 64;
+        incRectOut.x = futureX + futureW - 54; incRectOut.y = rowY; incRectOut.w = 36; incRectOut.h = 64;
+      }
+      settingsMusicVolDecRect = {}; settingsMusicVolIncRect = {};
+      settingsSFXVolDecRect   = {}; settingsSFXVolIncRect   = {};
+      settingsVolDecRect      = {}; settingsVolIncRect      = {};
+      _drawVolRow("Music",       musicVolume,  panelY + 212, settingsMusicVolDecRect, settingsMusicVolIncRect);
+      _drawVolRow("Game Sounds", sfxVolume,    panelY + 282, settingsSFXVolDecRect,   settingsSFXVolIncRect);
+      _drawVolRow("Master",      masterVolume, panelY + 352, settingsVolDecRect,      settingsVolIncRect);
 
       // Remaining future-feature rows
       const futureRows = [
@@ -5566,7 +5640,7 @@
         }
         // Audio: stop engine loop + play game-over sting
         stopEngineLoop();
-        playSFX("sfx_ui_gameover_v1", uiGainNode, 0);
+        playSFX("sfx_ui_gameover", uiGainNode, 0);
       }
       updateOverlayVisibility();
       drawScene();
@@ -5877,19 +5951,17 @@
           return;
         }
 
-        // Volume decrease tap
-        if (inside(settingsVolDecRect)) {
-          setMasterVolume(Math.max(0, masterVolume - 0.1));
-          drawSettings();
-          return;
-        }
+        // Music volume
+        if (inside(settingsMusicVolDecRect)) { setMusicVolume(musicVolume - 0.1); drawSettings(); return; }
+        if (inside(settingsMusicVolIncRect)) { setMusicVolume(musicVolume + 0.1); drawSettings(); return; }
 
-        // Volume increase tap
-        if (inside(settingsVolIncRect)) {
-          setMasterVolume(Math.min(1, masterVolume + 0.1));
-          drawSettings();
-          return;
-        }
+        // Game sounds volume
+        if (inside(settingsSFXVolDecRect)) { setSFXVolume(sfxVolume - 0.1); drawSettings(); return; }
+        if (inside(settingsSFXVolIncRect)) { setSFXVolume(sfxVolume + 0.1); drawSettings(); return; }
+
+        // Master volume
+        if (inside(settingsVolDecRect)) { setMasterVolume(masterVolume - 0.1); drawSettings(); return; }
+        if (inside(settingsVolIncRect)) { setMasterVolume(masterVolume + 0.1); drawSettings(); return; }
 
         return;
       }
