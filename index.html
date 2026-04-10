@@ -5048,23 +5048,51 @@
 
       // --- Volume controls (Music, Game Sounds, Master) ---
       function _drawVolRow(label, value, rowY, decRectOut, incRectOut) {
+        const btnSz = 38;
+        const rowH  = 64;
         ctx.fillStyle = "rgba(219, 193, 142, 0.96)";
-        fillRoundedRect(futureX, rowY, futureW, 64, 14);
+        fillRoundedRect(futureX, rowY, futureW, rowH, 14);
+
+        // Label + percentage
         ctx.textAlign = "left";
         ctx.fillStyle = "#2f220f";
-        ctx.font = "14px " + UI_FONT;
-        ctx.fillText(label, futureX + 18, rowY + 22);
-        const barX = futureX + 18, barY = rowY + 34, barW = futureW - 80, barH = 9;
-        ctx.fillStyle = "rgba(100, 78, 48, 0.3)";
-        fillRoundedRect(barX, barY, barW, barH, 4);
-        ctx.fillStyle = "#7a5c2e";
-        fillRoundedRect(barX, barY, Math.max(0, barW * value), barH, 4);
+        ctx.font = "13px " + UI_FONT;
+        ctx.fillText(label, futureX + btnSz + 12, rowY + 20);
         ctx.textAlign = "right";
         ctx.font = "bold 13px " + UI_FONT;
+        ctx.fillText(Math.round(value * 100) + "%", futureX + futureW - btnSz - 12, rowY + 20);
+
+        // Bar
+        const barX = futureX + btnSz + 12;
+        const barW = futureW - btnSz * 2 - 24;
+        const barY = rowY + 32, barH = 10;
+        ctx.fillStyle = "rgba(100, 78, 48, 0.25)";
+        fillRoundedRect(barX, barY, barW, barH, 5);
+        ctx.fillStyle = "#7a5c2e";
+        fillRoundedRect(barX, barY, Math.max(0, barW * value), barH, 5);
+
+        // − button
+        const decX = futureX + 4, btnY = rowY + (rowH - btnSz) / 2;
+        ctx.fillStyle = "rgba(42, 31, 20, 0.18)";
+        fillRoundedRect(decX, btnY, btnSz, btnSz, 10);
+        ctx.strokeStyle = "#9C7A5A"; ctx.lineWidth = 1;
+        strokeRoundedRect(decX, btnY, btnSz, btnSz, 10);
         ctx.fillStyle = "#2f220f";
-        ctx.fillText(Math.round(value * 100) + "%", futureX + futureW - 18, rowY + 45);
-        decRectOut.x = futureX + 18;      decRectOut.y = rowY; decRectOut.w = 36; decRectOut.h = 64;
-        incRectOut.x = futureX + futureW - 54; incRectOut.y = rowY; incRectOut.w = 36; incRectOut.h = 64;
+        ctx.font = "bold 20px " + UI_FONT;
+        ctx.textAlign = "center";
+        ctx.fillText("−", decX + btnSz / 2, btnY + btnSz / 2 + 7);
+
+        // + button
+        const incX = futureX + futureW - btnSz - 4;
+        ctx.fillStyle = "rgba(42, 31, 20, 0.18)";
+        fillRoundedRect(incX, btnY, btnSz, btnSz, 10);
+        ctx.strokeStyle = "#9C7A5A"; ctx.lineWidth = 1;
+        strokeRoundedRect(incX, btnY, btnSz, btnSz, 10);
+        ctx.fillStyle = "#2f220f";
+        ctx.fillText("+", incX + btnSz / 2, btnY + btnSz / 2 + 7);
+
+        decRectOut.x = decX; decRectOut.y = btnY; decRectOut.w = btnSz; decRectOut.h = btnSz;
+        incRectOut.x = incX; incRectOut.y = btnY; incRectOut.w = btnSz; incRectOut.h = btnSz;
       }
       settingsMusicVolDecRect = {}; settingsMusicVolIncRect = {};
       settingsSFXVolDecRect   = {}; settingsSFXVolIncRect   = {};
