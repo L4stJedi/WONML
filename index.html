@@ -4560,17 +4560,18 @@
 
     function getCampaignMapDrawMetrics() {
       const viewport = { x: 16, y: 72, w: W - 32, h: H - 210 };
-      const fitScale = Math.max(viewport.w / campaignMapAsset.img.width, viewport.h / campaignMapAsset.img.height);
+      const mapImg = (campaignMapBG.loaded ? campaignMapBG : campaignMapAsset);
+      const fitScale = Math.max(viewport.w / mapImg.img.width, viewport.h / mapImg.img.height);
       const scale = fitScale * 1.28;
-      const drawW = campaignMapAsset.img.width * scale;
-      const drawH = campaignMapAsset.img.height * scale;
+      const drawW = mapImg.img.width * scale;
+      const drawH = mapImg.img.height * scale;
       const minPanX = Math.min(0, viewport.w - drawW);
       const minPanY = Math.min(0, viewport.h - drawH);
       return { viewport, scale, drawW, drawH, minPanX, minPanY };
     }
 
     function clampCampaignMapPan() {
-      if (!campaignMapAsset.loaded) return;
+      if (!campaignMapBG.loaded && !campaignMapAsset.loaded) return;
       const { minPanX, minPanY } = getCampaignMapDrawMetrics();
       campaignMapPanX = Math.min(0, Math.max(minPanX, campaignMapPanX));
       campaignMapPanY = Math.min(0, Math.max(minPanY, campaignMapPanY));
@@ -5314,13 +5315,14 @@
       ctx.closePath();
       ctx.clip();
 
-      if (campaignMapAsset.loaded) {
+      const activeMapAsset = campaignMapBG.loaded ? campaignMapBG : campaignMapAsset;
+      if (activeMapAsset.loaded) {
         clampCampaignMapPan();
         const metrics = getCampaignMapDrawMetrics();
         const drawX = metrics.viewport.x + campaignMapPanX;
         const drawY = metrics.viewport.y + campaignMapPanY;
 
-        ctx.drawImage(campaignMapAsset.img, drawX, drawY, metrics.drawW, metrics.drawH);
+        ctx.drawImage(activeMapAsset.img, drawX, drawY, metrics.drawW, metrics.drawH);
 
         // ---- Node markers: 5 visual states ----
         // State resolution per node:
