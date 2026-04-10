@@ -4605,6 +4605,7 @@
       hintEl.textContent = GAMEPLAY_HINT;
       resetGame();
       flap();
+      drawScene();   // paint immediately — don't wait for first rAF tick
       startGameLoop();
       return true;
     }
@@ -4746,6 +4747,7 @@
       hintEl.textContent = GAMEPLAY_HINT;
       resetGame();
       flap();
+      drawScene();   // paint immediately — don't wait for first rAF tick
       startGameLoop();
     }
 
@@ -5623,7 +5625,6 @@
 
       // ---- Fly confirmation modal ----
       confirmFlyRect = null; confirmCancelRect = null;
-      confirmPickBritRect = null; confirmPickGerRect = null;
       if (campaignMapConfirming) {
         const mW = 260, mH = 100;
         const mX = (W - mW) / 2, mY = (H - mH) / 2 - 20;
