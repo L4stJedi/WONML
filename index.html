@@ -1030,7 +1030,15 @@
     const frenchRoundel = loadSplashAsset("assets/backgrounds/menu/FrenchRoundel.png");
     const italianRoundel = loadSplashAsset("assets/backgrounds/menu/ItalianRoundel.png");
     const russianRoundel = loadSplashAsset("assets/backgrounds/menu/RussianRoundel.png");
-    const nodeBelgiumIcon = loadSplashAsset("assets/ui/map_nodes/node_belgium.png");
+    const nodeBelgiumIcon = (() => {
+      const asset = { img: new Image(), loaded: false };
+      asset.img.onload = () => {
+        asset.loaded = true;
+        if (screen === "campaignMap") drawCampaignMap();
+      };
+      asset.img.src = "assets/ui/map_nodes/node_belgium.png";
+      return asset;
+    })();
     const campaignMapAsset = loadSplashAsset("assets/backgrounds/map/CampaignMap.png");
     // Campaign map production background (parchment illustration by Sal — not yet delivered).
     // Falls back to flat #F6EEDC fill in drawCampaignMap() when not loaded.
@@ -5260,11 +5268,11 @@
       ctx.fillText("Back", campaignMapBackRect.x + campaignMapBackRect.w / 2, 38);
 
       // ---- Header: Faction toggle buttons ----
-      // Two 52×30px buttons. Shifted left to clear the mute button (right:20px, 44px wide = W−64).
-      const btnW = 52, btnH = 30, btnGap = 6;
-      const btnBritX = W - 190;
-      const btnGerX = btnBritX + btnW + btnGap;
-      const btnY = 20;
+      // Two 52×26px faction buttons on second row, below the title.
+      const btnW = 52, btnH = 26, btnGap = 6;
+      const btnBritX = W / 2 - btnW - btnGap / 2;
+      const btnGerX  = W / 2 + btnGap / 2;
+      const btnY = 54;
 
       mapFactionBritishRect = { x: btnBritX, y: btnY, w: btnW, h: btnH };
       mapFactionGermanRect  = { x: btnGerX,  y: btnY, w: btnW, h: btnH };
