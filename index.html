@@ -225,9 +225,9 @@
     }
 
     .burst-btn {
-      position: absolute;
+      position: fixed;
       right: 20px;
-      bottom: 68px;
+      bottom: 20px;
       min-width: 78px;
       padding: 10px 12px 9px;
       border-radius: 14px;
@@ -251,9 +251,9 @@
     }
 
     .rapid-btn {
-      position: absolute;
+      position: fixed;
       right: 20px;
-      bottom: 124px;
+      bottom: 76px;
       min-width: 78px;
       padding: 10px 12px 9px;
       border-radius: 14px;
@@ -288,12 +288,12 @@
 
     body.compact-layout .burst-btn {
       right: 12px;
-      bottom: 58px;
+      bottom: 12px;
     }
 
     body.compact-layout .rapid-btn {
       right: 12px;
-      bottom: 120px;
+      bottom: 68px;
     }
 
     body.compact-layout .burst-btn.is-left {
@@ -1108,10 +1108,10 @@
     const belgiumFarBlend3 = loadSplashAsset("assets/backgrounds/campaigns/Belgium/Belgium3_seamless.png");
     const belgiumFarS1     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumFar_S1.png");
     const belgiumFarS5     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumFar_S5.png");
-    const belgiumMidS1     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S1.png");
-    const belgiumMidS3     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S3.png");
-    const belgiumMidS5     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S5.png");
-    const belgiumForeS1    = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumFore_S1.png");
+    const belgiumMidS1     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S1_rework.png");
+    const belgiumMidS3     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S3_rework.png");
+    const belgiumMidS5     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S5_rework.png");
+    const belgiumForeS1    = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumFore_S1_rework.png");
     // Mid variants for blended parallax — cycle through S1/S3/S5 for progressive damage narrative
     const belgiumMidVariants = [belgiumMidS1, belgiumMidS3, belgiumMidS5];
     // Belgium atmosphere layer (ultra-far, 4th depth layer) — placeholder until Sal's artwork arrives.
@@ -1149,6 +1149,32 @@
     };
     // Keep alias for anything still referencing the old single config
     const BELGIUM_CAMPAIGN_LAYERS = BELGIUM_LAYERS_S1;
+
+    // Cloud sprite loading (for sprite-based cloud system)
+    const cloudSpriteMap = {};
+    const cloudSprites = [
+      "cloud_cumulus_small", "cloud_cumulus_medium", "cloud_cumulus_large",
+      "cloud_stratus_small", "cloud_stratus_medium", "cloud_stratus_large",
+      "cloud_cirrus_small", "cloud_cirrus_medium", "cloud_cirrus_large"
+    ];
+    cloudSprites.forEach(spriteId => {
+      cloudSpriteMap[spriteId] = loadSplashAsset(`assets/clouds/${spriteId}.png`);
+    });
+
+    // Cloud configuration loaded dynamically per level
+    let belgiumCloudConfig = null;
+
+    // Load cloud config on startup (async, will be ready before gameplay starts)
+    (async () => {
+      try {
+        const response = await fetch("config/clouds_belgium.json");
+        if (response.ok) {
+          belgiumCloudConfig = await response.json();
+        }
+      } catch (error) {
+        console.warn("Failed to load cloud config, will fall back to procedural clouds:", error);
+      }
+    })();
 
     const GERMAN_STANDARD_PLANES = [
       { tier: "Tier 1", label: "Fokker E.III", planeType: "e3std" },
@@ -3711,6 +3737,78 @@
       }
     }
 
+    // Load cloud config from JSON (called during level load)
+    async function loadCloudConfig(configPath) {
+      try {
+        const response = await fetch(configPath);
+        if (!response.ok) {
+          console.warn(`Failed to load cloud config from ${configPath}: ${response.statusText}`);
+          return null;
+        }
+        return await response.json();
+      } catch (error) {
+        console.warn(`Error loading cloud config from ${configPath}:`, error);
+        return null;
+      }
+    }
+
+    // Draw sprite-based clouds from config
+    function drawCloudSystemFromConfig(config, skyHeight, skyTop, parallaxOffset) {
+      if (!config || !config.cloud_instances) return false;
+
+      const tiers = config.cloud_tiers || [];
+      const tierMap = {};
+      tiers.forEach(tier => {
+        tierMap[tier.tier] = tier;
+      });
+
+      config.cloud_instances.forEach(cloudInstance => {
+        const tier = tierMap[cloudInstance.tier];
+        if (!tier || !cloudInstance.sprite) return;
+
+        // Compute display position
+        const spriteName = cloudInstance.sprite;
+        const spriteAsset = cloudSpriteMap[spriteName];
+        if (!spriteAsset || !spriteAsset.loaded) return;
+
+        // X: proportional to canvas width, with parallax offset applied per tier
+        const cloudX = (cloudInstance.x_pct * W + (parallaxOffset || 0) * tier.parallax_speed_multiplier) % W;
+
+        // Y: proportional to sky height, with skyTop offset
+        const cloudY = skyTop + cloudInstance.y_pct * skyHeight;
+
+        // Size: scaled by sky height ratio (base 550px reference), multiplied by tier scale
+        const baseSizeScale = skyHeight / 550;
+        const displayScale = baseSizeScale * tier.size_scale;
+        const displayW = spriteAsset.img.width * displayScale;
+        const displayH = spriteAsset.img.height * displayScale;
+
+        // Draw with tier-specific opacity
+        ctx.save();
+        ctx.globalAlpha = tier.opacity;
+        ctx.drawImage(
+          spriteAsset.img,
+          cloudX - displayW / 2,
+          cloudY - displayH / 2,
+          displayW,
+          displayH
+        );
+        ctx.restore();
+      });
+
+      return true;
+    }
+
+    // Fallback procedural clouds for when config is not available
+    function drawProceduralClouds(skyHeight, skyTop) {
+      // Fallback to the original hardcoded cloud drawing with proportional scaling
+      const cloudScale = skyHeight / 550;
+      ctx.fillStyle = "rgba(255,255,255,0.7)";
+      drawCloudShape(80, Math.round(90 * cloudScale), 22);
+      drawCloudShape(180, Math.round(60 * cloudScale), 18);
+      drawCloudShape(340, Math.round(110 * cloudScale), 26);
+    }
+
     function drawBackground() {
       const level = getCurrentStage();
       const customLayers = level.parallax?.customLayers;
@@ -3726,10 +3824,20 @@
       if (customLayers?.sky && customLayers.sky.loaded) {
         drawImageCover(customLayers.sky, 0, 0, W, H);
       } else {
-        ctx.fillStyle = "rgba(255,255,255,0.7)";
-        drawCloudShape(80, 90, 22);
-        drawCloudShape(180, 60, 18);
-        drawCloudShape(340, 110, 26);
+        // Sprite-based cloud system with JSON config (Belgium campaign)
+        const skyHeight = H - GROUND_HEIGHT;
+        const skyTop = 0;
+        let cloudDrawn = false;
+
+        // Try sprite-based clouds if config is loaded and customLayers uses Belgium layers
+        if (belgiumCloudConfig && customLayers) {
+          cloudDrawn = drawCloudSystemFromConfig(belgiumCloudConfig, skyHeight, skyTop, parallax.clouds || 0);
+        }
+
+        // Fall back to procedural clouds if config unavailable
+        if (!cloudDrawn) {
+          drawProceduralClouds(skyHeight, skyTop);
+        }
       }
 
       const groundGradient = ctx.createLinearGradient(0, H - GROUND_HEIGHT, 0, H);
@@ -3815,22 +3923,24 @@
       // ---- MID layer (mid-distance, ~0.22x) ----
       // Full opacity — this is the "real" layer, reference plane for the player's eye.
       // Uses midVariants blend when available (same pattern as far layer).
+      // Anchored to groundTop to prevent floating gaps on tall screens.
       const drewMid = drawBlendedCampaignParallaxAssets(
         customLayers.midVariants || [customLayers.mid],
         parallax.mid * 0.367,
         2.05,
-        H + 120,
+        groundTop + 120,
         0.98
       );
 
       // ---- FORE layer (near terrain, ~0.65x) ----
       // Full opacity, maximum contrast — closest to camera, sharpest perceived detail.
       // Draw multiplier updated: 0.65 (was 0.5) → 1.00 × 0.65 = 0.650x effective scroll.
+      // Anchored to groundTop to prevent floating gaps on tall screens.
       const drewFore = drawCampaignParallaxAsset(
         customLayers.fore,
         parallax.fore * 0.65,
         2.2,
-        H + 210,
+        groundTop + 210,
         1.0            // full opacity — foreground is sharpest, highest contrast (unchanged)
       );
 

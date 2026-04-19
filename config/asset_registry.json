@@ -169,6 +169,131 @@
       "status": "active",
       "used_in": ["campaign_belgium"],
       "parallax_role": "far_variant"
+    },
+    {
+      "id": "bg_belgium_mid1_rework",
+      "type": "parallax_layer",
+      "path": "assets/backgrounds/campaigns/Belgium/BelgiumMid_S1_rework.png",
+      "description": "Belgium campaign mid background — S1 rural variant (reworked for responsive tall screens)",
+      "dimensions_px": { "w": 860, "h": 280 },
+      "status": "active",
+      "used_in": ["campaign_belgium"],
+      "parallax_role": "mid",
+      "note": "Seamlessly tileable at W=375,430,600. Top 30% fades to transparent for smooth blending on tall screens."
+    },
+    {
+      "id": "bg_belgium_mid3_rework",
+      "type": "parallax_layer",
+      "path": "assets/backgrounds/campaigns/Belgium/BelgiumMid_S3_rework.png",
+      "description": "Belgium campaign mid background — S3 industrial variant (reworked)",
+      "dimensions_px": { "w": 860, "h": 280 },
+      "status": "active",
+      "used_in": ["campaign_belgium"],
+      "parallax_role": "mid",
+      "note": "Industrial silhouettes with factories and trenches."
+    },
+    {
+      "id": "bg_belgium_mid5_rework",
+      "type": "parallax_layer",
+      "path": "assets/backgrounds/campaigns/Belgium/BelgiumMid_S5_rework.png",
+      "description": "Belgium campaign mid background — S5 contested variant (reworked)",
+      "dimensions_px": { "w": 860, "h": 280 },
+      "status": "active",
+      "used_in": ["campaign_belgium"],
+      "parallax_role": "mid",
+      "note": "Burnt structures and battle-scarred landscape."
+    },
+    {
+      "id": "bg_belgium_fore1_rework",
+      "type": "parallax_layer",
+      "path": "assets/backgrounds/campaigns/Belgium/BelgiumFore_S1_rework.png",
+      "description": "Belgium campaign fore background — S1/S3/S5 shared foreground (reworked with alpha fade)",
+      "dimensions_px": { "w": 900, "h": 260 },
+      "status": "active",
+      "used_in": ["campaign_belgium"],
+      "parallax_role": "fore",
+      "note": "Detailed foreground with tree, trenches, bunker. Top 30% fades to transparent for tall-screen blending."
+    },
+    {
+      "id": "cloud_cumulus_small",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_cumulus_small.png",
+      "description": "Cloud sprite: small puffy cloud (cumulus, 40×24 px, 90% opacity)",
+      "dimensions_px": { "w": 40, "h": 24 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
+    },
+    {
+      "id": "cloud_cumulus_medium",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_cumulus_medium.png",
+      "description": "Cloud sprite: medium puffy cloud (cumulus, 70×40 px, 95% opacity)",
+      "dimensions_px": { "w": 70, "h": 40 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
+    },
+    {
+      "id": "cloud_cumulus_large",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_cumulus_large.png",
+      "description": "Cloud sprite: large puffy cloud (cumulus, 100×56 px, 95% opacity)",
+      "dimensions_px": { "w": 100, "h": 56 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
+    },
+    {
+      "id": "cloud_stratus_small",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_stratus_small.png",
+      "description": "Cloud sprite: small flat cloud (stratus, 50×20 px, 85% opacity)",
+      "dimensions_px": { "w": 50, "h": 20 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
+    },
+    {
+      "id": "cloud_stratus_medium",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_stratus_medium.png",
+      "description": "Cloud sprite: medium flat cloud (stratus, 80×30 px, 90% opacity)",
+      "dimensions_px": { "w": 80, "h": 30 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
+    },
+    {
+      "id": "cloud_stratus_large",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_stratus_large.png",
+      "description": "Cloud sprite: large flat cloud (stratus, 120×45 px, 90% opacity)",
+      "dimensions_px": { "w": 120, "h": 45 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
+    },
+    {
+      "id": "cloud_cirrus_small",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_cirrus_small.png",
+      "description": "Cloud sprite: small wispy cloud (cirrus, 60×18 px, 70% opacity)",
+      "dimensions_px": { "w": 60, "h": 18 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
+    },
+    {
+      "id": "cloud_cirrus_medium",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_cirrus_medium.png",
+      "description": "Cloud sprite: medium wispy cloud (cirrus, 90×28 px, 80% opacity)",
+      "dimensions_px": { "w": 90, "h": 28 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
+    },
+    {
+      "id": "cloud_cirrus_large",
+      "type": "cloud_sprite",
+      "path": "assets/clouds/cloud_cirrus_large.png",
+      "description": "Cloud sprite: large wispy cloud (cirrus, 130×40 px, 85% opacity)",
+      "dimensions_px": { "w": 130, "h": 40 },
+      "status": "active",
+      "used_in": ["campaign_belgium"]
     }
   ],
 

@@ -1,0 +1,116 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "description": "Responsive cloud distribution config for Belgium campaign",
+    "canvas_contract": {
+      "width_px": [
+        280,
+        600
+      ],
+      "height_px": [
+        320,
+        960
+      ],
+      "ground_height_px": 90
+    },
+    "cloud_distribution": {
+      "upper_bound_pct": 0.05,
+      "lower_bound_pct": 0.6,
+      "explanation": "Clouds occupy 5% to 60% of sky height. Upper 40% of sky is reserved for plane visibility."
+    }
+  },
+  "cloud_tiers": [
+    {
+      "tier": 0,
+      "name": "far_clouds",
+      "parallax_speed_multiplier": 0.1,
+      "opacity": 0.6,
+      "size_scale": 0.8,
+      "count": 2,
+      "description": "Far clouds: move very slowly, appear in upper 15% of sky"
+    },
+    {
+      "tier": 1,
+      "name": "mid_clouds",
+      "parallax_speed_multiplier": 0.2,
+      "opacity": 0.75,
+      "size_scale": 1.0,
+      "count": 3,
+      "description": "Mid clouds: moderate speed, appear in 20-40% of sky"
+    },
+    {
+      "tier": 2,
+      "name": "near_clouds",
+      "parallax_speed_multiplier": 0.35,
+      "opacity": 0.9,
+      "size_scale": 1.3,
+      "count": 2,
+      "description": "Near clouds: fast speed, appear in 40-60% of sky"
+    }
+  ],
+  "cloud_instances": [
+    {
+      "id": "cloud_far_01",
+      "tier": 0,
+      "x_pct": 0.15,
+      "y_pct": 0.1,
+      "sprite": "cloud_cirrus_small",
+      "rotation_deg": 0
+    },
+    {
+      "id": "cloud_far_02",
+      "tier": 0,
+      "x_pct": 0.75,
+      "y_pct": 0.12,
+      "sprite": "cloud_cirrus_small",
+      "rotation_deg": 0
+    },
+    {
+      "id": "cloud_mid_01",
+      "tier": 1,
+      "x_pct": 0.2,
+      "y_pct": 0.25,
+      "sprite": "cloud_cumulus_medium",
+      "rotation_deg": 0
+    },
+    {
+      "id": "cloud_mid_02",
+      "tier": 1,
+      "x_pct": 0.5,
+      "y_pct": 0.3,
+      "sprite": "cloud_cumulus_medium",
+      "rotation_deg": 0
+    },
+    {
+      "id": "cloud_mid_03",
+      "tier": 1,
+      "x_pct": 0.8,
+      "y_pct": 0.28,
+      "sprite": "cloud_stratus_small",
+      "rotation_deg": 0
+    },
+    {
+      "id": "cloud_near_01",
+      "tier": 2,
+      "x_pct": 0.35,
+      "y_pct": 0.45,
+      "sprite": "cloud_cumulus_large",
+      "rotation_deg": 0
+    },
+    {
+      "id": "cloud_near_02",
+      "tier": 2,
+      "x_pct": 0.65,
+      "y_pct": 0.5,
+      "sprite": "cloud_cumulus_large",
+      "rotation_deg": 0
+    }
+  ],
+  "rendering_notes": {
+    "canvas_scaling": "All X/Y percentages are relative to canvas dimensions. Engine scales X by canvas width, Y by sky height (H - 90).",
+    "parallax": "Each cloud's horizontal position updates by: offset = parallax.cloudN * tier.speed_multiplier",
+    "responsive": "Cloud sizes scale with sky height: displayRadius = baseRadius * (skyHeight / 550)",
+    "tiling": "Clouds wrap horizontally when they move off-screen, reappearing on opposite side.",
+    "opacity_blending": "Each tier has opacity for atmospheric depth. Tier 0 (far) is most transparent."
+  }
+}
