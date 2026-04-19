@@ -44,9 +44,10 @@
     }
 
     body.compact-layout {
-      align-items: center;
-      padding-top: env(safe-area-inset-top);
-      padding-bottom: env(safe-area-inset-bottom);
+      align-items: stretch;
+      justify-content: stretch;
+      padding-top: 0;
+      padding-bottom: 0;
       background: #1e2a3a;
     }
 
@@ -61,11 +62,16 @@
     }
 
     body.compact-layout .game-wrapper {
-      padding: 4px;
-      border-radius: 10px;
+      width: 100%;
+      height: 100%;
+      padding: 0;
+      border-radius: 0;
       background: transparent;
       box-shadow: none;
       backdrop-filter: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     canvas {
@@ -76,8 +82,8 @@
     }
 
     body.compact-layout canvas {
-      border-radius: 12px;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.22);
+      border-radius: 0;
+      box-shadow: none;
     }
 
     .hud {
@@ -581,11 +587,43 @@
     const handBtn = document.getElementById("handBtn");
     const muteBtn = document.getElementById("muteBtn");
 
-    const W = Number(canvas.getAttribute("width")) || 480;
-    const H = Number(canvas.getAttribute("height")) || 640;
+    // Responsive canvas: W and H are now computed on resize/init, not constants.
+    let W = 480;
+    let H = 640;
     const GROUND_HEIGHT = 90;
 
+    function computeCanvasDimensions() {
+      // Use visualViewport when available — gives accurate dimensions on iPhone
+      // even when the on-screen keyboard or Safari's toolbar shifts the layout.
+      const vvw = window.visualViewport ? window.visualViewport.width  : window.innerWidth;
+      const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+
+      const safeTop = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sat") || "0") || 0;
+      const safeBot = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sab") || "0") || 0;
+
+      // Available canvas space: full width, full height minus safe insets
+      const availableWidth = Math.max(280, vvw);
+      const availableHeight = Math.max(320, vvh - safeTop - safeBot);
+
+      // For portrait-only, cap width so desktop doesn't stretch ridiculously wide
+      const maxW = 600;
+      const newW = Math.min(availableWidth, maxW);
+      const newH = availableHeight;
+
+      return { w: newW, h: newH };
+    }
+
     function syncCanvasResolution() {
+      // Update W and H to match viewport
+      const dims = computeCanvasDimensions();
+      W = dims.w;
+      H = dims.h;
+
+      // Update canvas attributes for game logic
+      canvas.setAttribute("width", W);
+      canvas.setAttribute("height", H);
+
+      // Physical resolution: scale by DPR for retina sharpness
       const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
       canvas.style.width = `${W}px`;
       canvas.style.height = `${H}px`;
@@ -599,23 +637,18 @@
     function syncGameWrapperScale() {
       if (!gameWrapperEl) return;
 
-      // Use visualViewport when available — gives accurate dimensions on iPhone
-      // even when the on-screen keyboard or Safari's toolbar shifts the layout.
+      // With responsive canvas, no scale transform needed; canvas fills viewport directly
+      // For non-compact layouts, add subtle padding via wrapper
       const vvw = window.visualViewport ? window.visualViewport.width  : window.innerWidth;
       const vvh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
 
       const compactLayout = vvw < 430 || vvh < 760;
-      const wrapperPad = compactLayout ? 0 : 32;
-      const safeTop    = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sat") || "0") || 0;
-      const safeBot    = parseInt(getComputedStyle(document.documentElement).getPropertyValue("--sab") || "0") || 0;
-      const availableWidth  = Math.max(280, vvw);
-      const availableHeight = Math.max(320, vvh - safeTop - safeBot - (compactLayout ? 0 : 12));
-      const wrapperWidth  = W + wrapperPad;
-      const wrapperHeight = H + wrapperPad;
-      const scale = Math.min(availableWidth / wrapperWidth, availableHeight / wrapperHeight);
-
       document.body.classList.toggle("compact-layout", compactLayout);
-      gameWrapperEl.style.transform = `scale(${scale})`;
+
+      // Wrapper padding only in non-compact mode
+      const wrapperPad = compactLayout ? 0 : 16;
+      gameWrapperEl.style.padding = `${wrapperPad}px`;
+      gameWrapperEl.style.transform = "scale(1)"; // no scale transform in responsive mode
     }
 
     const UI_FONT = "Segoe UI, Tahoma, Geneva, Verdana, sans-serif";
@@ -779,6 +812,12 @@
     let settingsMusicVolIncRect = null;
     let settingsSFXVolDecRect   = null;
     let settingsSFXVolIncRect   = null;
+    let settingsFullscreenRect = null;
+    let settingsParticleDecRect = null;
+    let settingsParticleIncRect = null;
+    let settingsBurnLogsRect = null;
+    let settingsBurnLogsConfirmingRect = null;
+    let settingsBurnLogsCancelRect = null;
     let testerNotesContinueRect = null;
     let currentHangarFaction = "germany";
     let currentHangarSection = "service";
@@ -1073,6 +1112,8 @@
     const belgiumMidS3     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S3.png");
     const belgiumMidS5     = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumMid_S5.png");
     const belgiumForeS1    = loadSplashAsset("assets/backgrounds/campaigns/Belgium/BelgiumFore_S1.png");
+    // Mid variants for blended parallax — cycle through S1/S3/S5 for progressive damage narrative
+    const belgiumMidVariants = [belgiumMidS1, belgiumMidS3, belgiumMidS5];
     // Belgium atmosphere layer (ultra-far, 4th depth layer) — placeholder until Sal's artwork arrives.
     // Spec: 480×640px PNG. Sky gradient (#EDE8DC top → #C8DAEA mid → #C2B99A horizon).
     // Faint warm haze band 40–60px tall just above ground baseline. Scroll coefficient 0.02x.
@@ -1084,24 +1125,27 @@
       atmos:       belgiumAtmosLayer,
       farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
       far:         belgiumFarS1,
+      midVariants: belgiumMidVariants,
       mid:         belgiumMidS1,
-      fore:        null  // foreground pending redesign
+      fore:        belgiumForeS1
     };
     const BELGIUM_LAYERS_S3 = {
       sky:         belgiumSkyLayer,
       atmos:       belgiumAtmosLayer,
       farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
       far:         belgiumFarS1,
+      midVariants: belgiumMidVariants,
       mid:         belgiumMidS3,
-      fore:        null  // foreground pending redesign
+      fore:        belgiumForeS1
     };
     const BELGIUM_LAYERS_S5 = {
       sky:         belgiumSkyLayer,
       atmos:       belgiumAtmosLayer,
       farVariants: [belgiumFarBlend1, belgiumFarBlend2, belgiumFarBlend3],
       far:         belgiumFarS5,
+      midVariants: belgiumMidVariants,
       mid:         belgiumMidS5,
-      fore:        null  // foreground pending redesign
+      fore:        belgiumForeS1
     };
     // Keep alias for anything still referencing the old single config
     const BELGIUM_CAMPAIGN_LAYERS = BELGIUM_LAYERS_S1;
@@ -1817,7 +1861,12 @@
 
     const PLANE_WIDTH = 52;
     const PLANE_HEIGHT = 28;
-    const PLANE_X = 90;
+    // Responsive PLANE_X: reference was 90 on W=480, scale linearly
+    function getPlaneX() {
+      const baseW = 480;
+      const baseX = 90;
+      return Math.round(baseX * (W / baseW));
+    }
     const XP_PER_ACE_STEP = 5;
     const BASE_FIRE_INTERVAL = 320;
     const RAPID_FIRE_INTERVAL = 185;
@@ -2083,12 +2132,17 @@
     const STORAGE_KEY_MASTER_VOL = `${STORAGE_REVISION}_master_vol`;
     const STORAGE_KEY_MUSIC_VOL  = `${STORAGE_REVISION}_music_vol`;
     const STORAGE_KEY_SFX_VOL    = `${STORAGE_REVISION}_sfx_vol`;
+    const STORAGE_KEY_FULLSCREEN = `${STORAGE_REVISION}_fullscreen`;
+    const STORAGE_KEY_PARTICLE_DETAIL = `${STORAGE_REVISION}_particle_detail`;
     let masterVolume = parseFloat(localStorage.getItem(STORAGE_KEY_MASTER_VOL) || "1.0");
     let musicVolume  = parseFloat(localStorage.getItem(STORAGE_KEY_MUSIC_VOL)  || "0.6");
     let sfxVolume    = parseFloat(localStorage.getItem(STORAGE_KEY_SFX_VOL)    || "0.8");
+    let fullscreenMode = localStorage.getItem(STORAGE_KEY_FULLSCREEN) === "true" ? true : false;
+    let particleDetail = parseFloat(localStorage.getItem(STORAGE_KEY_PARTICLE_DETAIL) || "1.0");
     if (isNaN(masterVolume) || masterVolume < 0 || masterVolume > 1) masterVolume = 1.0;
     if (isNaN(musicVolume)  || musicVolume  < 0 || musicVolume  > 1) musicVolume  = 0.6;
     if (isNaN(sfxVolume)    || sfxVolume    < 0 || sfxVolume    > 1) sfxVolume    = 0.8;
+    if (isNaN(particleDetail) || particleDetail < 0 || particleDetail > 1) particleDetail = 1.0;
 
     function initAudioContext() {
       if (audioCtx) {
@@ -2198,6 +2252,7 @@
     // Web-delivery: OGG at assets/audio/sfx/<name>.ogg (primary) +
     //               MP3 at assets/audio/sfx/<name>.mp3 (fallback)
     // See delivery note for full naming spec.
+    let lewisRoundRobinIndex = 0;
     function _loadAllSFX() {
       const SFX_BASE = "assets/audio/sfx/";
       const assets = [
@@ -2215,8 +2270,27 @@
         "sfx_ui_campaign_complete",
         "sfx_ambient_wind_loop",
         "sfx_ambient_artillery_distant",
+        "sfx_mg_lewis_shot_a",
+        "sfx_mg_lewis_shot_b",
+        "sfx_mg_lewis_shot_c",
+        "sfx_mg_spandau_shot_a",
       ];
       assets.forEach(id => loadSFX(id, SFX_BASE + id + ".ogg"));
+    }
+
+    // --- Player machine-gun SFX selector (faction-aware) ---
+    // British players → Lewis (round-robin a/b/c)
+    // German players → Spandau (single take, play straight)
+    function getPlayerGunSFXId() {
+      if (currentFaction === "britain") {
+        const lewisVariants = ["sfx_mg_lewis_shot_a", "sfx_mg_lewis_shot_b", "sfx_mg_lewis_shot_c"];
+        const id = lewisVariants[lewisRoundRobinIndex % 3];
+        lewisRoundRobinIndex++;
+        return id;
+      } else {
+        // German faction: Spandau (single take)
+        return "sfx_mg_spandau_shot_a";
+      }
     }
 
     // --- One-shot SFX trigger ---
@@ -2575,6 +2649,22 @@
       hitGainNode.gain.linearRampToValueAtTime(0.60 * sfxVolume, t);
       explosionGainNode.gain.linearRampToValueAtTime(1.2 * sfxVolume, t);
       uiGainNode.gain.linearRampToValueAtTime(0.55 * sfxVolume, t);
+    }
+
+    function setFullscreenMode(mode) {
+      fullscreenMode = !!mode;
+      localStorage.setItem(STORAGE_KEY_FULLSCREEN, String(fullscreenMode));
+      // Fullscreen request on user gesture (if supported)
+      if (fullscreenMode && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => { fullscreenMode = false; });
+      } else if (!fullscreenMode && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+
+    function setParticleDetail(detail) {
+      particleDetail = Math.max(0, Math.min(1, detail));
+      localStorage.setItem(STORAGE_KEY_PARTICLE_DETAIL, String(particleDetail));
     }
 
     // =========================================================================
@@ -3003,7 +3093,7 @@
         obstacles.forEach(disposeObstacleMedia);
       }
       plane = {
-        x: PLANE_X,
+        x: getPlaneX(),
         y: H / 2,
         width: PLANE_WIDTH,
         height: PLANE_HEIGHT,
@@ -3213,8 +3303,12 @@
 
       lastSpawnTime = timestamp;
 
-      const marginTop = 80;
-      const marginBottom = 80;
+      // Responsive spawn margins: scale by current H
+      // Reference: on H=640, margins were 80 each
+      const baseH = 640;
+      const hRatio = H / baseH;
+      const marginTop = Math.round(80 * hRatio);
+      const marginBottom = Math.round(80 * hRatio);
       const yMin = marginTop;
       const yMax = H - GROUND_HEIGHT - marginBottom;
       const baseY = Math.random() * (yMax - yMin) + yMin;
@@ -3289,11 +3383,15 @@
     }
 
     function pickEnemySpawnY(type) {
-      const minY = type === "zeppelin" ? 90 : 70;
-      const maxY = type === "zeppelin" ? H - GROUND_HEIGHT - 180 : H - GROUND_HEIGHT - 90;
+      // Responsive Y-spawn band: scale margins by current H
+      // Reference: on H=640, zeppelin had minY=90, maxY=640-90-180=370
+      const baseH = 640;
+      const hRatio = H / baseH;
+      const minY = type === "zeppelin" ? Math.round(90 * hRatio) : Math.round(70 * hRatio);
+      const maxY = type === "zeppelin" ? H - GROUND_HEIGHT - Math.round(180 * hRatio) : H - GROUND_HEIGHT - Math.round(90 * hRatio);
       const playerCenterY = plane.y + plane.height / 2;
-      const preferredSpacing = currentStageIndex === 0 ? 90 : 58;
-      const previousSpacing = type === "zeppelin" ? 110 : 70;
+      const preferredSpacing = currentStageIndex === 0 ? Math.round(90 * hRatio) : Math.round(58 * hRatio);
+      const previousSpacing = type === "zeppelin" ? Math.round(110 * hRatio) : Math.round(70 * hRatio);
 
       let fallbackY = Math.random() * Math.max(20, maxY - minY) + minY;
 
@@ -3337,9 +3435,16 @@
     }
 
     function getAutoFireTarget(planeCx, planeCy) {
+      // Responsive lookahead distances: scale by W
+      // Reference: on W=480, lookahead was 220 for enemies, 240 for balloons
+      const baseW = 480;
+      const wRatio = W / baseW;
+      const enemyLookahead = Math.round(220 * wRatio);
+      const balloonLookahead = Math.round(240 * wRatio);
+
       const enemyTarget = enemies.find(enemy =>
         enemy.x > planeCx &&
-        enemy.x < planeCx + 220 &&
+        enemy.x < planeCx + enemyLookahead &&
         Math.abs(enemy.y - planeCy) < (enemy.type === "zeppelin" ? 56 : 34)
       );
       if (enemyTarget) return enemyTarget;
@@ -3347,7 +3452,7 @@
       return obstacles.find(obstacle =>
         obstacle.type === "balloon" &&
         obstacle.x > planeCx &&
-        obstacle.x < planeCx + 240 &&
+        obstacle.x < planeCx + balloonLookahead &&
         Math.abs(obstacle.y - planeCy) < (obstacle.r + 26)
       );
     }
@@ -3374,8 +3479,9 @@
           ttl: 880
         });
       }
-      // Audio: gun fire SFX on every shot that fires
-      playSFX("sfx_gun_vickers_burst_short", gunGainNode, 0.05);
+      // Audio: gun fire SFX on every shot that fires (faction-specific MG)
+      const gunSFXId = getPlayerGunSFXId();
+      playSFX(gunSFXId, gunGainNode, 0.05);
     }
 
     function registerHit(timestamp) {
@@ -4724,11 +4830,11 @@
       }
 
       screen = "game";
-      updateOverlayVisibility();
       hintEl.textContent = GAMEPLAY_HINT;
       resetGame();
       flap();
-      drawScene();   // paint immediately — don't wait for first rAF tick
+      updateOverlayVisibility();  // update DOM state before first canvas frame
+      drawScene();   // paint immediately with correct overlay state — don't wait for first rAF tick
       startGameLoop();
       return true;
     }
@@ -4866,11 +4972,11 @@
     function restartCurrentRun() {
       gameOver = false;
       screen = "game";
-      updateOverlayVisibility();
       hintEl.textContent = GAMEPLAY_HINT;
       resetGame();
       flap();
       drawScene();   // paint immediately — don't wait for first rAF tick
+      updateOverlayVisibility();  // update DOM after first canvas frame
       startGameLoop();
     }
 
@@ -5250,9 +5356,9 @@
       settingsMusicVolDecRect = {}; settingsMusicVolIncRect = {};
       settingsSFXVolDecRect   = {}; settingsSFXVolIncRect   = {};
       settingsVolDecRect      = {}; settingsVolIncRect      = {};
-      _drawVolRow("Music",       musicVolume,  panelY + 212, settingsMusicVolDecRect, settingsMusicVolIncRect);
-      _drawVolRow("Game Sounds", sfxVolume,    panelY + 282, settingsSFXVolDecRect,   settingsSFXVolIncRect);
-      _drawVolRow("Master",      masterVolume, panelY + 352, settingsVolDecRect,      settingsVolIncRect);
+      _drawVolRow("Gramophone",                musicVolume,  panelY + 212, settingsMusicVolDecRect, settingsMusicVolIncRect);
+      _drawVolRow("Engine Roar & Ordnance",    sfxVolume,    panelY + 282, settingsSFXVolDecRect,   settingsSFXVolIncRect);
+      _drawVolRow("Engine & Ambient Mix",      masterVolume, panelY + 352, settingsVolDecRect,      settingsVolIncRect);
 
 
       ctx.textAlign = "center";

@@ -599,13 +599,36 @@ Future feature:
 
 This should become the player’s long-term identity layer.
 
-### Pilot Portraits
+### Pilot Portraits (Pilot Avatar)
 
-Possible later feature:
+Full spec captured in `Team Inbox/design/FEATURE_BRIEF_PilotAvatar_v1.md`. Summary:
 
-- use a prepared prompt workflow so players can turn their own face photo into a stylized pilot portrait
-- portraits should match the game’s comic-vector style
-- fixed format and consistent framing are required
+**Intent.** Each player gets a personal WW1 aviator portrait in the cockpit frame and Hangar, optionally generated from their own side-profile photo. Default is a generic silhouette — opt-in only. Purpose is emotional connection: the player sees themselves in the cockpit.
+
+**Art integration (non-negotiable).**
+
+- Fixed frame and fixed size — portrait renders inside a defined cockpit aperture at a locked dimension. The feature must never resize or reshape the cockpit art or plane visuals.
+- Side-profile framing (matches the side-view aviation scene).
+- Style-locked to the WONML comic-vector direction (leather helmet, goggles, scarf, muted period palette).
+- Fixed pose across all generations — variation would break cockpit readability.
+- Fallback silhouette treated as a first-class art asset, not a placeholder.
+
+**Privacy posture.** Player's photo stays private; only the generated avatar persists; explicit consent required; player can always delete their data. Two implementation paths:
+
+- *Option A — strict on-device generation.* Feasible on iOS via Apple Intelligence / Image Playground, but only inside a native wrapper (iOS 18.2+, iPhone 15 Pro / 16 series). No equivalent packaged API on Android today (Gemini Nano is text-focused). Blocks v1 on the web build.
+- *Option B — cloud API with zero-retention contract.* Photo sent over TLS to a vetted provider (OpenAI / Replicate / Stability / Gemini) under a no-training, no-logging agreement. Photo discarded server-side; only the stylized PNG persists in Firebase. Honest disclosure in consent screen. Ships in the current web build.
+
+Recommendation: Option B for v1 browser. Revisit Option A once native shells ship. Sunny to research providers, zero-retention terms, per-image cost, latency, moderation.
+
+**Consent.** Specific and plain-language, not a blanket EULA. Names the provider, states the photo is not retained, states where the avatar lives, explains deletion. Age-gated (13 US / 16 EU baseline) — minors see silhouette only, no parental-consent flow in v1.
+
+**"Delete my data" button.** Global player-data delete in settings (exists independent of the avatar feature). Two-tap confirm with hard warning that pilot profile, avatar, progression, Hangar unlocks, leaderboard scores, and campaign history will all be erased. On confirm: Firebase pilot doc + avatar blob purged, local save cleared, session signed out. GDPR Article 17 / CCPA baseline.
+
+**Monetization (cosmetic only).** Silhouette is free forever. Personalized portrait is purchased with in-game currency (earned through play, optional small IAP top-up). Regeneration budget: a few free retries per purchase, small currency cost thereafter, to bound provider cost. No stat, no perk, no pay-to-win surface.
+
+**Explicitly out of scope for v1.** Multiple poses, animated portraits, squadron crests on the portrait, custom uniforms / rank pips / medals (those belong to *Pilot Career*), social sharing, in-browser on-device generation, Android on-device generation, live camera overlay.
+
+**Trigger to schedule.** Do not start until Belgium vertical slice is shipped, Firebase leaderboard + pilot profile (Enzo v2) is live, and Phase 3 (Progression & Hangar) is underway.
 
 ### Squadrons
 

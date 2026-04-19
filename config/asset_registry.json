@@ -698,6 +698,50 @@
       "duration_seconds": null,
       "status": "pending",
       "used_in": []
+    },
+    {
+      "id": "sfx_mg_lewis_shot_a",
+      "type": "audio_sfx",
+      "path": "assets/audio/sfx/machineguns/sfx_mg_lewis_shot_a.mp3",
+      "description": "Lewis gun single-shot SFX — take A. British player aircraft. Round-robin with b/c on repeated shots.",
+      "duration_seconds": 1,
+      "status": "active",
+      "used_in": ["game"],
+      "faction": "britain",
+      "weapon": "lewis_gun"
+    },
+    {
+      "id": "sfx_mg_lewis_shot_b",
+      "type": "audio_sfx",
+      "path": "assets/audio/sfx/machineguns/sfx_mg_lewis_shot_b.mp3",
+      "description": "Lewis gun single-shot SFX — take B. British player aircraft. Round-robin with a/c on repeated shots.",
+      "duration_seconds": 1,
+      "status": "active",
+      "used_in": ["game"],
+      "faction": "britain",
+      "weapon": "lewis_gun"
+    },
+    {
+      "id": "sfx_mg_lewis_shot_c",
+      "type": "audio_sfx",
+      "path": "assets/audio/sfx/machineguns/sfx_mg_lewis_shot_c.mp3",
+      "description": "Lewis gun single-shot SFX — take C. British player aircraft. Round-robin with a/b on repeated shots.",
+      "duration_seconds": 1,
+      "status": "active",
+      "used_in": ["game"],
+      "faction": "britain",
+      "weapon": "lewis_gun"
+    },
+    {
+      "id": "sfx_mg_spandau_shot_a",
+      "type": "audio_sfx",
+      "path": "assets/audio/sfx/machineguns/sfx_mg_spandau_shot_a.mp3",
+      "description": "Spandau gun single-shot SFX. German player aircraft.",
+      "duration_seconds": 1,
+      "status": "active",
+      "used_in": ["game"],
+      "faction": "germany",
+      "weapon": "spandau_gun"
     }
   ],
 
