@@ -4943,8 +4943,8 @@
       hintEl.textContent = GAMEPLAY_HINT;
       resetGame();
       flap();
-      updateOverlayVisibility();  // update DOM state before first canvas frame
-      drawScene();   // paint immediately with correct overlay state — don't wait for first rAF tick
+      drawScene();   // paint immediately — don't wait for first rAF tick
+      updateOverlayVisibility();  // update DOM state with correct overlay state after canvas frame
       startGameLoop();
       return true;
     }
@@ -5092,6 +5092,7 @@
 
     function returnToMainMenu() {
       gameOver = false;
+      gameRunning = false;
       screen = "splash";
       updateOverlayVisibility();
       hintEl.textContent = MAIN_MENU_HINT;
